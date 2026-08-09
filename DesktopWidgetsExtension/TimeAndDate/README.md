@@ -1,3 +1,4 @@
 # Time and Date Widget
 
-Time and date presentation, timeline provider, and configuration code belong here.
+Contains the first buildable widget foundation: its timeline entry/provider, WidgetKit
+configuration, and a deliberately neutral view that can be restyled from visual references.
