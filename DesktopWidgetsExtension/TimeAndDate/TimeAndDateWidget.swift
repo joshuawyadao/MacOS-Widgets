@@ -3,7 +3,7 @@ import WidgetKit
 
 struct TimeAndDateEntry: TimelineEntry {
     let date: Date
-    let configuration: TimeAndDateConfigurationIntent
+    let configuration: TimeAndDateStringConfigurationIntent
 }
 
 struct TimeAndDateProvider: AppIntentTimelineProvider {
@@ -12,14 +12,14 @@ struct TimeAndDateProvider: AppIntentTimelineProvider {
     }
 
     func snapshot(
-        for configuration: TimeAndDateConfigurationIntent,
+        for configuration: TimeAndDateStringConfigurationIntent,
         in context: Context
     ) async -> TimeAndDateEntry {
         TimeAndDateEntry(date: .now, configuration: configuration)
     }
 
     func timeline(
-        for configuration: TimeAndDateConfigurationIntent,
+        for configuration: TimeAndDateStringConfigurationIntent,
         in context: Context
     ) async -> Timeline<TimeAndDateEntry> {
         let dates = Calendar.autoupdatingCurrent.minuteTimeline(startingAt: .now, count: 60)
@@ -42,20 +42,20 @@ struct TimeAndDateWidgetView: View {
     }
 
     private var dateText: String {
-        entry.configuration.dateFormat.string(from: entry.date, locale: locale, timeZone: timeZone)
+        entry.configuration.resolvedDateFormat.string(from: entry.date, locale: locale, timeZone: timeZone)
     }
 
     private var timeText: String {
-        entry.configuration.timeFormat.timeString(from: entry.date, locale: locale, timeZone: timeZone)
+        entry.configuration.resolvedTimeFormat.timeString(from: entry.date, locale: locale, timeZone: timeZone)
     }
 
     private var periodText: String? {
-        entry.configuration.timeFormat.periodString(from: entry.date, locale: locale, timeZone: timeZone)
+        entry.configuration.resolvedTimeFormat.periodString(from: entry.date, locale: locale, timeZone: timeZone)
     }
 
     var body: some View {
         Group {
-            switch entry.configuration.layout {
+            switch entry.configuration.resolvedLayout {
             case .reference:
                 referenceLayout
             case .stacked:
@@ -156,8 +156,8 @@ struct TimeAndDateWidgetView: View {
 
     private var dateLabel: some View {
         Text(dateText)
-            .font(entry.configuration.dateFont.font(size: metrics.dateSize, role: .date))
-            .fontWeight(entry.configuration.dateFont == .systemBold ? .black : nil)
+            .font(entry.configuration.resolvedDateFont.font(size: metrics.dateSize, role: .date))
+            .fontWeight(entry.configuration.resolvedDateFont == .systemBold ? .black : nil)
             .tracking(metrics.dateTracking)
             .lineLimit(1)
             .minimumScaleFactor(0.55)
@@ -165,7 +165,7 @@ struct TimeAndDateWidgetView: View {
 
     private var timeLabel: some View {
         Text(timeText)
-            .font(entry.configuration.timeFont.font(size: metrics.timeSize, role: .time))
+            .font(entry.configuration.resolvedTimeFont.font(size: metrics.timeSize, role: .time))
             .lineLimit(1)
             .minimumScaleFactor(0.55)
             .layoutPriority(1)
@@ -179,12 +179,12 @@ struct TimeAndDateWidgetView: View {
                 periodLabel(periodText)
             }
         }
-        .frame(maxWidth: entry.configuration.layout == .centered ? .infinity : nil)
+        .frame(maxWidth: entry.configuration.resolvedLayout == .centered ? .infinity : nil)
     }
 
     private func periodLabel(_ text: String) -> some View {
         Text(text)
-            .font(entry.configuration.timeFont.font(size: metrics.periodSize, role: .time))
+            .font(entry.configuration.resolvedTimeFont.font(size: metrics.periodSize, role: .time))
             .lineLimit(1)
             .minimumScaleFactor(0.7)
     }
@@ -239,7 +239,7 @@ struct TimeAndDateWidget: Widget {
     var body: some WidgetConfiguration {
         AppIntentConfiguration(
             kind: Self.kind,
-            intent: TimeAndDateConfigurationIntent.self,
+            intent: TimeAndDateStringConfigurationIntent.self,
             provider: TimeAndDateProvider()
         ) { entry in
             TimeAndDateWidgetView(entry: entry)

@@ -20,9 +20,10 @@ Battery, and Calendar remain isolated modules ready for later implementation.
 
 1. Open `DesktopWidgets.xcodeproj` in Xcode.
 2. Select **My Mac** and run the `DesktopWidgets` scheme once. The project uses **Sign to Run Locally**, so a paid Apple Developer Program membership or selected development team is not required.
-3. Control-click the desktop, choose **Edit Widgets**, and add **Time and Date (Custom)**.
-4. Control-click the placed widget and choose **Edit Time and Date** to select its layout, date format, time format, date font, and time font.
+3. If an earlier Time and Date widget is already on the desktop, remove it once. Build 4 uses a fresh configuration identity to avoid the broken AppEnum schema cached by macOS 26.5.
+4. Control-click the desktop, choose **Edit Widgets**, and add **Time and Date (Custom)**.
+5. Control-click the placed widget and choose **Edit Time and Date** to select its layout, date format, time format, date font, and time font.
 
-Font choices include an `Aa` specimen rendered in the selected typeface when the macOS editor displays App Intent option images. The widget declares a clear, removable background; macOS may still apply its own glass or tint treatment in some system appearance modes.
+The native editor choices use string-backed dynamic options because macOS 26.5 can save AppEnum selections while still delivering their defaults to a widget timeline. Font choices retain an `Aa` specimen rendered in the selected typeface when the macOS editor displays App Intent option images. The widget declares a clear, removable background; macOS may still apply its own glass or tint treatment in some system appearance modes.
 
 See [Time and Date widget](docs/Time-And-Date-Widget.md) for every customization option and display notes.

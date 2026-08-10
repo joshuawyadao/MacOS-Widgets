@@ -2,38 +2,44 @@ import AppIntents
 import Foundation
 import SwiftUI
 
-enum TimeAndDateLayout: String, AppEnum {
+protocol TimeAndDateStringOption: CaseIterable, RawRepresentable where RawValue == String {
+    var displayName: LocalizedStringResource { get }
+}
+
+enum TimeAndDateLayout: String, CaseIterable, Sendable, TimeAndDateStringOption {
     case reference
     case stacked
     case timeFirst
     case centered
     case inline
 
-    static let typeDisplayRepresentation: TypeDisplayRepresentation = "Layout"
-    static let caseDisplayRepresentations: [Self: DisplayRepresentation] = [
-        .reference: "Reference",
-        .stacked: "Date Above Time",
-        .timeFirst: "Time Above Date",
-        .centered: "Centered",
-        .inline: "Side by Side",
-    ]
+    var displayName: LocalizedStringResource {
+        switch self {
+        case .reference: "Reference"
+        case .stacked: "Date Above Time"
+        case .timeFirst: "Time Above Date"
+        case .centered: "Centered"
+        case .inline: "Side by Side"
+        }
+    }
 }
 
-enum TimeAndDateDateFormat: String, AppEnum {
+enum TimeAndDateDateFormat: String, CaseIterable, Sendable, TimeAndDateStringOption {
     case reference
     case monthFirstWords
     case monthDayYear
     case dayMonthYear
     case iso
 
-    static let typeDisplayRepresentation: TypeDisplayRepresentation = "Date Format"
-    static let caseDisplayRepresentations: [Self: DisplayRepresentation] = [
-        .reference: "Sunday 09 Aug",
-        .monthFirstWords: "Sun Aug 09",
-        .monthDayYear: "MM/dd/yyyy",
-        .dayMonthYear: "dd/MM/yyyy",
-        .iso: "yyyy-MM-dd",
-    ]
+    var displayName: LocalizedStringResource {
+        switch self {
+        case .reference: "Sunday 09 Aug"
+        case .monthFirstWords: "Sun Aug 09"
+        case .monthDayYear: "MM/dd/yyyy"
+        case .dayMonthYear: "dd/MM/yyyy"
+        case .iso: "yyyy-MM-dd"
+        }
+    }
 
     func string(from date: Date, locale: Locale, timeZone: TimeZone) -> String {
         let formatter = DateFormatter()
@@ -60,15 +66,16 @@ enum TimeAndDateDateFormat: String, AppEnum {
     }
 }
 
-enum TimeAndDateTimeFormat: String, AppEnum {
+enum TimeAndDateTimeFormat: String, CaseIterable, Sendable, TimeAndDateStringOption {
     case twelveHour
     case twentyFourHour
 
-    static let typeDisplayRepresentation: TypeDisplayRepresentation = "Time Format"
-    static let caseDisplayRepresentations: [Self: DisplayRepresentation] = [
-        .twelveHour: "12-hour",
-        .twentyFourHour: "24-hour",
-    ]
+    var displayName: LocalizedStringResource {
+        switch self {
+        case .twelveHour: "12-hour"
+        case .twentyFourHour: "24-hour"
+        }
+    }
 
     func timeString(from date: Date, locale: Locale, timeZone: TimeZone) -> String {
         formatted(date, pattern: self == .twelveHour ? "hh:mm" : "HH:mm", locale: locale, timeZone: timeZone)
@@ -94,7 +101,7 @@ enum TimeAndDateTimeFormat: String, AppEnum {
     }
 }
 
-enum TimeAndDateFont: String, AppEnum {
+enum TimeAndDateFont: String, CaseIterable, Sendable, TimeAndDateStringOption {
     case systemBold
     case systemRounded
     case systemSerif
@@ -106,89 +113,35 @@ enum TimeAndDateFont: String, AppEnum {
     case markerFelt
     case snellRoundhand
 
-    static let typeDisplayRepresentation: TypeDisplayRepresentation = "Font"
-    static let caseDisplayRepresentations: [Self: DisplayRepresentation] = [
-        .systemBold: DisplayRepresentation(
-            title: "System Bold",
-            image: DisplayRepresentation.Image(
-                named: "FontPreviewSystemBold",
-                isTemplate: true,
-                displayStyle: .default
-            )
-        ),
-        .systemRounded: DisplayRepresentation(
-            title: "System Rounded",
-            image: DisplayRepresentation.Image(
-                named: "FontPreviewSystemRounded",
-                isTemplate: true,
-                displayStyle: .default
-            )
-        ),
-        .systemSerif: DisplayRepresentation(
-            title: "System Serif",
-            image: DisplayRepresentation.Image(
-                named: "FontPreviewSystemSerif",
-                isTemplate: true,
-                displayStyle: .default
-            )
-        ),
-        .systemMonospaced: DisplayRepresentation(
-            title: "System Monospaced",
-            image: DisplayRepresentation.Image(
-                named: "FontPreviewSystemMonospaced",
-                isTemplate: true,
-                displayStyle: .default
-            )
-        ),
-        .avenirNext: DisplayRepresentation(
-            title: "Avenir Next",
-            image: DisplayRepresentation.Image(
-                named: "FontPreviewAvenirNext",
-                isTemplate: true,
-                displayStyle: .default
-            )
-        ),
-        .noteworthy: DisplayRepresentation(
-            title: "Noteworthy",
-            image: DisplayRepresentation.Image(
-                named: "FontPreviewNoteworthy",
-                isTemplate: true,
-                displayStyle: .default
-            )
-        ),
-        .chalkboard: DisplayRepresentation(
-            title: "Chalkboard SE",
-            image: DisplayRepresentation.Image(
-                named: "FontPreviewChalkboard",
-                isTemplate: true,
-                displayStyle: .default
-            )
-        ),
-        .bradleyHand: DisplayRepresentation(
-            title: "Bradley Hand",
-            image: DisplayRepresentation.Image(
-                named: "FontPreviewBradleyHand",
-                isTemplate: true,
-                displayStyle: .default
-            )
-        ),
-        .markerFelt: DisplayRepresentation(
-            title: "Marker Felt",
-            image: DisplayRepresentation.Image(
-                named: "FontPreviewMarkerFelt",
-                isTemplate: true,
-                displayStyle: .default
-            )
-        ),
-        .snellRoundhand: DisplayRepresentation(
-            title: "Snell Roundhand",
-            image: DisplayRepresentation.Image(
-                named: "FontPreviewSnellRoundhand",
-                isTemplate: true,
-                displayStyle: .default
-            )
-        ),
-    ]
+    var displayName: LocalizedStringResource {
+        switch self {
+        case .systemBold: "System Bold"
+        case .systemRounded: "System Rounded"
+        case .systemSerif: "System Serif"
+        case .systemMonospaced: "System Monospaced"
+        case .avenirNext: "Avenir Next"
+        case .noteworthy: "Noteworthy"
+        case .chalkboard: "Chalkboard SE"
+        case .bradleyHand: "Bradley Hand"
+        case .markerFelt: "Marker Felt"
+        case .snellRoundhand: "Snell Roundhand"
+        }
+    }
+
+    var previewImageName: String {
+        switch self {
+        case .systemBold: "FontPreviewSystemBold"
+        case .systemRounded: "FontPreviewSystemRounded"
+        case .systemSerif: "FontPreviewSystemSerif"
+        case .systemMonospaced: "FontPreviewSystemMonospaced"
+        case .avenirNext: "FontPreviewAvenirNext"
+        case .noteworthy: "FontPreviewNoteworthy"
+        case .chalkboard: "FontPreviewChalkboard"
+        case .bradleyHand: "FontPreviewBradleyHand"
+        case .markerFelt: "FontPreviewMarkerFelt"
+        case .snellRoundhand: "FontPreviewSnellRoundhand"
+        }
+    }
 
     func font(size: CGFloat, role: TimeAndDateFontRole) -> Font {
         switch self {
@@ -221,32 +174,137 @@ enum TimeAndDateFontRole {
     case time
 }
 
-struct TimeAndDateConfigurationIntent: WidgetConfigurationIntent {
+private enum TimeAndDateOptionItems {
+    static func collection<Option: TimeAndDateStringOption>(
+        for optionType: Option.Type,
+        prompt: LocalizedStringResource
+    ) -> IntentItemCollection<String> {
+        let items = Option.allCases.map { option in
+            IntentItem(option.rawValue, title: option.displayName)
+        }
+
+        return IntentItemCollection(
+            promptLabel: prompt,
+            sections: [IntentItemSection(items: items)]
+        )
+    }
+
+    static func fontCollection(prompt: LocalizedStringResource) -> IntentItemCollection<String> {
+        let items = TimeAndDateFont.allCases.map { font in
+            IntentItem(
+                font.rawValue,
+                title: font.displayName,
+                image: DisplayRepresentation.Image(
+                    named: font.previewImageName,
+                    isTemplate: true,
+                    displayStyle: .default
+                )
+            )
+        }
+
+        return IntentItemCollection(
+            promptLabel: prompt,
+            sections: [IntentItemSection(items: items)]
+        )
+    }
+}
+
+struct TimeAndDateLayoutOptionsProvider: DynamicOptionsProvider {
+    func results() async throws -> IntentItemCollection<String> {
+        TimeAndDateOptionItems.collection(for: TimeAndDateLayout.self, prompt: "Choose a layout")
+    }
+
+    func defaultResult() async -> String? {
+        TimeAndDateLayout.reference.rawValue
+    }
+}
+
+struct TimeAndDateDateFormatOptionsProvider: DynamicOptionsProvider {
+    func results() async throws -> IntentItemCollection<String> {
+        TimeAndDateOptionItems.collection(for: TimeAndDateDateFormat.self, prompt: "Choose a date format")
+    }
+
+    func defaultResult() async -> String? {
+        TimeAndDateDateFormat.reference.rawValue
+    }
+}
+
+struct TimeAndDateTimeFormatOptionsProvider: DynamicOptionsProvider {
+    func results() async throws -> IntentItemCollection<String> {
+        TimeAndDateOptionItems.collection(for: TimeAndDateTimeFormat.self, prompt: "Choose a time format")
+    }
+
+    func defaultResult() async -> String? {
+        TimeAndDateTimeFormat.twelveHour.rawValue
+    }
+}
+
+struct TimeAndDateDateFontOptionsProvider: DynamicOptionsProvider {
+    func results() async throws -> IntentItemCollection<String> {
+        TimeAndDateOptionItems.fontCollection(prompt: "Choose a date font")
+    }
+
+    func defaultResult() async -> String? {
+        TimeAndDateFont.systemBold.rawValue
+    }
+}
+
+struct TimeAndDateTimeFontOptionsProvider: DynamicOptionsProvider {
+    func results() async throws -> IntentItemCollection<String> {
+        TimeAndDateOptionItems.fontCollection(prompt: "Choose a time font")
+    }
+
+    func defaultResult() async -> String? {
+        TimeAndDateFont.noteworthy.rawValue
+    }
+}
+
+struct TimeAndDateStringConfigurationIntent: WidgetConfigurationIntent {
     static let title: LocalizedStringResource = "Time and Date"
     static let description = IntentDescription("Choose how the date and time look on the desktop.")
 
-    @Parameter(title: "Layout", default: .reference)
-    var layout: TimeAndDateLayout
+    @Parameter(title: "Layout", optionsProvider: TimeAndDateLayoutOptionsProvider())
+    var layout: String?
 
-    @Parameter(title: "Date Format", default: .reference)
-    var dateFormat: TimeAndDateDateFormat
+    @Parameter(title: "Date Format", optionsProvider: TimeAndDateDateFormatOptionsProvider())
+    var dateFormat: String?
 
-    @Parameter(title: "Time Format", default: .twelveHour)
-    var timeFormat: TimeAndDateTimeFormat
+    @Parameter(title: "Time Format", optionsProvider: TimeAndDateTimeFormatOptionsProvider())
+    var timeFormat: String?
 
-    @Parameter(title: "Date Font", default: .systemBold)
-    var dateFont: TimeAndDateFont
+    @Parameter(title: "Date Font", optionsProvider: TimeAndDateDateFontOptionsProvider())
+    var dateFont: String?
 
-    @Parameter(title: "Time Font", default: .noteworthy)
-    var timeFont: TimeAndDateFont
+    @Parameter(title: "Time Font", optionsProvider: TimeAndDateTimeFontOptionsProvider())
+    var timeFont: String?
+
+    var resolvedLayout: TimeAndDateLayout {
+        layout.flatMap(TimeAndDateLayout.init(rawValue:)) ?? .reference
+    }
+
+    var resolvedDateFormat: TimeAndDateDateFormat {
+        dateFormat.flatMap(TimeAndDateDateFormat.init(rawValue:)) ?? .reference
+    }
+
+    var resolvedTimeFormat: TimeAndDateTimeFormat {
+        timeFormat.flatMap(TimeAndDateTimeFormat.init(rawValue:)) ?? .twelveHour
+    }
+
+    var resolvedDateFont: TimeAndDateFont {
+        dateFont.flatMap(TimeAndDateFont.init(rawValue:)) ?? .systemBold
+    }
+
+    var resolvedTimeFont: TimeAndDateFont {
+        timeFont.flatMap(TimeAndDateFont.init(rawValue:)) ?? .noteworthy
+    }
 
     static func referencePreview() -> Self {
         let configuration = Self()
-        configuration.layout = .reference
-        configuration.dateFormat = .reference
-        configuration.timeFormat = .twelveHour
-        configuration.dateFont = .systemBold
-        configuration.timeFont = .noteworthy
+        configuration.layout = TimeAndDateLayout.reference.rawValue
+        configuration.dateFormat = TimeAndDateDateFormat.reference.rawValue
+        configuration.timeFormat = TimeAndDateTimeFormat.twelveHour.rawValue
+        configuration.dateFont = TimeAndDateFont.systemBold.rawValue
+        configuration.timeFont = TimeAndDateFont.noteworthy.rawValue
         return configuration
     }
 }

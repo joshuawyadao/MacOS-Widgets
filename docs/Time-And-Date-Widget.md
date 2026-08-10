@@ -4,10 +4,12 @@ The Time and Date widget is inspired by the supplied desktop reference: white up
 
 ## Customize the widget
 
-1. Run the `DesktopWidgets` app once from Xcode and add **Time and Date (Custom)** from the macOS widget gallery.
-2. Control-click the widget on the desktop.
-3. Choose **Edit Time and Date**.
-4. Change any of the following options:
+1. Run the `DesktopWidgets` app once from Xcode.
+2. Remove any Time and Date widget installed from build 3 or earlier. Build 4 intentionally uses a fresh widget and intent identity so macOS does not reuse the old AppEnum configuration cache.
+3. Add **Time and Date (Custom)** from the macOS widget gallery.
+4. Control-click the widget on the desktop.
+5. Choose **Edit Time and Date**.
+6. Change any of the following options:
 
 | Setting | Choices |
 | --- | --- |
@@ -19,7 +21,9 @@ The Time and Date widget is inspired by the supplied desktop reference: white up
 
 The 24-hour format automatically hides AM/PM. Each layout adapts to the small, medium, and large widget families; the compact family stacks content when a side-by-side presentation would be too narrow.
 
-Each font choice includes a square `Aa` specimen rendered with that macOS font. The specimen is attached to the native App Intent option as a template image, allowing macOS to tint it appropriately in light and dark menus. Apple controls the Edit Widget interface, including whether and at what size it displays those images; option titles themselves remain in the system interface font.
+Each editor row is backed by a stable string identifier supplied by a native App Intents dynamic options provider. The widget validates each identifier and safely falls back to its documented default if macOS supplies an unknown value. This transport preserves independent per-widget choices while avoiding a macOS 26.5 issue where AppEnum selections were stored correctly but rendered as their defaults.
+
+Each font choice includes a square `Aa` specimen rendered with that macOS font. The specimen is attached to its dynamic option as a template image, allowing macOS to tint it appropriately in light and dark menus. Apple controls the Edit Widget interface, including whether and at what size it displays those images; option titles themselves remain in the system interface font.
 
 ## Appearance notes
 
