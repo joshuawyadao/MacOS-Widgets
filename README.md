@@ -20,7 +20,7 @@ Battery, and Calendar remain isolated modules ready for later implementation.
 
 1. Open `DesktopWidgets.xcodeproj` in Xcode.
 2. Select **My Mac** and run the `DesktopWidgets` scheme once. The project uses **Sign to Run Locally**, so a paid Apple Developer Program membership or selected development team is not required.
-3. Control-click the desktop, choose **Edit Widgets**, and add **Time and Date**.
+3. Control-click the desktop, choose **Edit Widgets**, and add **Time and Date (Custom)**.
 4. Control-click the placed widget and choose **Edit Time and Date** to select its layout, date format, time format, date font, and time font.
 
 See [Time and Date widget](docs/Time-And-Date-Widget.md) for every customization option and display notes.

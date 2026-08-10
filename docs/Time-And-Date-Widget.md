@@ -4,7 +4,7 @@ The Time and Date widget is inspired by the supplied desktop reference: white up
 
 ## Customize the widget
 
-1. Run the `DesktopWidgets` app once from Xcode and add **Time and Date** from the macOS widget gallery.
+1. Run the `DesktopWidgets` app once from Xcode and add **Time and Date (Custom)** from the macOS widget gallery.
 2. Control-click the widget on the desktop.
 3. Choose **Edit Time and Date**.
 4. Change any of the following options:

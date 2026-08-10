@@ -242,7 +242,7 @@ struct TimeAndDateWidget: Widget {
         ) { entry in
             TimeAndDateWidgetView(entry: entry)
         }
-        .configurationDisplayName("Time and Date")
+        .configurationDisplayName("Time and Date (Custom)")
         .description("A transparent, configurable date and clock for your desktop.")
         .supportedFamilies([.systemSmall, .systemMedium, .systemLarge])
     }
