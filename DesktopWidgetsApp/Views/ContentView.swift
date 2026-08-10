@@ -2,7 +2,7 @@ import SwiftUI
 
 struct ContentView: View {
     private let widgets = [
-        WidgetStatus(name: "Time and Date", symbol: "clock", status: "Foundation ready", isAvailable: true),
+        WidgetStatus(name: "Time and Date", symbol: "clock", status: "Ready and customizable", isAvailable: true),
         WidgetStatus(name: "Weather", symbol: "cloud.sun", status: "Coming next", isAvailable: false),
         WidgetStatus(name: "Battery", symbol: "battery.75percent", status: "Coming next", isAvailable: false),
         WidgetStatus(name: "Calendar", symbol: "calendar", status: "Coming next", isAvailable: false),
