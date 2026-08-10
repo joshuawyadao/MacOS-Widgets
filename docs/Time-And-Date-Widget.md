@@ -19,9 +19,12 @@ The Time and Date widget is inspired by the supplied desktop reference: white up
 
 The 24-hour format automatically hides AM/PM. Each layout adapts to the small, medium, and large widget families; the compact family stacks content when a side-by-side presentation would be too narrow.
 
+Each font choice includes a square `Aa` specimen rendered with that macOS font. The specimen is attached to the native App Intent option as a template image, allowing macOS to tint it appropriately in light and dark menus. Apple controls the Edit Widget interface, including whether and at what size it displays those images; option titles themselves remain in the system interface font.
+
 ## Appearance notes
 
-- The wallpaper texture belongs to the desktop; the widget intentionally uses a clear background rather than copying it.
+- The wallpaper texture belongs to the desktop; the widget declares a clear, removable container background rather than copying it.
+- WidgetKit controls the final desktop presentation. On current macOS versions, clear or accented appearances can replace the removed app background with system glass or tint, so a native widget cannot guarantee literal wallpaper-pixel transparency in every appearance mode.
 - Noteworthy is the default time font and the closest built-in approximation to the reference. An exact match would require the original font file and permission to redistribute it.
-- macOS may tint widgets according to **System Settings → Desktop & Dock → Widgets → Widget style**. Choose **Full-color** when you want the white-on-wallpaper appearance to remain closest to the reference.
+- In **System Settings → Desktop & Dock → Widgets**, choose **Full-color** for Widget style and set desktop dimming to **Never** when you want the white-on-wallpaper appearance to remain closest to the reference.
 - The widget uses fonts already included with macOS and does not download or bundle third-party assets.

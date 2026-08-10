@@ -1,22 +1,19 @@
-# Time and Date Widget Implementation Plan
+# Plan
 
-Match the supplied Time and Date reference with a transparent, white typographic design while making its layout, date/time formats, and fonts configurable through macOS's Edit Widget interface.
+Make the Time and Date widget use the maximum transparency WidgetKit permits on macOS and add real font-rendered previews to the native font choices. Keep the implementation within App Intents and document the system-owned glass/tint limitation honestly.
 
 ## Scope
-
-- In: A configurable macOS 14+ Time and Date widget, adaptive small/medium/large layouts, curated built-in fonts, documentation, and build verification.
-- Out: Third-party font files, wallpaper/image reproduction, Weather/Battery/Calendar implementation, and App Store distribution work.
+- In: Removable clear WidgetKit background, rendering-mode awareness, font preview assets for every curated font, AppEnum display representations, documentation, build and metadata validation, commit, and push.
+- Out: Wallpaper-cropping transparency tricks, a persistent desktop overlay window, third-party font files, and control over macOS-owned Liquid Glass or tint effects.
 
 ## Action items
-
-- [x] Add App Intent configuration models for layout, date format, time format, date font, and time font.
-- [x] Refactor the Time and Date timeline and view to consume those settings and update every minute.
-- [x] Recreate the reference hierarchy with a clear background, white uppercase date, handwritten time, and contextual AM/PM marker.
-- [x] Adapt every layout to small, medium, and large widget families without clipping.
-- [x] Update the host app and project documentation with customization and teamless local-signing guidance.
-- [x] Build the macOS app and widget extension with Xcode and inspect the final Git diff.
-- [x] Commit and push the completed implementation to `feature/time-and-date-widget`.
+- [x] Verify the current transparency and App Intent presentation APIs against Apple documentation.
+- [x] Refactor the widget root to declare an explicitly removable clear container background and remain legible across rendering modes.
+- [x] Generate template preview glyph assets using each built-in macOS font and add them to the extension resources.
+- [x] Attach each preview asset to its matching AppEnum font display representation.
+- [x] Update Time and Date documentation with preview behavior, transparency limits, and relevant macOS appearance settings.
+- [x] Build the arm64 macOS app and verify the compiled App Intent metadata includes every font preview image.
+- [x] Inspect the final diff, commit the implementation plan and feature changes, and push `feature/time-and-date-widget`.
 
 ## Open questions
-
-- None. The supplied reference and requested configuration axes are sufficient for this implementation pass.
+- None. Native font-preview images are the closest supported representation because the system owns the picker row typography.

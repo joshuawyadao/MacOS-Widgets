@@ -71,7 +71,9 @@ struct TimeAndDateWidgetView: View {
         .foregroundStyle(.white)
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(accessibilityText)
-        .containerBackground(Color.clear, for: .widget)
+        .containerBackground(for: .widget) {
+            Color.clear
+        }
     }
 
     private var accessibilityText: String {
@@ -245,6 +247,7 @@ struct TimeAndDateWidget: Widget {
         .configurationDisplayName("Time and Date (Custom)")
         .description("A transparent, configurable date and clock for your desktop.")
         .supportedFamilies([.systemSmall, .systemMedium, .systemLarge])
+        .containerBackgroundRemovable(true)
     }
 }
 

@@ -19,6 +19,7 @@
 		A0000000000000000000000A /* Calendar+WidgetTimeline.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0000000000000000000000A /* Calendar+WidgetTimeline.swift */; };
 		A0000000000000000000000B /* WidgetStatus.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0000000000000000000000B /* WidgetStatus.swift */; };
 		A0000000000000000000000C /* TimeAndDateConfiguration.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0000000000000000000000C /* TimeAndDateConfiguration.swift */; };
+		A0000000000000000000000D /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = F0000000000000000000000D /* Assets.xcassets */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -58,6 +59,7 @@
 		F0000000000000000000000A /* Calendar+WidgetTimeline.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Calendar+WidgetTimeline.swift"; sourceTree = "<group>"; };
 		F0000000000000000000000B /* WidgetStatus.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WidgetStatus.swift; sourceTree = "<group>"; };
 		F0000000000000000000000C /* TimeAndDateConfiguration.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimeAndDateConfiguration.swift; sourceTree = "<group>"; };
+		F0000000000000000000000D /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Resources/Assets.xcassets; sourceTree = "<group>"; };
 		P00000000000000000000001 /* DesktopWidgets.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = DesktopWidgets.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		P00000000000000000000002 /* DesktopWidgetsExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = DesktopWidgetsExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
@@ -121,6 +123,7 @@
 			isa = PBXGroup;
 			children = (
 				F00000000000000000000004 /* DesktopWidgetBundle.swift */,
+				F0000000000000000000000D /* Assets.xcassets */,
 				G00000000000000000000006 /* TimeAndDate */,
 				G00000000000000000000007 /* Weather */,
 				G00000000000000000000008 /* Battery */,
@@ -301,6 +304,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				A0000000000000000000000D /* Assets.xcassets in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -383,7 +387,7 @@
 			buildSettings = {
 				CODE_SIGN_ENTITLEMENTS = DesktopWidgetsApp/DesktopWidgetsApp.entitlements;
 				CODE_SIGN_STYLE = Manual;
-				CURRENT_PROJECT_VERSION = 2;
+				CURRENT_PROJECT_VERSION = 3;
 				DEVELOPMENT_TEAM = "";
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_PREVIEWS = YES;
@@ -407,7 +411,7 @@
 			buildSettings = {
 				CODE_SIGN_ENTITLEMENTS = DesktopWidgetsApp/DesktopWidgetsApp.entitlements;
 				CODE_SIGN_STYLE = Manual;
-				CURRENT_PROJECT_VERSION = 2;
+				CURRENT_PROJECT_VERSION = 3;
 				DEVELOPMENT_TEAM = "";
 				ENABLE_HARDENED_RUNTIME = YES;
 				GENERATE_INFOPLIST_FILE = YES;
@@ -431,7 +435,7 @@
 				APPLICATION_EXTENSION_API_ONLY = YES;
 				CODE_SIGN_ENTITLEMENTS = DesktopWidgetsExtension/DesktopWidgetsExtension.entitlements;
 				CODE_SIGN_STYLE = Manual;
-				CURRENT_PROJECT_VERSION = 2;
+				CURRENT_PROJECT_VERSION = 3;
 				DEVELOPMENT_TEAM = "";
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_PREVIEWS = YES;
@@ -457,7 +461,7 @@
 				APPLICATION_EXTENSION_API_ONLY = YES;
 				CODE_SIGN_ENTITLEMENTS = DesktopWidgetsExtension/DesktopWidgetsExtension.entitlements;
 				CODE_SIGN_STYLE = Manual;
-				CURRENT_PROJECT_VERSION = 2;
+				CURRENT_PROJECT_VERSION = 3;
 				DEVELOPMENT_TEAM = "";
 				ENABLE_HARDENED_RUNTIME = YES;
 				GENERATE_INFOPLIST_FILE = NO;

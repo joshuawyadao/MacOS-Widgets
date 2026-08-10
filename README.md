@@ -23,4 +23,6 @@ Battery, and Calendar remain isolated modules ready for later implementation.
 3. Control-click the desktop, choose **Edit Widgets**, and add **Time and Date (Custom)**.
 4. Control-click the placed widget and choose **Edit Time and Date** to select its layout, date format, time format, date font, and time font.
 
+Font choices include an `Aa` specimen rendered in the selected typeface when the macOS editor displays App Intent option images. The widget declares a clear, removable background; macOS may still apply its own glass or tint treatment in some system appearance modes.
+
 See [Time and Date widget](docs/Time-And-Date-Widget.md) for every customization option and display notes.

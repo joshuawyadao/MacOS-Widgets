@@ -108,16 +108,86 @@ enum TimeAndDateFont: String, AppEnum {
 
     static let typeDisplayRepresentation: TypeDisplayRepresentation = "Font"
     static let caseDisplayRepresentations: [Self: DisplayRepresentation] = [
-        .systemBold: "System Bold",
-        .systemRounded: "System Rounded",
-        .systemSerif: "System Serif",
-        .systemMonospaced: "System Monospaced",
-        .avenirNext: "Avenir Next",
-        .noteworthy: "Noteworthy",
-        .chalkboard: "Chalkboard SE",
-        .bradleyHand: "Bradley Hand",
-        .markerFelt: "Marker Felt",
-        .snellRoundhand: "Snell Roundhand",
+        .systemBold: DisplayRepresentation(
+            title: "System Bold",
+            image: DisplayRepresentation.Image(
+                named: "FontPreviewSystemBold",
+                isTemplate: true,
+                displayStyle: .default
+            )
+        ),
+        .systemRounded: DisplayRepresentation(
+            title: "System Rounded",
+            image: DisplayRepresentation.Image(
+                named: "FontPreviewSystemRounded",
+                isTemplate: true,
+                displayStyle: .default
+            )
+        ),
+        .systemSerif: DisplayRepresentation(
+            title: "System Serif",
+            image: DisplayRepresentation.Image(
+                named: "FontPreviewSystemSerif",
+                isTemplate: true,
+                displayStyle: .default
+            )
+        ),
+        .systemMonospaced: DisplayRepresentation(
+            title: "System Monospaced",
+            image: DisplayRepresentation.Image(
+                named: "FontPreviewSystemMonospaced",
+                isTemplate: true,
+                displayStyle: .default
+            )
+        ),
+        .avenirNext: DisplayRepresentation(
+            title: "Avenir Next",
+            image: DisplayRepresentation.Image(
+                named: "FontPreviewAvenirNext",
+                isTemplate: true,
+                displayStyle: .default
+            )
+        ),
+        .noteworthy: DisplayRepresentation(
+            title: "Noteworthy",
+            image: DisplayRepresentation.Image(
+                named: "FontPreviewNoteworthy",
+                isTemplate: true,
+                displayStyle: .default
+            )
+        ),
+        .chalkboard: DisplayRepresentation(
+            title: "Chalkboard SE",
+            image: DisplayRepresentation.Image(
+                named: "FontPreviewChalkboard",
+                isTemplate: true,
+                displayStyle: .default
+            )
+        ),
+        .bradleyHand: DisplayRepresentation(
+            title: "Bradley Hand",
+            image: DisplayRepresentation.Image(
+                named: "FontPreviewBradleyHand",
+                isTemplate: true,
+                displayStyle: .default
+            )
+        ),
+        .markerFelt: DisplayRepresentation(
+            title: "Marker Felt",
+            image: DisplayRepresentation.Image(
+                named: "FontPreviewMarkerFelt",
+                isTemplate: true,
+                displayStyle: .default
+            )
+        ),
+        .snellRoundhand: DisplayRepresentation(
+            title: "Snell Roundhand",
+            image: DisplayRepresentation.Image(
+                named: "FontPreviewSnellRoundhand",
+                isTemplate: true,
+                displayStyle: .default
+            )
+        ),
     ]
 
     func font(size: CGFloat, role: TimeAndDateFontRole) -> Font {
