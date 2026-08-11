@@ -88,29 +88,34 @@ final class TimeAndDateConfigurationTests: XCTestCase {
     }
 
     func testEveryOptionsProviderReturnsAllStableIDsAndAValidDefault() async throws {
-        try await assertProvider(
+        assertProvider(
             results: try await TimeAndDateLayoutOptionsProvider().results(),
             defaultResult: await TimeAndDateLayoutOptionsProvider().defaultResult(),
+            expectedDefault: TimeAndDateLayout.reference.rawValue,
             expected: TimeAndDateLayout.allCases.map(\.rawValue)
         )
-        try await assertProvider(
+        assertProvider(
             results: try await TimeAndDateDateFormatOptionsProvider().results(),
             defaultResult: await TimeAndDateDateFormatOptionsProvider().defaultResult(),
+            expectedDefault: TimeAndDateDateFormat.reference.rawValue,
             expected: TimeAndDateDateFormat.allCases.map(\.rawValue)
         )
-        try await assertProvider(
+        assertProvider(
             results: try await TimeAndDateTimeFormatOptionsProvider().results(),
             defaultResult: await TimeAndDateTimeFormatOptionsProvider().defaultResult(),
+            expectedDefault: TimeAndDateTimeFormat.twelveHour.rawValue,
             expected: TimeAndDateTimeFormat.allCases.map(\.rawValue)
         )
-        try await assertProvider(
+        assertProvider(
             results: try await TimeAndDateDateFontOptionsProvider().results(),
             defaultResult: await TimeAndDateDateFontOptionsProvider().defaultResult(),
+            expectedDefault: TimeAndDateFont.systemBold.rawValue,
             expected: TimeAndDateFont.allCases.map(\.rawValue)
         )
-        try await assertProvider(
+        assertProvider(
             results: try await TimeAndDateTimeFontOptionsProvider().results(),
             defaultResult: await TimeAndDateTimeFontOptionsProvider().defaultResult(),
+            expectedDefault: TimeAndDateFont.noteworthy.rawValue,
             expected: TimeAndDateFont.allCases.map(\.rawValue)
         )
     }
@@ -118,12 +123,13 @@ final class TimeAndDateConfigurationTests: XCTestCase {
     private func assertProvider(
         results: IntentItemCollection<String>,
         defaultResult: String?,
+        expectedDefault: String,
         expected: [String]
-    ) async throws {
+    ) {
         XCTAssertEqual(Set(results.items), Set(expected))
         XCTAssertEqual(results.items.count, expected.count)
-        XCTAssertNotNil(defaultResult)
-        XCTAssertTrue(defaultResult.map(results.items.contains) ?? false)
+        XCTAssertEqual(defaultResult, expectedDefault)
+        XCTAssertTrue(results.items.contains(expectedDefault))
     }
 
     private func makeDate(
