@@ -6,6 +6,6 @@ struct DesktopWidgetsApp: App {
         WindowGroup {
             ContentView()
         }
-        .defaultSize(width: 620, height: 460)
+        .defaultSize(width: 760, height: 680)
     }
 }

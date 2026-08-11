@@ -15,11 +15,11 @@ enum TimeAndDateLayout: String, CaseIterable, Sendable, TimeAndDateStringOption 
 
     var displayName: LocalizedStringResource {
         switch self {
-        case .reference: "Reference"
-        case .stacked: "Date Above Time"
-        case .timeFirst: "Time Above Date"
-        case .centered: "Centered"
-        case .inline: "Side by Side"
+        case .reference: "Classic — Date above time"
+        case .stacked: "Compact — Date above time"
+        case .timeFirst: "Time first — Time above date"
+        case .centered: "Centered — Date above time"
+        case .inline: "Side by side — Date then time"
         }
     }
 }
@@ -33,11 +33,11 @@ enum TimeAndDateDateFormat: String, CaseIterable, Sendable, TimeAndDateStringOpt
 
     var displayName: LocalizedStringResource {
         switch self {
-        case .reference: "Sunday 09 Aug"
-        case .monthFirstWords: "Sun Aug 09"
-        case .monthDayYear: "MM/dd/yyyy"
-        case .dayMonthYear: "dd/MM/yyyy"
-        case .iso: "yyyy-MM-dd"
+        case .reference: "Words — Sunday 09 Aug"
+        case .monthFirstWords: "Short words — Sun Aug 09"
+        case .monthDayYear: "Month first — 08/09/2026"
+        case .dayMonthYear: "Day first — 09/08/2026"
+        case .iso: "ISO — 2026-08-09"
         }
     }
 
@@ -72,8 +72,8 @@ enum TimeAndDateTimeFormat: String, CaseIterable, Sendable, TimeAndDateStringOpt
 
     var displayName: LocalizedStringResource {
         switch self {
-        case .twelveHour: "12-hour"
-        case .twentyFourHour: "24-hour"
+        case .twelveHour: "12-hour — 9:09 AM"
+        case .twentyFourHour: "24-hour — 09:09"
         }
     }
 
@@ -143,6 +143,15 @@ enum TimeAndDateFont: String, CaseIterable, Sendable, TimeAndDateStringOption {
         }
     }
 
+    var category: TimeAndDateFontCategory {
+        switch self {
+        case .systemBold, .systemRounded, .systemSerif, .systemMonospaced, .avenirNext:
+            .cleanAndClassic
+        case .noteworthy, .chalkboard, .bradleyHand, .markerFelt, .snellRoundhand:
+            .handwritten
+        }
+    }
+
     func font(size: CGFloat, role: TimeAndDateFontRole) -> Font {
         switch self {
         case .systemBold:
@@ -169,6 +178,11 @@ enum TimeAndDateFont: String, CaseIterable, Sendable, TimeAndDateStringOption {
     }
 }
 
+enum TimeAndDateFontCategory {
+    case cleanAndClassic
+    case handwritten
+}
+
 enum TimeAndDateFontRole {
     case date
     case time
@@ -190,21 +204,26 @@ private enum TimeAndDateOptionItems {
     }
 
     static func fontCollection(prompt: LocalizedStringResource) -> IntentItemCollection<String> {
-        let items = TimeAndDateFont.allCases.map { font in
-            IntentItem(
-                font.rawValue,
-                title: font.displayName,
-                image: DisplayRepresentation.Image(
-                    named: font.previewImageName,
-                    isTemplate: true,
-                    displayStyle: .default
+        func items(in category: TimeAndDateFontCategory) -> [IntentItem<String>] {
+            TimeAndDateFont.allCases.filter { $0.category == category }.map { font in
+                IntentItem(
+                    font.rawValue,
+                    title: font.displayName,
+                    image: DisplayRepresentation.Image(
+                        named: font.previewImageName,
+                        isTemplate: true,
+                        displayStyle: .default
+                    )
                 )
-            )
+            }
         }
 
         return IntentItemCollection(
             promptLabel: prompt,
-            sections: [IntentItemSection(items: items)]
+            sections: [
+                IntentItemSection("Clean & Classic", items: items(in: .cleanAndClassic)),
+                IntentItemSection("Handwritten", items: items(in: .handwritten)),
+            ]
         )
     }
 }
@@ -260,20 +279,20 @@ struct TimeAndDateTimeFontOptionsProvider: DynamicOptionsProvider {
 }
 
 struct TimeAndDateStringConfigurationIntent: WidgetConfigurationIntent {
-    static let title: LocalizedStringResource = "Time and Date"
-    static let description = IntentDescription("Choose how the date and time look on the desktop.")
+    static let title: LocalizedStringResource = "Customize Time and Date"
+    static let description = IntentDescription("Choose the arrangement, formats, and fonts for this widget.")
 
-    @Parameter(title: "Layout", optionsProvider: TimeAndDateLayoutOptionsProvider())
+    @Parameter(title: "Arrangement", optionsProvider: TimeAndDateLayoutOptionsProvider())
     var layout: String?
 
-    @Parameter(title: "Date Format", optionsProvider: TimeAndDateDateFormatOptionsProvider())
+    @Parameter(title: "Date Style", optionsProvider: TimeAndDateDateFormatOptionsProvider())
     var dateFormat: String?
-
-    @Parameter(title: "Time Format", optionsProvider: TimeAndDateTimeFormatOptionsProvider())
-    var timeFormat: String?
 
     @Parameter(title: "Date Font", optionsProvider: TimeAndDateDateFontOptionsProvider())
     var dateFont: String?
+
+    @Parameter(title: "Clock Style", optionsProvider: TimeAndDateTimeFormatOptionsProvider())
+    var timeFormat: String?
 
     @Parameter(title: "Time Font", optionsProvider: TimeAndDateTimeFontOptionsProvider())
     var timeFont: String?

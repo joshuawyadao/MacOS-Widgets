@@ -244,8 +244,8 @@ struct TimeAndDateWidget: Widget {
         ) { entry in
             TimeAndDateWidgetView(entry: entry)
         }
-        .configurationDisplayName("Time and Date (Custom)")
-        .description("A transparent, configurable date and clock for your desktop.")
+        .configurationDisplayName("Time & Date")
+        .description("A customizable date and clock with your choice of layout, formats, and fonts.")
         .supportedFamilies([.systemSmall, .systemMedium, .systemLarge])
         .containerBackgroundRemovable(true)
     }
