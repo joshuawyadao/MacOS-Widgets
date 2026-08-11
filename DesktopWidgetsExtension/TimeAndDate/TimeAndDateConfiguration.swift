@@ -72,7 +72,7 @@ enum TimeAndDateTimeFormat: String, CaseIterable, Sendable, TimeAndDateStringOpt
 
     var displayName: LocalizedStringResource {
         switch self {
-        case .twelveHour: "12-hour — 9:09 AM"
+        case .twelveHour: "12-hour — 09:09 AM"
         case .twentyFourHour: "24-hour — 09:09"
         }
     }

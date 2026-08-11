@@ -263,6 +263,28 @@ struct TimeAndDateWidget: Widget {
     TimeAndDateEntry(date: timeAndDatePreviewDate, configuration: .referencePreview())
 }
 
+#Preview("Alternate Configuration", as: .systemMedium) {
+    TimeAndDateWidget()
+} timeline: {
+    TimeAndDateEntry(date: timeAndDatePreviewDate, configuration: timeAndDateAlternatePreviewConfiguration)
+}
+
+#Preview(as: .systemLarge) {
+    TimeAndDateWidget()
+} timeline: {
+    TimeAndDateEntry(date: timeAndDatePreviewDate, configuration: .referencePreview())
+}
+
+private var timeAndDateAlternatePreviewConfiguration: TimeAndDateStringConfigurationIntent {
+    let configuration = TimeAndDateStringConfigurationIntent()
+    configuration.layout = TimeAndDateLayout.inline.rawValue
+    configuration.dateFormat = TimeAndDateDateFormat.iso.rawValue
+    configuration.timeFormat = TimeAndDateTimeFormat.twentyFourHour.rawValue
+    configuration.dateFont = TimeAndDateFont.snellRoundhand.rawValue
+    configuration.timeFont = TimeAndDateFont.systemMonospaced.rawValue
+    return configuration
+}
+
 private var timeAndDatePreviewDate: Date {
     var calendar = Calendar(identifier: .gregorian)
     calendar.timeZone = .autoupdatingCurrent

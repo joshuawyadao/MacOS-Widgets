@@ -20,6 +20,8 @@
 		A0000000000000000000000B /* WidgetStatus.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0000000000000000000000B /* WidgetStatus.swift */; };
 		A0000000000000000000000C /* TimeAndDateConfiguration.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0000000000000000000000C /* TimeAndDateConfiguration.swift */; };
 		A0000000000000000000000D /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = F0000000000000000000000D /* Assets.xcassets */; };
+		A0000000000000000000000E /* TimeAndDateConfiguration.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0000000000000000000000C /* TimeAndDateConfiguration.swift */; };
+		A0000000000000000000000F /* TimeAndDateConfigurationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0000000000000000000000E /* TimeAndDateConfigurationTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -60,8 +62,10 @@
 		F0000000000000000000000B /* WidgetStatus.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WidgetStatus.swift; sourceTree = "<group>"; };
 		F0000000000000000000000C /* TimeAndDateConfiguration.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimeAndDateConfiguration.swift; sourceTree = "<group>"; };
 		F0000000000000000000000D /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Resources/Assets.xcassets; sourceTree = "<group>"; };
+		F0000000000000000000000E /* TimeAndDateConfigurationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimeAndDateConfigurationTests.swift; sourceTree = "<group>"; };
 		P00000000000000000000001 /* DesktopWidgets.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = DesktopWidgets.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		P00000000000000000000002 /* DesktopWidgetsExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = DesktopWidgetsExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		P00000000000000000000003 /* DesktopWidgetsTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = DesktopWidgetsTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -79,6 +83,13 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		B00000000000000000000008 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
@@ -87,6 +98,7 @@
 			children = (
 				G00000000000000000000002 /* DesktopWidgetsApp */,
 				G00000000000000000000005 /* DesktopWidgetsExtension */,
+				G00000000000000000000011 /* DesktopWidgetsTests */,
 				G0000000000000000000000B /* Shared */,
 				G0000000000000000000000F /* Products */,
 			);
@@ -203,6 +215,7 @@
 			children = (
 				P00000000000000000000001 /* DesktopWidgets.app */,
 				P00000000000000000000002 /* DesktopWidgetsExtension.appex */,
+				P00000000000000000000003 /* DesktopWidgetsTests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -213,6 +226,14 @@
 				F0000000000000000000000B /* WidgetStatus.swift */,
 			);
 			path = Models;
+			sourceTree = "<group>";
+		};
+		G00000000000000000000011 /* DesktopWidgetsTests */ = {
+			isa = PBXGroup;
+			children = (
+				F0000000000000000000000E /* TimeAndDateConfigurationTests.swift */,
+			);
+			path = DesktopWidgetsTests;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -254,6 +275,23 @@
 			productReference = P00000000000000000000002 /* DesktopWidgetsExtension.appex */;
 			productType = "com.apple.product-type.app-extension";
 		};
+		T00000000000000000000003 /* DesktopWidgetsTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = L00000000000000000000004 /* Build configuration list for PBXNativeTarget "DesktopWidgetsTests" */;
+			buildPhases = (
+				B00000000000000000000007 /* Sources */,
+				B00000000000000000000008 /* Frameworks */,
+				B00000000000000000000009 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = DesktopWidgetsTests;
+			productName = DesktopWidgetsTests;
+			productReference = P00000000000000000000003 /* DesktopWidgetsTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -268,6 +306,9 @@
 						CreatedOnToolsVersion = 26.6;
 					};
 					T00000000000000000000002 = {
+						CreatedOnToolsVersion = 26.6;
+					};
+					T00000000000000000000003 = {
 						CreatedOnToolsVersion = 26.6;
 					};
 				};
@@ -288,6 +329,7 @@
 			targets = (
 				T00000000000000000000001 /* DesktopWidgets */,
 				T00000000000000000000002 /* DesktopWidgetsExtension */,
+				T00000000000000000000003 /* DesktopWidgetsTests */,
 			);
 		};
 /* End PBXProject section */
@@ -305,6 +347,13 @@
 			buildActionMask = 2147483647;
 			files = (
 				A0000000000000000000000D /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		B00000000000000000000009 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -333,6 +382,15 @@
 				A00000000000000000000008 /* WidgetIdentifier.swift in Sources */,
 				A00000000000000000000009 /* WidgetTheme.swift in Sources */,
 				A0000000000000000000000A /* Calendar+WidgetTimeline.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		B00000000000000000000007 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A0000000000000000000000E /* TimeAndDateConfiguration.swift in Sources */,
+				A0000000000000000000000F /* TimeAndDateConfigurationTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -387,7 +445,7 @@
 			buildSettings = {
 				CODE_SIGN_ENTITLEMENTS = DesktopWidgetsApp/DesktopWidgetsApp.entitlements;
 				CODE_SIGN_STYLE = Manual;
-				CURRENT_PROJECT_VERSION = 5;
+				CURRENT_PROJECT_VERSION = 6;
 				DEVELOPMENT_TEAM = "";
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_PREVIEWS = YES;
@@ -411,7 +469,7 @@
 			buildSettings = {
 				CODE_SIGN_ENTITLEMENTS = DesktopWidgetsApp/DesktopWidgetsApp.entitlements;
 				CODE_SIGN_STYLE = Manual;
-				CURRENT_PROJECT_VERSION = 5;
+				CURRENT_PROJECT_VERSION = 6;
 				DEVELOPMENT_TEAM = "";
 				ENABLE_HARDENED_RUNTIME = YES;
 				GENERATE_INFOPLIST_FILE = YES;
@@ -435,7 +493,7 @@
 				APPLICATION_EXTENSION_API_ONLY = YES;
 				CODE_SIGN_ENTITLEMENTS = DesktopWidgetsExtension/DesktopWidgetsExtension.entitlements;
 				CODE_SIGN_STYLE = Manual;
-				CURRENT_PROJECT_VERSION = 5;
+				CURRENT_PROJECT_VERSION = 6;
 				DEVELOPMENT_TEAM = "";
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_PREVIEWS = YES;
@@ -461,7 +519,7 @@
 				APPLICATION_EXTENSION_API_ONLY = YES;
 				CODE_SIGN_ENTITLEMENTS = DesktopWidgetsExtension/DesktopWidgetsExtension.entitlements;
 				CODE_SIGN_STYLE = Manual;
-				CURRENT_PROJECT_VERSION = 5;
+				CURRENT_PROJECT_VERSION = 6;
 				DEVELOPMENT_TEAM = "";
 				ENABLE_HARDENED_RUNTIME = YES;
 				GENERATE_INFOPLIST_FILE = NO;
@@ -477,6 +535,34 @@
 				PROVISIONING_PROFILE_SPECIFIER = "";
 				SKIP_INSTALL = YES;
 				SWIFT_EMIT_LOC_STRINGS = YES;
+			};
+			name = Release;
+		};
+		X00000000000000000000007 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Manual;
+				CURRENT_PROJECT_VERSION = 6;
+				DEVELOPMENT_TEAM = "";
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 0.1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.joshuawyadao.DesktopWidgetsTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+			};
+			name = Debug;
+		};
+		X00000000000000000000008 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Manual;
+				CURRENT_PROJECT_VERSION = 6;
+				DEVELOPMENT_TEAM = "";
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 0.1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.joshuawyadao.DesktopWidgetsTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
 			};
 			name = Release;
 		};
@@ -506,6 +592,15 @@
 			buildConfigurations = (
 				X00000000000000000000005 /* Debug */,
 				X00000000000000000000006 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		L00000000000000000000004 /* Build configuration list for PBXNativeTarget "DesktopWidgetsTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				X00000000000000000000007 /* Debug */,
+				X00000000000000000000008 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

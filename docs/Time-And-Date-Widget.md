@@ -15,7 +15,7 @@ The Time and Date widget is inspired by the supplied desktop reference: white up
 | --- | --- |
 | Arrangement | Classic — Date above time; Compact — Date above time; Time first; Centered; Side by side |
 | Date style | Words — Sunday 09 Aug; Short words — Sun Aug 09; Month first — 08/09/2026; Day first — 09/08/2026; ISO — 2026-08-09 |
-| Clock style | 12-hour — 9:09 AM; 24-hour — 09:09 |
+| Clock style | 12-hour — 09:09 AM; 24-hour — 09:09 |
 | Date font | Clean & Classic: System Bold, System Rounded, System Serif, System Monospaced, Avenir Next. Handwritten: Noteworthy, Chalkboard SE, Bradley Hand, Marker Felt, Snell Roundhand. |
 | Time font | The same grouped font choices as the date |
 
@@ -32,3 +32,16 @@ Each font choice includes a square `Aa` specimen rendered with that macOS font. 
 - Noteworthy is the default time font and the closest built-in approximation to the reference. An exact match would require the original font file and permission to redistribute it.
 - In **System Settings → Appearance**, choose **Clear → Light** for the softest Liquid Glass appearance. macOS still supplies the glass surface; native WidgetKit apps cannot remove that system-owned layer.
 - The widget uses fonts already included with macOS and does not download or bundle third-party assets.
+
+## Desktop acceptance checklist
+
+The automated suite verifies every formatter, every dynamic option provider, fallback behavior, and two independent configurations. WidgetKit's desktop editor and restart persistence still require a short check on the Mac that will use the widget:
+
+- [ ] Add small, medium, and large Time & Date widgets and confirm no date, time, or AM/PM text is clipped.
+- [ ] Configure one instance with the default Classic/12-hour choices and a second instance with Side by side/ISO/24-hour choices; confirm the two instances remain visually different.
+- [ ] Reopen **Edit Time & Date** for both instances and confirm each editor shows its own saved selections.
+- [ ] Restart the Mac (or log out and back in), then confirm both configurations persist and the clocks continue updating.
+
+## Lock-screen privacy behavior
+
+The extension intentionally does not include Apple's Data Protection entitlement. Adding `NSFileProtectionCompleteUntilFirstUserAuthentication` made Xcode require a provisioning profile for the widget extension, which would break this project's free, teamless **Sign to Run Locally** workflow. As a result, macOS may show its opaque privacy placeholder while the Mac is locked. Revisit this tradeoff only if the project later adopts an Apple Developer Program signing profile.

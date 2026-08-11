@@ -27,3 +27,13 @@ Battery, and Calendar remain isolated modules ready for later implementation.
 The companion app includes a two-step setup guide and a short explanation of every customization group. Native editor choices use string-backed dynamic options because macOS 26.5 can save AppEnum selections while still delivering their defaults to a widget timeline. Font choices retain an `Aa` specimen rendered in the selected typeface when the macOS editor displays App Intent option images. The widget declares a clear, removable background; macOS may still apply its own Liquid Glass or tint treatment.
 
 See [Time and Date widget](docs/Time-And-Date-Widget.md) for every customization option and display notes.
+
+## Test the Time and Date configuration
+
+The `DesktopWidgetsTests` scheme covers all date and clock styles, stable dynamic-option IDs and defaults, safe fallback behavior, and independent widget configurations. Run it from Xcode with **Product → Test**, or use:
+
+```sh
+DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer xcodebuild test -project DesktopWidgets.xcodeproj -scheme DesktopWidgetsTests -destination 'platform=macOS' CODE_SIGNING_ALLOWED=NO
+```
+
+The free teamless signing setup intentionally omits Apple's provisioning-profile-only Data Protection entitlement. macOS can therefore replace the widget with an opaque privacy placeholder while the Mac is locked.
