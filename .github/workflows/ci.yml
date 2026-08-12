@@ -25,7 +25,7 @@ jobs:
         run: >-
           xcodebuild test
           -project DesktopWidgets.xcodeproj
-          -scheme DesktopWidgetsTests
+          -scheme DesktopWidgets
           -configuration Debug
           -destination 'platform=macOS'
           -derivedDataPath "$RUNNER_TEMP/DesktopWidgetsTests"
