@@ -139,9 +139,9 @@ struct TimeAndDateWidgetView: View {
     private var inlineLayout: some View {
         if family == .systemSmall {
             VStack(alignment: .leading, spacing: metrics.spacing) {
-                compactTimeLabel
-                Spacer(minLength: 0)
                 dateLabel
+                Spacer(minLength: 0)
+                compactTimeLabel
             }
         } else {
             HStack(alignment: .center, spacing: metrics.inlineSpacing) {
