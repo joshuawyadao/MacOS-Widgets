@@ -41,10 +41,15 @@ enum TimeAndDateDateFormat: String, CaseIterable, Sendable, TimeAndDateStringOpt
         }
     }
 
-    func string(from date: Date, locale: Locale, timeZone: TimeZone) -> String {
+    func string(
+        from date: Date,
+        locale: Locale,
+        timeZone: TimeZone,
+        calendar: Calendar = .autoupdatingCurrent
+    ) -> String {
         let formatter = DateFormatter()
-        formatter.calendar = .autoupdatingCurrent
         formatter.locale = locale
+        formatter.calendar = self == .iso ? Calendar(identifier: .gregorian) : calendar
         formatter.timeZone = timeZone
         formatter.dateFormat = pattern
         return formatter.string(from: date).uppercased(with: locale)

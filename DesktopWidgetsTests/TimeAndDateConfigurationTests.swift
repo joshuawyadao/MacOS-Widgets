@@ -25,6 +25,20 @@ final class TimeAndDateConfigurationTests: XCTestCase {
         }
     }
 
+    func testISODateUsesGregorianCalendarRegardlessOfUserCalendar() {
+        let date = makeDate(year: 2026, month: 8, day: 9, hour: 21, minute: 9)
+
+        XCTAssertEqual(
+            TimeAndDateDateFormat.iso.string(
+                from: date,
+                locale: locale,
+                timeZone: timeZone,
+                calendar: Calendar(identifier: .buddhist)
+            ),
+            "2026-08-09"
+        )
+    }
+
     func testEveryClockStyleFormatsTheReferenceTime() {
         let date = makeDate(year: 2026, month: 8, day: 9, hour: 21, minute: 9)
 
