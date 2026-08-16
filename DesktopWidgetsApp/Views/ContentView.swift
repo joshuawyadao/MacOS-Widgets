@@ -2,7 +2,6 @@ import SwiftUI
 
 struct ContentView: View {
     private let upcomingWidgets = [
-        WidgetStatus(name: "Weather", symbol: "cloud.sun", status: "Coming next", isAvailable: false),
         WidgetStatus(name: "Battery", symbol: "battery.75percent", status: "Coming next", isAvailable: false),
         WidgetStatus(name: "Calendar", symbol: "calendar", status: "Coming next", isAvailable: false),
     ]
@@ -11,10 +10,11 @@ struct ContentView: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 24) {
                 header
-                readyCard
+                readyWidgets
                 setupGuide
                 customizationGuide
                 appearanceTip
+                weatherDataTip
                 upcomingSection
             }
             .padding(28)
@@ -33,36 +33,22 @@ struct ContentView: View {
         }
     }
 
-    private var readyCard: some View {
-        HStack(alignment: .top, spacing: 18) {
-            Image(systemName: "clock")
-                .font(.system(size: 26, weight: .semibold))
-                .foregroundStyle(WidgetTheme.accent)
-                .frame(width: 52, height: 52)
-                .background(WidgetTheme.accent.opacity(0.12), in: RoundedRectangle(cornerRadius: 14))
+    private var readyWidgets: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            SectionTitle(title: "Ready widgets", subtitle: "Add either widget from the macOS widget gallery.")
 
-            VStack(alignment: .leading, spacing: 6) {
-                Text("Time & Date")
-                    .font(.title2.bold())
-
-                Text("Choose how the date and clock are arranged, formatted, and styled.")
-                    .foregroundStyle(.secondary)
+            HStack(alignment: .top, spacing: 12) {
+                ReadyWidgetCard(
+                    symbol: "clock",
+                    title: "Time & Date",
+                    detail: "Arrange and style the date and clock."
+                )
+                ReadyWidgetCard(
+                    symbol: "cloud.sun",
+                    title: "Weather",
+                    detail: "Choose a city, forecast view, units, and details."
+                )
             }
-
-            Spacer(minLength: 16)
-
-            Label("Ready", systemImage: "checkmark.circle.fill")
-                .font(.callout.weight(.semibold))
-                .foregroundStyle(.green)
-                .padding(.horizontal, 11)
-                .padding(.vertical, 7)
-                .background(.green.opacity(0.10), in: Capsule())
-        }
-        .padding(20)
-        .background(WidgetTheme.accent.opacity(0.08), in: RoundedRectangle(cornerRadius: 18))
-        .overlay {
-            RoundedRectangle(cornerRadius: 18)
-                .stroke(WidgetTheme.accent.opacity(0.20), lineWidth: 1)
         }
     }
 
@@ -73,20 +59,20 @@ struct ContentView: View {
             SetupStep(
                 number: 1,
                 title: "Add it to the desktop",
-                detail: "Control-click the desktop, choose Edit Widgets, search for Desktop Widgets, then drag Time & Date onto the desktop."
+                detail: "Control-click the desktop, choose Edit Widgets, search for Desktop Widgets, then drag Time & Date or Weather onto the desktop."
             )
 
             SetupStep(
                 number: 2,
                 title: "Make it yours",
-                detail: "Control-click the placed widget, choose Edit “Time & Date,” pick your options, then click anywhere outside the editor to save."
+                detail: "Control-click the placed widget, choose Edit, pick its options, then click outside the editor to finish. Each copy keeps its own choices."
             )
         }
     }
 
     private var customizationGuide: some View {
         VStack(alignment: .leading, spacing: 12) {
-            SectionTitle(title: "What you can change", subtitle: "Each copy of the widget can have its own look.")
+            SectionTitle(title: "Time & Date options", subtitle: "Each copy can have its own layout, formats, and fonts.")
 
             LazyVGrid(
                 columns: [GridItem(.flexible(), spacing: 12), GridItem(.flexible(), spacing: 12)],
@@ -113,6 +99,34 @@ struct ContentView: View {
                     detail: "Pick separate clean, classic, or handwritten fonts for date and time."
                 )
             }
+
+            SectionTitle(title: "Weather options", subtitle: "Each copy can track a different city and forecast.")
+
+            LazyVGrid(
+                columns: [GridItem(.flexible(), spacing: 12), GridItem(.flexible(), spacing: 12)],
+                spacing: 12
+            ) {
+                CustomizationItem(
+                    symbol: "building.2",
+                    title: "City",
+                    detail: "Enter a city; add its state or country for the best match."
+                )
+                CustomizationItem(
+                    symbol: "calendar.day.timeline.leading",
+                    title: "Forecast view",
+                    detail: "Switch between the week, today, and the next six hours."
+                )
+                CustomizationItem(
+                    symbol: "thermometer.medium",
+                    title: "Units",
+                    detail: "Match this Mac automatically or choose Fahrenheit or Celsius."
+                )
+                CustomizationItem(
+                    symbol: "slider.horizontal.3",
+                    title: "Details",
+                    detail: "Show temperature, condition, humidity, chance of rain, and wind."
+                )
+            }
         }
     }
 
@@ -126,9 +140,37 @@ struct ContentView: View {
                 Text("About the glass background")
                     .font(.headline)
 
-                Text("With the Clear icon and widget style, macOS replaces widget backgrounds with Liquid Glass. Clear Light gives the softest appearance.")
+                Text("With the Clear icon and widget style, macOS replaces widget backgrounds with Liquid Glass. Clear Light gives the softest appearance; place white widget text over a darker wallpaper area for the best readability.")
                     .font(.callout)
                     .foregroundStyle(.secondary)
+            }
+        }
+        .padding(16)
+        .background(.quaternary.opacity(0.35), in: RoundedRectangle(cornerRadius: 14))
+    }
+
+    private var weatherDataTip: some View {
+        HStack(alignment: .top, spacing: 12) {
+            Image(systemName: "cloud.sun")
+                .font(.title3)
+                .foregroundStyle(WidgetTheme.accent)
+
+            VStack(alignment: .leading, spacing: 5) {
+                Text("About Weather data")
+                    .font(.headline)
+
+                Text("Weather sends the city you enter and its matched coordinate to Open-Meteo. Recent forecasts and resolved cities are cached locally to reduce requests and remain useful while offline. Values are normalized and rounded for display.")
+                    .font(.callout)
+                    .foregroundStyle(.secondary)
+
+                HStack(spacing: 4) {
+                    Link("Weather data by Open-Meteo", destination: URL(string: "https://open-meteo.com/")!)
+                    Text("•")
+                    Link("CC BY 4.0", destination: URL(string: "https://creativecommons.org/licenses/by/4.0/")!)
+                    Text("•")
+                    Link("City data by GeoNames", destination: URL(string: "https://www.geonames.org/")!)
+                }
+                .font(.caption)
             }
         }
         .padding(16)
@@ -144,6 +186,45 @@ struct ContentView: View {
                     WidgetStatusCard(widget: widget)
                 }
             }
+        }
+    }
+}
+
+private struct ReadyWidgetCard: View {
+    let symbol: String
+    let title: String
+    let detail: String
+
+    var body: some View {
+        HStack(alignment: .top, spacing: 14) {
+            Image(systemName: symbol)
+                .font(.system(size: 24, weight: .semibold))
+                .foregroundStyle(WidgetTheme.accent)
+                .frame(width: 46, height: 46)
+                .background(WidgetTheme.accent.opacity(0.12), in: RoundedRectangle(cornerRadius: 12))
+
+            VStack(alignment: .leading, spacing: 5) {
+                Text(title)
+                    .font(.headline)
+
+                Text(detail)
+                    .font(.callout)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+
+            Spacer(minLength: 4)
+
+            Image(systemName: "checkmark.circle.fill")
+                .foregroundStyle(.green)
+                .accessibilityLabel("Ready")
+        }
+        .padding(16)
+        .frame(maxWidth: .infinity, minHeight: 98, alignment: .topLeading)
+        .background(WidgetTheme.accent.opacity(0.08), in: RoundedRectangle(cornerRadius: 16))
+        .overlay {
+            RoundedRectangle(cornerRadius: 16)
+                .stroke(WidgetTheme.accent.opacity(0.20), lineWidth: 1)
         }
     }
 }
