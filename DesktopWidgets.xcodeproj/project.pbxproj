@@ -1,0 +1,611 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		A00000000000000000000001 /* DesktopWidgetsApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = F00000000000000000000001 /* DesktopWidgetsApp.swift */; };
+		A00000000000000000000002 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F00000000000000000000002 /* ContentView.swift */; };
+		A00000000000000000000003 /* WidgetIdentifier.swift in Sources */ = {isa = PBXBuildFile; fileRef = F00000000000000000000008 /* WidgetIdentifier.swift */; };
+		A00000000000000000000004 /* WidgetTheme.swift in Sources */ = {isa = PBXBuildFile; fileRef = F00000000000000000000009 /* WidgetTheme.swift */; };
+		A00000000000000000000005 /* DesktopWidgetsExtension.appex in Embed App Extensions */ = {isa = PBXBuildFile; fileRef = P00000000000000000000002 /* DesktopWidgetsExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		A00000000000000000000006 /* DesktopWidgetBundle.swift in Sources */ = {isa = PBXBuildFile; fileRef = F00000000000000000000004 /* DesktopWidgetBundle.swift */; };
+		A00000000000000000000007 /* TimeAndDateWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = F00000000000000000000005 /* TimeAndDateWidget.swift */; };
+		A00000000000000000000008 /* WidgetIdentifier.swift in Sources */ = {isa = PBXBuildFile; fileRef = F00000000000000000000008 /* WidgetIdentifier.swift */; };
+		A00000000000000000000009 /* WidgetTheme.swift in Sources */ = {isa = PBXBuildFile; fileRef = F00000000000000000000009 /* WidgetTheme.swift */; };
+		A0000000000000000000000A /* Calendar+WidgetTimeline.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0000000000000000000000A /* Calendar+WidgetTimeline.swift */; };
+		A0000000000000000000000B /* WidgetStatus.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0000000000000000000000B /* WidgetStatus.swift */; };
+		A0000000000000000000000C /* TimeAndDateConfiguration.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0000000000000000000000C /* TimeAndDateConfiguration.swift */; };
+		A0000000000000000000000D /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = F0000000000000000000000D /* Assets.xcassets */; };
+		A0000000000000000000000E /* TimeAndDateConfiguration.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0000000000000000000000C /* TimeAndDateConfiguration.swift */; };
+		A0000000000000000000000F /* TimeAndDateConfigurationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0000000000000000000000E /* TimeAndDateConfigurationTests.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		602D62FE30294D0B006C8AE2 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = R00000000000000000000001 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = T00000000000000000000002;
+			remoteInfo = DesktopWidgetsExtension;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		C00000000000000000000001 /* Embed App Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				A00000000000000000000005 /* DesktopWidgetsExtension.appex in Embed App Extensions */,
+			);
+			name = "Embed App Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
+/* Begin PBXFileReference section */
+		F00000000000000000000001 /* DesktopWidgetsApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DesktopWidgetsApp.swift; sourceTree = "<group>"; };
+		F00000000000000000000002 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
+		F00000000000000000000003 /* DesktopWidgetsApp.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = DesktopWidgetsApp.entitlements; sourceTree = "<group>"; };
+		F00000000000000000000004 /* DesktopWidgetBundle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DesktopWidgetBundle.swift; sourceTree = "<group>"; };
+		F00000000000000000000005 /* TimeAndDateWidget.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimeAndDateWidget.swift; sourceTree = "<group>"; };
+		F00000000000000000000006 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		F00000000000000000000007 /* DesktopWidgetsExtension.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = DesktopWidgetsExtension.entitlements; sourceTree = "<group>"; };
+		F00000000000000000000008 /* WidgetIdentifier.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WidgetIdentifier.swift; sourceTree = "<group>"; };
+		F00000000000000000000009 /* WidgetTheme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WidgetTheme.swift; sourceTree = "<group>"; };
+		F0000000000000000000000A /* Calendar+WidgetTimeline.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Calendar+WidgetTimeline.swift"; sourceTree = "<group>"; };
+		F0000000000000000000000B /* WidgetStatus.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WidgetStatus.swift; sourceTree = "<group>"; };
+		F0000000000000000000000C /* TimeAndDateConfiguration.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimeAndDateConfiguration.swift; sourceTree = "<group>"; };
+		F0000000000000000000000D /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Resources/Assets.xcassets; sourceTree = "<group>"; };
+		F0000000000000000000000E /* TimeAndDateConfigurationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimeAndDateConfigurationTests.swift; sourceTree = "<group>"; };
+		P00000000000000000000001 /* DesktopWidgets.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = DesktopWidgets.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		P00000000000000000000002 /* DesktopWidgetsExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = DesktopWidgetsExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		P00000000000000000000003 /* DesktopWidgetsTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = DesktopWidgetsTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		B00000000000000000000002 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		B00000000000000000000005 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		B00000000000000000000008 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		G00000000000000000000001 = {
+			isa = PBXGroup;
+			children = (
+				G00000000000000000000002 /* DesktopWidgetsApp */,
+				G00000000000000000000005 /* DesktopWidgetsExtension */,
+				G00000000000000000000011 /* DesktopWidgetsTests */,
+				G0000000000000000000000B /* Shared */,
+				G0000000000000000000000F /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		G00000000000000000000002 /* DesktopWidgetsApp */ = {
+			isa = PBXGroup;
+			children = (
+				G00000000000000000000003 /* App */,
+				G00000000000000000000010 /* Models */,
+				G00000000000000000000004 /* Views */,
+				F00000000000000000000003 /* DesktopWidgetsApp.entitlements */,
+			);
+			path = DesktopWidgetsApp;
+			sourceTree = "<group>";
+		};
+		G00000000000000000000003 /* App */ = {
+			isa = PBXGroup;
+			children = (
+				F00000000000000000000001 /* DesktopWidgetsApp.swift */,
+			);
+			path = App;
+			sourceTree = "<group>";
+		};
+		G00000000000000000000004 /* Views */ = {
+			isa = PBXGroup;
+			children = (
+				F00000000000000000000002 /* ContentView.swift */,
+			);
+			path = Views;
+			sourceTree = "<group>";
+		};
+		G00000000000000000000005 /* DesktopWidgetsExtension */ = {
+			isa = PBXGroup;
+			children = (
+				F00000000000000000000004 /* DesktopWidgetBundle.swift */,
+				F0000000000000000000000D /* Assets.xcassets */,
+				G00000000000000000000006 /* TimeAndDate */,
+				G00000000000000000000007 /* Weather */,
+				G00000000000000000000008 /* Battery */,
+				G00000000000000000000009 /* Calendar */,
+				F00000000000000000000006 /* Info.plist */,
+				F00000000000000000000007 /* DesktopWidgetsExtension.entitlements */,
+			);
+			path = DesktopWidgetsExtension;
+			sourceTree = "<group>";
+		};
+		G00000000000000000000006 /* TimeAndDate */ = {
+			isa = PBXGroup;
+			children = (
+				F0000000000000000000000C /* TimeAndDateConfiguration.swift */,
+				F00000000000000000000005 /* TimeAndDateWidget.swift */,
+			);
+			path = TimeAndDate;
+			sourceTree = "<group>";
+		};
+		G00000000000000000000007 /* Weather */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			path = Weather;
+			sourceTree = "<group>";
+		};
+		G00000000000000000000008 /* Battery */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			path = Battery;
+			sourceTree = "<group>";
+		};
+		G00000000000000000000009 /* Calendar */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			path = Calendar;
+			sourceTree = "<group>";
+		};
+		G0000000000000000000000B /* Shared */ = {
+			isa = PBXGroup;
+			children = (
+				G0000000000000000000000C /* Models */,
+				G0000000000000000000000D /* Styling */,
+				G0000000000000000000000E /* Utilities */,
+			);
+			path = Shared;
+			sourceTree = "<group>";
+		};
+		G0000000000000000000000C /* Models */ = {
+			isa = PBXGroup;
+			children = (
+				F00000000000000000000008 /* WidgetIdentifier.swift */,
+			);
+			path = Models;
+			sourceTree = "<group>";
+		};
+		G0000000000000000000000D /* Styling */ = {
+			isa = PBXGroup;
+			children = (
+				F00000000000000000000009 /* WidgetTheme.swift */,
+			);
+			path = Styling;
+			sourceTree = "<group>";
+		};
+		G0000000000000000000000E /* Utilities */ = {
+			isa = PBXGroup;
+			children = (
+				F0000000000000000000000A /* Calendar+WidgetTimeline.swift */,
+			);
+			path = Utilities;
+			sourceTree = "<group>";
+		};
+		G0000000000000000000000F /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				P00000000000000000000001 /* DesktopWidgets.app */,
+				P00000000000000000000002 /* DesktopWidgetsExtension.appex */,
+				P00000000000000000000003 /* DesktopWidgetsTests.xctest */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		G00000000000000000000010 /* Models */ = {
+			isa = PBXGroup;
+			children = (
+				F0000000000000000000000B /* WidgetStatus.swift */,
+			);
+			path = Models;
+			sourceTree = "<group>";
+		};
+		G00000000000000000000011 /* DesktopWidgetsTests */ = {
+			isa = PBXGroup;
+			children = (
+				F0000000000000000000000E /* TimeAndDateConfigurationTests.swift */,
+			);
+			path = DesktopWidgetsTests;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		T00000000000000000000001 /* DesktopWidgets */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = L00000000000000000000002 /* Build configuration list for PBXNativeTarget "DesktopWidgets" */;
+			buildPhases = (
+				B00000000000000000000001 /* Sources */,
+				B00000000000000000000002 /* Frameworks */,
+				B00000000000000000000003 /* Resources */,
+				C00000000000000000000001 /* Embed App Extensions */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				D00000000000000000000001 /* PBXTargetDependency */,
+			);
+			name = DesktopWidgets;
+			productName = DesktopWidgets;
+			productReference = P00000000000000000000001 /* DesktopWidgets.app */;
+			productType = "com.apple.product-type.application";
+		};
+		T00000000000000000000002 /* DesktopWidgetsExtension */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = L00000000000000000000003 /* Build configuration list for PBXNativeTarget "DesktopWidgetsExtension" */;
+			buildPhases = (
+				B00000000000000000000004 /* Sources */,
+				B00000000000000000000005 /* Frameworks */,
+				B00000000000000000000006 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = DesktopWidgetsExtension;
+			productName = DesktopWidgetsExtension;
+			productReference = P00000000000000000000002 /* DesktopWidgetsExtension.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
+		T00000000000000000000003 /* DesktopWidgetsTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = L00000000000000000000004 /* Build configuration list for PBXNativeTarget "DesktopWidgetsTests" */;
+			buildPhases = (
+				B00000000000000000000007 /* Sources */,
+				B00000000000000000000008 /* Frameworks */,
+				B00000000000000000000009 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = DesktopWidgetsTests;
+			productName = DesktopWidgetsTests;
+			productReference = P00000000000000000000003 /* DesktopWidgetsTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		R00000000000000000000001 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 2660;
+				LastUpgradeCheck = 2660;
+				TargetAttributes = {
+					T00000000000000000000001 = {
+						CreatedOnToolsVersion = 26.6;
+					};
+					T00000000000000000000002 = {
+						CreatedOnToolsVersion = 26.6;
+					};
+					T00000000000000000000003 = {
+						CreatedOnToolsVersion = 26.6;
+					};
+				};
+			};
+			buildConfigurationList = L00000000000000000000001 /* Build configuration list for PBXProject "DesktopWidgets" */;
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = G00000000000000000000001;
+			minimizedProjectReferenceProxies = 1;
+			preferredProjectObjectVersion = 77;
+			productRefGroup = G0000000000000000000000F /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				T00000000000000000000001 /* DesktopWidgets */,
+				T00000000000000000000002 /* DesktopWidgetsExtension */,
+				T00000000000000000000003 /* DesktopWidgetsTests */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		B00000000000000000000003 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		B00000000000000000000006 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A0000000000000000000000D /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		B00000000000000000000009 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		B00000000000000000000001 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A00000000000000000000001 /* DesktopWidgetsApp.swift in Sources */,
+				A00000000000000000000002 /* ContentView.swift in Sources */,
+				A00000000000000000000003 /* WidgetIdentifier.swift in Sources */,
+				A00000000000000000000004 /* WidgetTheme.swift in Sources */,
+				A0000000000000000000000B /* WidgetStatus.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		B00000000000000000000004 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A00000000000000000000006 /* DesktopWidgetBundle.swift in Sources */,
+				A0000000000000000000000C /* TimeAndDateConfiguration.swift in Sources */,
+				A00000000000000000000007 /* TimeAndDateWidget.swift in Sources */,
+				A00000000000000000000008 /* WidgetIdentifier.swift in Sources */,
+				A00000000000000000000009 /* WidgetTheme.swift in Sources */,
+				A0000000000000000000000A /* Calendar+WidgetTimeline.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		B00000000000000000000007 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A0000000000000000000000E /* TimeAndDateConfiguration.swift in Sources */,
+				A0000000000000000000000F /* TimeAndDateConfigurationTests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		D00000000000000000000001 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = T00000000000000000000002 /* DesktopWidgetsExtension */;
+			targetProxy = 602D62FE30294D0B006C8AE2 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		X00000000000000000000001 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = macosx;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 6.0;
+			};
+			name = Debug;
+		};
+		X00000000000000000000002 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				SDKROOT = macosx;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_VERSION = 6.0;
+			};
+			name = Release;
+		};
+		X00000000000000000000003 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = DesktopWidgetsApp/DesktopWidgetsApp.entitlements;
+				CODE_SIGN_STYLE = Manual;
+				CURRENT_PROJECT_VERSION = 6;
+				DEVELOPMENT_TEAM = "";
+				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = "Desktop Widgets";
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MARKETING_VERSION = 0.1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.joshuawyadao.DesktopWidgets;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+			};
+			name = Debug;
+		};
+		X00000000000000000000004 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = DesktopWidgetsApp/DesktopWidgetsApp.entitlements;
+				CODE_SIGN_STYLE = Manual;
+				CURRENT_PROJECT_VERSION = 6;
+				DEVELOPMENT_TEAM = "";
+				ENABLE_HARDENED_RUNTIME = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = "Desktop Widgets";
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MARKETING_VERSION = 0.1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.joshuawyadao.DesktopWidgets;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+			};
+			name = Release;
+		};
+		X00000000000000000000005 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				APPLICATION_EXTENSION_API_ONLY = YES;
+				CODE_SIGN_ENTITLEMENTS = DesktopWidgetsExtension/DesktopWidgetsExtension.entitlements;
+				CODE_SIGN_STYLE = Manual;
+				CURRENT_PROJECT_VERSION = 6;
+				DEVELOPMENT_TEAM = "";
+				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = DesktopWidgetsExtension/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@executable_path/../../../../Frameworks",
+				);
+				MARKETING_VERSION = 0.1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.joshuawyadao.DesktopWidgets.Widgets;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
+				SKIP_INSTALL = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+			};
+			name = Debug;
+		};
+		X00000000000000000000006 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				APPLICATION_EXTENSION_API_ONLY = YES;
+				CODE_SIGN_ENTITLEMENTS = DesktopWidgetsExtension/DesktopWidgetsExtension.entitlements;
+				CODE_SIGN_STYLE = Manual;
+				CURRENT_PROJECT_VERSION = 6;
+				DEVELOPMENT_TEAM = "";
+				ENABLE_HARDENED_RUNTIME = YES;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = DesktopWidgetsExtension/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@executable_path/../../../../Frameworks",
+				);
+				MARKETING_VERSION = 0.1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.joshuawyadao.DesktopWidgets.Widgets;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
+				SKIP_INSTALL = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+			};
+			name = Release;
+		};
+		X00000000000000000000007 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Manual;
+				CURRENT_PROJECT_VERSION = 6;
+				DEVELOPMENT_TEAM = "";
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 0.1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.joshuawyadao.DesktopWidgetsTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+			};
+			name = Debug;
+		};
+		X00000000000000000000008 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Manual;
+				CURRENT_PROJECT_VERSION = 6;
+				DEVELOPMENT_TEAM = "";
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 0.1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.joshuawyadao.DesktopWidgetsTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		L00000000000000000000001 /* Build configuration list for PBXProject "DesktopWidgets" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				X00000000000000000000001 /* Debug */,
+				X00000000000000000000002 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		L00000000000000000000002 /* Build configuration list for PBXNativeTarget "DesktopWidgets" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				X00000000000000000000003 /* Debug */,
+				X00000000000000000000004 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		L00000000000000000000003 /* Build configuration list for PBXNativeTarget "DesktopWidgetsExtension" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				X00000000000000000000005 /* Debug */,
+				X00000000000000000000006 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		L00000000000000000000004 /* Build configuration list for PBXNativeTarget "DesktopWidgetsTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				X00000000000000000000007 /* Debug */,
+				X00000000000000000000008 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = R00000000000000000000001 /* Project object */;
+}
