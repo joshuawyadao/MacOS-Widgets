@@ -13,6 +13,7 @@ struct ContentView: View {
                 readyWidgets
                 setupGuide
                 customizationGuide
+                weatherDetailLimitsTip
                 appearanceTip
                 weatherDataTip
                 upcomingSection
@@ -109,7 +110,7 @@ struct ContentView: View {
                 CustomizationItem(
                     symbol: "building.2",
                     title: "City",
-                    detail: "Enter a city; add its state or country for the best match."
+                    detail: "Start typing, then select the right city from the matching suggestions."
                 )
                 CustomizationItem(
                     symbol: "calendar.day.timeline.leading",
@@ -122,12 +123,31 @@ struct ContentView: View {
                     detail: "Match this Mac automatically or choose Fahrenheit or Celsius."
                 )
                 CustomizationItem(
-                    symbol: "slider.horizontal.3",
+                    symbol: "checklist",
                     title: "Details",
-                    detail: "Show temperature, condition, humidity, chance of rain, and wind."
+                    detail: "Click the details you want in one list. The allowed count follows the widget size."
                 )
             }
         }
+    }
+
+    private var weatherDetailLimitsTip: some View {
+        HStack(alignment: .top, spacing: 12) {
+            Image(systemName: "checklist.checked")
+                .font(.title3)
+                .foregroundStyle(WidgetTheme.accent)
+
+            VStack(alignment: .leading, spacing: 4) {
+                Text("Weather detail limits")
+                    .font(.headline)
+
+                Text("Choose up to 2 details on Small, 3 on Medium, or 5 on Large. The editor prevents extra selections. If you resize a configured widget smaller, the widget keeps the first details that fit and shows a “Showing X of Y” notice.")
+                    .font(.callout)
+                    .foregroundStyle(.secondary)
+            }
+        }
+        .padding(16)
+        .background(.quaternary.opacity(0.35), in: RoundedRectangle(cornerRadius: 14))
     }
 
     private var appearanceTip: some View {
@@ -159,7 +179,7 @@ struct ContentView: View {
                 Text("About Weather data")
                     .font(.headline)
 
-                Text("Weather sends the city you enter and its matched coordinate to Open-Meteo. Recent forecasts and resolved cities are cached locally to reduce requests and remain useful while offline. Values are normalized and rounded for display.")
+                Text("Weather sends your city search and the selected coordinate to Open-Meteo. Recent forecasts are cached locally to reduce requests and remain useful while offline. Values are normalized and rounded for display.")
                     .font(.callout)
                     .foregroundStyle(.secondary)
 

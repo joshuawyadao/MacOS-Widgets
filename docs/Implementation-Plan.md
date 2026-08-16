@@ -1,20 +1,19 @@
 # Plan
 
-Build a configurable Weather widget that matches the supplied clear seven-column forecast while remaining useful in day and hour modes. Use Open-Meteo for keyless noncommercial weather and city lookup, isolate transport from presentation, preserve the Time and Date widget, and document the provider's attribution, privacy, and macOS transparency constraints.
+Make Weather configuration easier and safer in the native macOS widget editor: searchable city suggestions, one clickable details list, and family-specific selection limits that prevent cramped layouts.
 
 ## Scope
-- In: Per-widget city entry, Week/Day/Hour modes, temperature units, detail toggles, Open-Meteo geocoding and forecast mapping, stale-cache/error states, clear WidgetKit presentation, accessibility, host-app onboarding, tests, docs, clean builds, and branch save.
-- Out: Current-location permission, paid WeatherKit provisioning, commercial weather-service support, severe-weather alerts, radar, and background push updates.
+- In: Native city search, disambiguated city choices, a single multi-select detail list, Small/Medium/Large limits, resize protection, user guidance, tests, docs, clean builds, and a local branch checkpoint.
+- Out: Device-location permission, a custom companion-app settings store, replacing Apple's WidgetKit editor, and changes to the weather provider.
 
 ## Action items
-- [x] Add stable string-backed Weather configuration choices, city entry, unit selection, and detail toggles with documented defaults.
-- [x] Add normalized weather models, Open-Meteo geocoding/forecast transport, WMO condition mapping, local last-success cache, and deterministic sample data.
-- [x] Build adaptive Week, Day, and Hour WidgetKit layouts for small, medium, and large families with clear container treatment, attribution, stale/error states, and accessibility labels.
-- [x] Register the Weather widget, update the host app to present both ready widgets and intuitive setup/customization guidance, and update the Xcode project graph.
-- [x] Add deterministic tests for configuration fallback, request construction, decoding/mapping, units, WMO conditions, detail selection, city errors, and cached fallback behavior.
-- [x] Update the Weather module README, root README, and focused Weather documentation with setup, privacy, attribution, free-use, signing, and Liquid Glass notes.
-- [x] Run tests plus clean unsigned Debug and Release builds with fresh DerivedData, and document the desktop acceptance checklist for WidgetKit behavior that automation cannot cover.
-- [x] Inspect the scoped diff, commit the Weather implementation and plan, and push `codex/feature/weather-widget`.
+- [x] Replace free-form city text with a searchable App Entity that stores a resolved city and coordinate.
+- [x] Replace separate detail controls with a single clickable App Entity collection.
+- [x] Enforce 2/3/5 detail limits for Small/Medium/Large in the native editor and defensively cap rendering after a resize.
+- [x] Explain the limits in the editor, companion app, on-widget resize notice, and documentation.
+- [x] Add deterministic tests for city identity, suggestions, detail choices, and selection limits.
+- [x] Run the complete test suite plus fresh unsigned Debug and Release builds.
+- [x] Review the scoped diff and commit the completed enhancement to the current feature branch.
 
 ## Open questions
-- None. This personal, subscription-free build will use Open-Meteo's keyless noncommercial API and default to Portland, Oregon; a future commercial release must replace or commercially license the provider.
+- None. WidgetKit owns the visual presentation of search results and checkmarks; the app supplies searchable entities, rich labels, and per-family collection limits through supported App Intents APIs.

@@ -11,22 +11,18 @@ The Weather widget recreates the supplied reference's quiet visual rhythm: a mon
 
 | Setting | Behavior |
 | --- | --- |
-| City | Enter a city name. Include a state, province, or country when names are ambiguous, such as `Portland, Oregon`. Blank input uses the documented Portland default. An unmatched city shows an error instead of silently displaying another city. |
+| City | Start typing at least two characters, then select a matching city from the suggestion list. Each result includes its region and country so similarly named cities are easy to distinguish. Portland, Oregon is the default. |
 | Forecast View | **Week** shows seven days on medium and large widgets; a small widget focuses on today. **Day** shows current conditions and today's high/low. **Hour** shows the next six hours, or three on a small widget. |
 | Temperature Units | **Automatic** follows the Mac's regional temperature and wind conventions. Explicit Fahrenheit uses mph; explicit Celsius uses km/h. |
-| Show Temperature | Shows the current or forecast temperature. |
-| Show Condition | Adds a written description to the condition symbol. |
-| Show Humidity | Adds relative humidity. |
-| Show Chance of Rain | Adds precipitation probability. |
-| Show Wind | Adds wind speed. |
+| Details | Open one selectable list and click Temperature, Condition, Humidity, Chance of rain, or Wind to check or uncheck it. The list allows 2 choices on Small, 3 on Medium, and all 5 on Large. |
 
-If every detail switch is off, the condition remains visible so the widget never becomes an empty city label. All selected details are rendered; selecting many details in a medium seven-column forecast intentionally uses compact labels.
+The native editor enforces a minimum of one detail and the maximum for the widget's current size. If a configured widget is later resized smaller, the widget keeps the first choices that fit and displays a compact **Showing X of Y · Size limit N** notice. Temperature is the defensive fallback if macOS restores an empty or invalid configuration.
 
 Each placed widget owns its configuration. One instance can show Portland's week in Fahrenheit while another shows Tokyo's next six hours in Celsius.
 
 ## Data source and refresh behavior
 
-This personal, subscription-free build uses [Open-Meteo's Forecast API](https://open-meteo.com/en/docs) and [Geocoding API](https://open-meteo.com/en/docs/geocoding-api). It requests current conditions, seven daily forecasts, and hourly forecasts in one refresh. The normalized model includes temperature, relative humidity, precipitation probability, wind speed, and WMO weather condition codes.
+This personal, subscription-free build uses [Open-Meteo's Forecast API](https://open-meteo.com/en/docs) and [Geocoding API](https://open-meteo.com/en/docs/geocoding-api). City suggestions query geocoding after two typed characters. Selecting a result stores that resolved name and coordinate in the widget configuration, so forecast refreshes do not repeat the city lookup. Each refresh requests current conditions, seven daily forecasts, and hourly forecasts. The normalized model includes temperature, relative humidity, precipitation probability, wind speed, and WMO weather condition codes.
 
 The free endpoint is keyless and limited to noncommercial use under [Open-Meteo's current terms](https://open-meteo.com/en/terms). Forecast data is licensed under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/), so the widget displays a linked **Open-Meteo** credit next to the city. Values are normalized into the app's provider-neutral model and rounded for display. City lookup is based on [GeoNames](https://www.geonames.org/) data. A commercial release must use an appropriately licensed provider or a paid Open-Meteo endpoint and must not embed an API key directly in a public client.
 
@@ -34,9 +30,9 @@ WidgetKit receives several future hourly entries from one forecast response and 
 
 ## Privacy
 
-- The widget sends the entered city to Open-Meteo's geocoding endpoint, then sends the matched coordinate to its forecast endpoint.
+- The widget sends the city search text to Open-Meteo's geocoding endpoint as the user requests suggestions, then sends the selected coordinate to its forecast endpoint.
 - Open-Meteo states that service logs can contain IP addresses, request URLs, and coordinates for troubleshooting and may retain them for up to 90 days; see its [Terms & Privacy](https://open-meteo.com/en/terms).
-- To reduce requests, the extension stores one recent normalized forecast per city/unit for up to 24 hours and one resolved city coordinate for up to 30 days. Cache filenames use hashes and each cache is capped at 12 entries. These are user-entered city matches, not device-location or movement data. The widget does not request precise device location, use analytics, or commit cities to source control.
+- To reduce requests, the extension stores up to 12 recent normalized city/unit forecasts for no more than 24 hours. Cache filenames use hashes. The selected city and coordinate also live in that widget instance's macOS-managed configuration. These are user-selected places, not device-location or movement data. The widget does not request precise device location, use analytics, or commit cities to source control.
 - No WeatherKit entitlement, Apple Developer Program membership, API key, account, or Location Services permission is required for this implementation.
 
 ## Appearance and accessibility
@@ -54,13 +50,14 @@ Apple WeatherKit was not selected because Apple's [WeatherKit account setup](htt
 
 ## Desktop acceptance checklist
 
-Automated tests cover stable configuration defaults, every editor choice, request construction, response decoding, WMO mapping, unit formatting, city errors, and cached forecast round trips. WidgetKit's editor, network sandbox, and final layout still need a short desktop check:
+Automated tests cover stable configuration defaults, searchable city identity, detail-list choices and limits, request construction, response decoding, WMO mapping, unit formatting, city errors, and cached forecast round trips. WidgetKit's editor, network sandbox, and final layout still need a short desktop check:
 
 - [ ] Run the app once, add Weather in small, medium, and large sizes, and confirm Portland data loads.
-- [ ] Edit one instance to a distinct city and confirm the resolved city appears instead of Portland.
+- [ ] Type part of a city name, confirm suggestions appear with region/country qualifiers, select one, and confirm it appears instead of Portland.
 - [ ] Switch among Week, Day, and Hour and confirm each presentation changes immediately.
-- [ ] Turn each detail on and off, reopen the editor, and confirm the choices persist independently per widget.
+- [ ] Click details in the single selection list and confirm Small stops at 2, Medium at 3, and Large at 5.
+- [ ] Configure a Large widget with 5 details, resize it to Small, and confirm only 2 render alongside a **Showing 2 of 5** notice.
 - [ ] Disconnect networking after one successful load and confirm the saved forecast plus last-updated label appears.
-- [ ] Enter a clearly invalid city and confirm the widget shows the city error without substituting another location.
+- [ ] Search for a clearly invalid city and confirm no result can replace the widget's existing selection.
 - [ ] Verify the Open-Meteo link is visible and opens the provider site.
 - [ ] Compare Clear Light, Clear Dark, and Tinted appearances and confirm the content stays readable.

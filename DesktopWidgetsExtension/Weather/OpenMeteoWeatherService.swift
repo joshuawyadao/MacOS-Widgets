@@ -34,7 +34,7 @@ enum WeatherServiceError: LocalizedError, Equatable, Sendable {
 }
 
 protocol WeatherServing: Sendable {
-    func forecast(city: String, unit: WeatherTemperatureUnit, locale: Locale) async throws -> WeatherSnapshot
+    func forecast(location: WeatherLocation, unit: WeatherTemperatureUnit, locale: Locale) async throws -> WeatherSnapshot
 }
 
 enum WeatherLoadOutcome: Equatable, Sendable {
@@ -52,15 +52,16 @@ struct WeatherLoader: Sendable {
         self.cache = cache
     }
 
-    func load(city: String, unit: WeatherTemperatureUnit, locale: Locale) async -> WeatherLoadOutcome {
+    func load(location: WeatherLocation, unit: WeatherTemperatureUnit, locale: Locale) async -> WeatherLoadOutcome {
         let resolvedUnit = unit.resolved(for: locale)
+        let cacheKey = location.displayName
         do {
-            let snapshot = try await service.forecast(city: city, unit: unit, locale: locale)
-            try? cache.save(snapshot, city: city)
+            let snapshot = try await service.forecast(location: location, unit: unit, locale: locale)
+            try? cache.save(snapshot, city: cacheKey)
             return .fresh(snapshot)
         } catch {
             let message = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
-            if let cached = cache.load(city: city, unit: resolvedUnit) {
+            if let cached = cache.load(city: cacheKey, unit: resolvedUnit) {
                 return .stale(cached, message: message)
             }
             return .failed(
@@ -71,7 +72,7 @@ struct WeatherLoader: Sendable {
     }
 }
 
-struct WeatherLocation: Codable, Equatable, Sendable {
+struct WeatherLocation: Codable, Equatable, Hashable, Sendable {
     let name: String
     let latitude: Double
     let longitude: Double
@@ -89,28 +90,70 @@ struct WeatherLocation: Codable, Equatable, Sendable {
         }
         return parts.joined(separator: ", ")
     }
+
+    var qualifier: String {
+        [adminArea, country]
+            .compactMap { $0 }
+            .filter { !$0.isEmpty && $0.caseInsensitiveCompare(name) != .orderedSame }
+            .joined(separator: ", ")
+    }
+
+    static let portland = Self(
+        name: "Portland",
+        latitude: 45.52345,
+        longitude: -122.67621,
+        timeZoneIdentifier: "America/Los_Angeles",
+        adminArea: "Oregon",
+        country: "United States"
+    )
+}
+
+struct OpenMeteoLocationSearchService: Sendable {
+    private let session: URLSession
+
+    init(session: URLSession = .shared) {
+        self.session = session
+    }
+
+    func locations(matching query: String, locale: Locale, limit: Int = 8) async throws -> [WeatherLocation] {
+        let trimmed = query.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard trimmed.count >= 2 else { return [] }
+
+        do {
+            let url = try OpenMeteoWeatherService.geocodingURL(
+                city: trimmed,
+                count: limit,
+                languageCode: locale.language.languageCode?.identifier ?? "en"
+            )
+            var request = URLRequest(url: url)
+            request.timeoutInterval = 6
+            request.setValue("MacOS-Widgets/0.1", forHTTPHeaderField: "User-Agent")
+
+            let (data, response) = try await session.data(for: request)
+            guard let httpResponse = response as? HTTPURLResponse,
+                  (200..<300).contains(httpResponse.statusCode) else {
+                throw WeatherServiceError.invalidResponse
+            }
+            return try OpenMeteoWeatherService.decodeLocations(data: data)
+        } catch let error as WeatherServiceError {
+            throw error
+        } catch {
+            throw WeatherServiceError.requestFailed(error.localizedDescription)
+        }
+    }
 }
 
 struct OpenMeteoWeatherService: WeatherServing {
     static let providerID = "open-meteo"
 
     private let session: URLSession
-    private let locationCache: WeatherLocationCache
 
-    init(
-        session: URLSession = .shared,
-        locationCache: WeatherLocationCache = WeatherLocationCache()
-    ) {
+    init(session: URLSession = .shared) {
         self.session = session
-        self.locationCache = locationCache
     }
 
-    func forecast(city: String, unit: WeatherTemperatureUnit, locale: Locale) async throws -> WeatherSnapshot {
-        let trimmedCity = city.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard trimmedCity.count >= 2 else { throw WeatherServiceError.invalidCity }
-
+    func forecast(location: WeatherLocation, unit: WeatherTemperatureUnit, locale: Locale) async throws -> WeatherSnapshot {
         do {
-            let location = try await resolveLocation(named: trimmedCity, locale: locale)
             let resolvedUnit = unit.resolved(for: locale)
             let url = try Self.forecastURL(location: location, unit: resolvedUnit)
             let data = try await data(from: url)
@@ -120,37 +163,6 @@ struct OpenMeteoWeatherService: WeatherServing {
         } catch {
             throw WeatherServiceError.requestFailed(error.localizedDescription)
         }
-    }
-
-    private func resolveLocation(named city: String, locale: Locale) async throws -> WeatherLocation {
-        if let cached = locationCache.load(city: city) {
-            return cached
-        }
-
-        let url = try Self.geocodingURL(city: city, languageCode: locale.language.languageCode?.identifier ?? "en")
-        let data = try await data(from: url)
-        let response: GeocodingResponse
-
-        do {
-            response = try JSONDecoder().decode(GeocodingResponse.self, from: data)
-        } catch {
-            throw WeatherServiceError.invalidData
-        }
-
-        guard let match = response.results?.first else {
-            throw WeatherServiceError.cityNotFound(city)
-        }
-
-        let location = WeatherLocation(
-            name: match.name,
-            latitude: match.latitude,
-            longitude: match.longitude,
-            timeZoneIdentifier: match.timezone,
-            adminArea: match.admin1,
-            country: match.country
-        )
-        try? locationCache.save(location, city: city)
-        return location
     }
 
     private func data(from url: URL) async throws -> Data {
@@ -166,16 +178,36 @@ struct OpenMeteoWeatherService: WeatherServing {
         return data
     }
 
-    static func geocodingURL(city: String, languageCode: String = "en") throws -> URL {
+    static func geocodingURL(city: String, count: Int = 8, languageCode: String = "en") throws -> URL {
         var components = URLComponents(string: "https://geocoding-api.open-meteo.com/v1/search")!
         components.queryItems = [
             URLQueryItem(name: "name", value: city),
-            URLQueryItem(name: "count", value: "1"),
+            URLQueryItem(name: "count", value: String(count)),
             URLQueryItem(name: "language", value: languageCode),
             URLQueryItem(name: "format", value: "json"),
         ]
         guard let url = components.url else { throw WeatherServiceError.invalidCity }
         return url
+    }
+
+    static func decodeLocations(data: Data) throws -> [WeatherLocation] {
+        let response: GeocodingResponse
+        do {
+            response = try JSONDecoder().decode(GeocodingResponse.self, from: data)
+        } catch {
+            throw WeatherServiceError.invalidData
+        }
+
+        return (response.results ?? []).map { match in
+            WeatherLocation(
+                name: match.name,
+                latitude: match.latitude,
+                longitude: match.longitude,
+                timeZoneIdentifier: match.timezone,
+                adminArea: match.admin1,
+                country: match.country
+            )
+        }
     }
 
     static func forecastURL(location: WeatherLocation, unit: WeatherResolvedUnit) throws -> URL {
@@ -272,66 +304,6 @@ struct OpenMeteoWeatherService: WeatherServing {
         )
     }
 
-}
-
-struct WeatherLocationCache: Sendable {
-    private static let maximumAge: TimeInterval = 30 * 24 * 60 * 60
-    private static let maximumStoredEntries = 12
-    private let directoryURL: URL
-
-    init(directoryURL: URL? = nil) {
-        self.directoryURL = directoryURL
-            ?? FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask)[0]
-                .appendingPathComponent("WeatherLocations", isDirectory: true)
-    }
-
-    func load(city: String) -> WeatherLocation? {
-        let url = fileURL(city: city)
-        guard let data = try? Data(contentsOf: url),
-              let cached = try? JSONDecoder().decode(CachedWeatherLocation.self, from: data) else {
-            return nil
-        }
-        guard Date.now.timeIntervalSince(cached.savedAt) <= Self.maximumAge else {
-            try? FileManager.default.removeItem(at: url)
-            return nil
-        }
-        return cached.location
-    }
-
-    func save(_ location: WeatherLocation, city: String, savedAt: Date = .now) throws {
-        try FileManager.default.createDirectory(at: directoryURL, withIntermediateDirectories: true)
-        let data = try JSONEncoder().encode(CachedWeatherLocation(location: location, savedAt: savedAt))
-        try data.write(to: fileURL(city: city), options: .atomic)
-        pruneIfNeeded()
-    }
-
-    private func fileURL(city: String) -> URL {
-        let digest = SHA256.hash(data: Data(city.lowercased().utf8))
-        let key = digest.map { String(format: "%02x", $0) }.joined()
-        return directoryURL.appendingPathComponent("\(key).json")
-    }
-
-    private func pruneIfNeeded() {
-        guard let urls = try? FileManager.default.contentsOfDirectory(
-            at: directoryURL,
-            includingPropertiesForKeys: [.contentModificationDateKey],
-            options: [.skipsHiddenFiles]
-        ) else { return }
-
-        let files = urls.map { url in
-            (url, (try? url.resourceValues(forKeys: [.contentModificationDateKey]).contentModificationDate) ?? .distantPast)
-        }
-        .sorted { $0.1 > $1.1 }
-
-        for (url, _) in files.dropFirst(Self.maximumStoredEntries) {
-            try? FileManager.default.removeItem(at: url)
-        }
-    }
-}
-
-private struct CachedWeatherLocation: Codable {
-    let location: WeatherLocation
-    let savedAt: Date
 }
 
 struct WeatherSnapshotCache: Sendable {

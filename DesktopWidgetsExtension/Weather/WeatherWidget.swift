@@ -10,7 +10,7 @@ enum WeatherEntryState: Equatable, Sendable {
 
 struct WeatherEntry: TimelineEntry {
     let date: Date
-    let configuration: WeatherConfigurationIntent
+    let configuration: SearchableWeatherConfigurationIntent
     let snapshot: WeatherSnapshot?
     let state: WeatherEntryState
 }
@@ -37,7 +37,7 @@ struct WeatherProvider: AppIntentTimelineProvider {
     }
 
     func snapshot(
-        for configuration: WeatherConfigurationIntent,
+        for configuration: SearchableWeatherConfigurationIntent,
         in context: Context
     ) async -> WeatherEntry {
         if context.isPreview {
@@ -52,7 +52,7 @@ struct WeatherProvider: AppIntentTimelineProvider {
     }
 
     func timeline(
-        for configuration: WeatherConfigurationIntent,
+        for configuration: SearchableWeatherConfigurationIntent,
         in context: Context
     ) async -> Timeline<WeatherEntry> {
         let now = Date.now
@@ -82,10 +82,9 @@ struct WeatherProvider: AppIntentTimelineProvider {
         }
     }
 
-    private func loadEntry(configuration: WeatherConfigurationIntent, date: Date) async -> WeatherEntry {
-        let city = configuration.resolvedCity
+    private func loadEntry(configuration: SearchableWeatherConfigurationIntent, date: Date) async -> WeatherEntry {
         let outcome = await WeatherLoader(service: service, cache: cache).load(
-            city: city,
+            location: configuration.resolvedLocation,
             unit: configuration.resolvedTemperatureUnit,
             locale: .autoupdatingCurrent
         )
@@ -160,6 +159,10 @@ struct WeatherWidgetView: View {
 
             if case .stale = entry.state {
                 staleLabel(snapshot)
+            }
+
+            if hiddenDetailCount > 0 {
+                detailLimitNotice
             }
         }
         .accessibilityElement(children: .contain)
@@ -239,7 +242,7 @@ struct WeatherWidgetView: View {
                     .font(.system(size: family == .systemLarge ? 66 : 44))
                     .widgetAccentable()
 
-                if entry.configuration.resolvedDetails.contains(.condition) {
+                if visibleDetails.contains(.condition) {
                     Text(current.condition.displayName)
                         .font(.caption.weight(.semibold))
                         .lineLimit(1)
@@ -249,7 +252,7 @@ struct WeatherWidgetView: View {
             Spacer(minLength: 0)
 
             VStack(alignment: .trailing, spacing: 5) {
-                if entry.configuration.resolvedDetails.contains(.temperature) {
+                if visibleDetails.contains(.temperature) {
                     Text(WeatherValueFormatter.temperature(current.temperature, unit: snapshot.unit))
                         .font(.system(size: family == .systemLarge ? 58 : 38, weight: .bold, design: .rounded))
                         .monospacedDigit()
@@ -367,7 +370,7 @@ struct WeatherWidgetView: View {
         condition: WeatherCondition,
         snapshot: WeatherSnapshot
     ) -> [WeatherMetricValue] {
-        entry.configuration.resolvedDetails.compactMap { detail in
+        visibleDetails.compactMap { detail in
             switch detail {
             case .temperature:
                 WeatherMetricValue(
@@ -407,6 +410,50 @@ struct WeatherWidgetView: View {
         .font(.system(size: 9, weight: .medium))
         .opacity(0.8)
         .accessibilityLabel("Showing saved weather from \(snapshot.fetchedAt.formatted())")
+    }
+
+    private var visibleDetails: [WeatherDetail] {
+        WeatherDetailLimits.limited(entry.configuration.resolvedDetails, maximum: detailLimit)
+    }
+
+    private var hiddenDetailCount: Int {
+        max(0, entry.configuration.resolvedDetails.count - visibleDetails.count)
+    }
+
+    private var detailLimit: Int {
+        switch family {
+        case .systemSmall:
+            WeatherDetailLimits.small
+        case .systemMedium:
+            WeatherDetailLimits.medium
+        case .systemLarge:
+            WeatherDetailLimits.large
+        default:
+            WeatherDetailLimits.small
+        }
+    }
+
+    private var familyName: String {
+        switch family {
+        case .systemSmall: "Small"
+        case .systemMedium: "Medium"
+        case .systemLarge: "Large"
+        default: "this size"
+        }
+    }
+
+    private var detailLimitNotice: some View {
+        Label(
+            "Showing \(visibleDetails.count) of \(entry.configuration.resolvedDetails.count) · \(familyName) limit \(detailLimit)",
+            systemImage: "info.circle.fill"
+        )
+        .font(.system(size: 9, weight: .semibold))
+        .lineLimit(1)
+        .minimumScaleFactor(0.75)
+        .opacity(0.9)
+        .accessibilityLabel(
+            "\(hiddenDetailCount) weather details hidden because the \(familyName) widget limit is \(detailLimit)"
+        )
     }
 
     private var failureView: some View {
@@ -472,7 +519,7 @@ struct WeatherWidget: Widget {
     var body: some WidgetConfiguration {
         AppIntentConfiguration(
             kind: Self.kind,
-            intent: WeatherConfigurationIntent.self,
+            intent: SearchableWeatherConfigurationIntent.self,
             provider: WeatherProvider()
         ) { entry in
             WeatherWidgetView(entry: entry)
@@ -506,10 +553,12 @@ struct WeatherWidget: Widget {
     )
 }
 
-private var weatherDayPreviewConfiguration: WeatherConfigurationIntent {
-    let configuration = WeatherConfigurationIntent.referencePreview()
+private var weatherDayPreviewConfiguration: SearchableWeatherConfigurationIntent {
+    let configuration = SearchableWeatherConfigurationIntent.referencePreview()
     configuration.viewMode = WeatherViewMode.day.rawValue
-    configuration.showHumidity = true
-    configuration.showPrecipitation = true
+    configuration.details = [
+        WeatherDetailEntity(detail: .temperature),
+        WeatherDetailEntity(detail: .humidity),
+    ]
     return configuration
 }

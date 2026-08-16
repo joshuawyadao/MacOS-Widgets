@@ -3,38 +3,73 @@ import Foundation
 import XCTest
 
 final class WeatherConfigurationTests: XCTestCase {
+    func testNewConfigurationStartsWithPortlandAndTemperatureSelected() {
+        let configuration = SearchableWeatherConfigurationIntent()
+
+        XCTAssertEqual(configuration.resolvedLocation, .portland)
+        XCTAssertEqual(configuration.resolvedDetails, [.temperature])
+    }
+
     func testConfigurationUsesDocumentedDefaultsAndDefensiveFallbacks() {
         for value in [nil, "unknown-choice"] {
-            let configuration = WeatherConfigurationIntent.referencePreview()
-            configuration.city = "  "
+            let configuration = SearchableWeatherConfigurationIntent.referencePreview()
+            configuration.city = nil
             configuration.viewMode = value
             configuration.temperatureUnit = value
 
-            XCTAssertEqual(configuration.resolvedCity, "Portland, Oregon")
+            XCTAssertEqual(configuration.resolvedCity, "Portland, Oregon, United States")
             XCTAssertEqual(configuration.resolvedViewMode, .week)
             XCTAssertEqual(configuration.resolvedTemperatureUnit, .automatic)
             XCTAssertEqual(configuration.resolvedDetails, [.temperature])
         }
     }
 
-    func testEveryDetailCanBeSelectedAndEmptySelectionKeepsConditionVisible() {
-        let configuration = WeatherConfigurationIntent.referencePreview()
-        configuration.showCondition = true
-        configuration.showHumidity = true
-        configuration.showPrecipitation = true
-        configuration.showWind = true
+    func testEveryDetailCanBeSelectedAndEmptySelectionKeepsTemperatureVisible() {
+        let configuration = SearchableWeatherConfigurationIntent.referencePreview()
+        configuration.details = WeatherDetail.allCases.map(WeatherDetailEntity.init(detail:))
 
         XCTAssertEqual(
             configuration.resolvedDetails,
             [.temperature, .condition, .humidity, .precipitation, .wind]
         )
 
-        configuration.showTemperature = false
-        configuration.showCondition = false
-        configuration.showHumidity = false
-        configuration.showPrecipitation = false
-        configuration.showWind = false
-        XCTAssertEqual(configuration.resolvedDetails, [.condition])
+        configuration.details = []
+        XCTAssertEqual(configuration.resolvedDetails, [.temperature])
+    }
+
+    func testDetailLimitsDeduplicateAndCapSelectionsForEveryWidgetSize() {
+        let duplicated: [WeatherDetail] = [.temperature, .humidity, .temperature, .wind, .condition]
+
+        XCTAssertEqual(
+            WeatherDetailLimits.limited(duplicated, maximum: WeatherDetailLimits.small),
+            [.temperature, .humidity]
+        )
+        XCTAssertEqual(
+            WeatherDetailLimits.limited(duplicated, maximum: WeatherDetailLimits.medium),
+            [.temperature, .humidity, .wind]
+        )
+        XCTAssertEqual(
+            WeatherDetailLimits.limited(duplicated, maximum: WeatherDetailLimits.large),
+            [.temperature, .humidity, .wind, .condition]
+        )
+    }
+
+    func testCityEntitiesRoundTripWithoutAnotherNetworkLookup() async throws {
+        let portland = WeatherLocationEntity.portland
+        let restored = try await WeatherLocationQuery().entities(for: [portland.id])
+        let suggestions = try await WeatherLocationQuery().suggestedEntities()
+
+        XCTAssertEqual(restored, [portland])
+        XCTAssertEqual(suggestions.first, portland)
+        XCTAssertTrue(suggestions.contains { $0.location.name == "Tokyo" })
+    }
+
+    func testDetailQueryReturnsClickableStableChoices() async throws {
+        let details = try await WeatherDetailQuery().suggestedEntities()
+        let restored = try await WeatherDetailQuery().entities(for: details.map(\.id))
+
+        XCTAssertEqual(details.map(\.detail), WeatherDetail.allCases)
+        XCTAssertEqual(restored, details)
     }
 
     func testOptionsProvidersReturnStableIDsAndDefaults() async throws {
@@ -104,7 +139,7 @@ final class WeatherConfigurationTests: XCTestCase {
         let geocodingURL = try OpenMeteoWeatherService.geocodingURL(city: "Portland, Oregon")
         let geocodingItems = URLComponents(url: geocodingURL, resolvingAgainstBaseURL: false)?.queryItems ?? []
         XCTAssertEqual(geocodingItems.first(where: { $0.name == "name" })?.value, "Portland, Oregon")
-        XCTAssertEqual(geocodingItems.first(where: { $0.name == "count" })?.value, "1")
+        XCTAssertEqual(geocodingItems.first(where: { $0.name == "count" })?.value, "8")
 
         let location = WeatherLocation(
             name: "Portland",
@@ -131,6 +166,16 @@ final class WeatherConfigurationTests: XCTestCase {
         XCTAssertEqual(items.first(where: { $0.name == "wind_speed_unit" })?.value, "mph")
         XCTAssertEqual(items.first(where: { $0.name == "timezone" })?.value, "auto")
         XCTAssertEqual(items.first(where: { $0.name == "timeformat" })?.value, "unixtime")
+    }
+
+    func testGeocodingResultsBecomeDistinctSearchableCityChoices() throws {
+        let locations = try OpenMeteoWeatherService.decodeLocations(data: Data(Self.locationFixture.utf8))
+
+        XCTAssertEqual(locations.count, 2)
+        XCTAssertEqual(locations[0], .portland)
+        XCTAssertEqual(locations[0].displayName, "Portland, Oregon, United States")
+        XCTAssertEqual(locations[0].qualifier, "Oregon, United States")
+        XCTAssertEqual(locations[1].displayName, "Portland, Maine, United States")
     }
 
     func testForecastDecodingNormalizesCurrentHourlyAndDailyData() throws {
@@ -184,31 +229,6 @@ final class WeatherConfigurationTests: XCTestCase {
         XCTAssertNil(cache.load(city: "Expired City", unit: .fahrenheit))
     }
 
-    func testLocationCacheAvoidsRepeatedGeocodingAndExpiresOldCoordinates() throws {
-        let root = FileManager.default.temporaryDirectory
-            .appendingPathComponent(UUID().uuidString, isDirectory: true)
-        defer { try? FileManager.default.removeItem(at: root) }
-        let cache = WeatherLocationCache(directoryURL: root)
-        let location = WeatherLocation(
-            name: "Portland",
-            latitude: 45.52345,
-            longitude: -122.67621,
-            timeZoneIdentifier: "America/Los_Angeles",
-            adminArea: "Oregon",
-            country: "United States"
-        )
-
-        try cache.save(location, city: "Portland, Oregon")
-        XCTAssertEqual(cache.load(city: "Portland, Oregon"), location)
-
-        try cache.save(
-            location,
-            city: "Expired City",
-            savedAt: .now.addingTimeInterval(-31 * 24 * 60 * 60)
-        )
-        XCTAssertNil(cache.load(city: "Expired City"))
-    }
-
     func testLoaderCachesAFreshForecastForTheResolvedCityAndUnit() async throws {
         let root = FileManager.default.temporaryDirectory
             .appendingPathComponent(UUID().uuidString, isDirectory: true)
@@ -221,13 +241,13 @@ final class WeatherConfigurationTests: XCTestCase {
         )
 
         let outcome = await loader.load(
-            city: "Portland, Oregon",
+            location: .portland,
             unit: .fahrenheit,
             locale: Locale(identifier: "en_US")
         )
 
         XCTAssertEqual(outcome, .fresh(snapshot))
-        XCTAssertEqual(cache.load(city: "Portland, Oregon", unit: .fahrenheit), snapshot)
+        XCTAssertEqual(cache.load(city: WeatherLocation.portland.displayName, unit: .fahrenheit), snapshot)
     }
 
     func testLoaderReturnsSavedForecastAsStaleWhenRefreshFails() async throws {
@@ -236,14 +256,14 @@ final class WeatherConfigurationTests: XCTestCase {
         defer { try? FileManager.default.removeItem(at: root) }
         let snapshot = WeatherSnapshot.sample(now: .now)
         let cache = WeatherSnapshotCache(directoryURL: root)
-        try cache.save(snapshot, city: "Portland, Oregon")
+        try cache.save(snapshot, city: WeatherLocation.portland.displayName)
         let loader = WeatherLoader(
             service: StubWeatherService(result: .failure(.requestFailed("Offline"))),
             cache: cache
         )
 
         let outcome = await loader.load(
-            city: "Portland, Oregon",
+            location: .portland,
             unit: .fahrenheit,
             locale: Locale(identifier: "en_US")
         )
@@ -264,7 +284,14 @@ final class WeatherConfigurationTests: XCTestCase {
         )
 
         let outcome = await loader.load(
-            city: "Unknownville",
+            location: WeatherLocation(
+                name: "Unknownville",
+                latitude: 0,
+                longitude: 0,
+                timeZoneIdentifier: "UTC",
+                adminArea: nil,
+                country: nil
+            ),
             unit: .automatic,
             locale: Locale(identifier: "en_US")
         )
@@ -315,12 +342,35 @@ final class WeatherConfigurationTests: XCTestCase {
       }
     }
     """
+
+    private static let locationFixture = """
+    {
+      "results": [
+        {
+          "name": "Portland",
+          "latitude": 45.52345,
+          "longitude": -122.67621,
+          "timezone": "America/Los_Angeles",
+          "admin1": "Oregon",
+          "country": "United States"
+        },
+        {
+          "name": "Portland",
+          "latitude": 43.6591,
+          "longitude": -70.2568,
+          "timezone": "America/New_York",
+          "admin1": "Maine",
+          "country": "United States"
+        }
+      ]
+    }
+    """
 }
 
 private struct StubWeatherService: WeatherServing {
     let result: Result<WeatherSnapshot, WeatherServiceError>
 
-    func forecast(city: String, unit: WeatherTemperatureUnit, locale: Locale) async throws -> WeatherSnapshot {
+    func forecast(location: WeatherLocation, unit: WeatherTemperatureUnit, locale: Locale) async throws -> WeatherSnapshot {
         try result.get()
     }
 }
