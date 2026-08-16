@@ -108,11 +108,20 @@ if [[ "$EXTENSION_POINT" != "com.apple.widgetkit-extension" ]]; then
 fi
 
 require_contains "$APP_INTENTS_METADATA" "TimeAndDateStringConfigurationIntent" "Time & Date configuration metadata"
-require_contains "$APP_INTENTS_METADATA" "PresetWeatherConfigurationIntent" "Weather configuration metadata"
+require_contains "$APP_INTENTS_METADATA" "WeatherV7ConfigurationIntent" "Weather configuration metadata"
+require_contains "$APP_INTENTS_METADATA" "citySearch" "Weather city search parameter"
+if ! jq -e '.actions.WeatherV7ConfigurationIntent.parameters[] | select(.name == "city") | .dynamicOptionsSupport > 0' "$APP_INTENTS_METADATA" >/dev/null; then
+    echo "FAIL: Weather Matching City parameter does not export dynamic options" >&2
+    exit 1
+fi
+if grep -Fq 'WeatherV5LocationEntity' "$APP_INTENTS_METADATA"; then
+    echo "FAIL: Weather metadata still contains the broken custom city entity transport" >&2
+    exit 1
+fi
 require_contains "$APP_INTENTS_METADATA" "detailPreset" "Weather preset editor parameter"
 
 strings "$EXTENSION_BINARY" > "$EXTENSION_STRINGS"
 require_contains "$EXTENSION_STRINGS" "com.joshuawyadao.desktop-widgets.time-and-date.configurable-v2-string" "Time & Date widget identity"
-require_contains "$EXTENSION_STRINGS" "com.joshuawyadao.desktop-widgets.weather.presets-v3" "Weather widget identity"
+require_contains "$EXTENSION_STRINGS" "com.joshuawyadao.desktop-widgets.weather.search-v7" "Weather widget identity"
 
 echo "PASS: Both widgets passed behavior tests, Release compilation, embedding, identity, and editor-metadata checks."

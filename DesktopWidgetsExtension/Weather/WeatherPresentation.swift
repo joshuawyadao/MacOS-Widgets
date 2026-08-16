@@ -17,8 +17,13 @@ enum WeatherWidgetContent: Equatable, Sendable {
 struct WeatherMetricValue: Equatable, Identifiable, Sendable {
     let detail: WeatherDetail
     let text: String
+    let unitSuffix: String?
     let spokenText: String
     let symbolName: String
+
+    var displayText: String {
+        text + (unitSuffix ?? "")
+    }
 
     var id: String { detail.rawValue }
 }
@@ -33,6 +38,7 @@ struct WeatherWidgetPresentation: Equatable, Sendable {
     private let locale: Locale
     private let timeZone: TimeZone
     private let unit: WeatherResolvedUnit
+    let usesExpandedForecastLayout: Bool
 
     var renderedMode: WeatherViewMode? {
         switch content {
@@ -114,21 +120,18 @@ struct WeatherWidgetPresentation: Equatable, Sendable {
 
     init(
         date: Date,
-        configuration: PresetWeatherConfigurationIntent,
+        configuration: WeatherV7ConfigurationIntent,
         snapshot: WeatherSnapshot?,
         state: WeatherEntryState,
         family: WidgetFamily,
         locale: Locale
     ) {
-        self.detailPresentation = WeatherDetailPresentation(
-            preset: configuration.resolvedDetailPreset,
-            family: family
-        )
         self.showsStaleStatus = if case .stale = state { true } else { false }
         self.locationName = snapshot?.locationName ?? configuration.resolvedCity
         self.locale = locale
         self.timeZone = snapshot?.timeZone ?? .autoupdatingCurrent
         self.unit = snapshot?.unit ?? configuration.resolvedTemperatureUnit.resolved(for: locale)
+        self.usesExpandedForecastLayout = family == .systemLarge
         self.familyName = switch family {
         case .systemSmall: "Small"
         case .systemMedium: "Medium"
@@ -136,30 +139,49 @@ struct WeatherWidgetPresentation: Equatable, Sendable {
         default: "This size"
         }
 
+        let resolvedContent: WeatherWidgetContent
         guard let snapshot else {
             if case let .failed(message, _) = state {
-                self.content = .failure(message: message)
+                resolvedContent = .failure(message: message)
             } else {
-                self.content = .failure(message: "Weather is unavailable.")
+                resolvedContent = .failure(message: "Weather is unavailable.")
             }
+            self.content = resolvedContent
+            self.detailPresentation = WeatherDetailPresentation(
+                preset: configuration.resolvedDetailPreset,
+                family: family,
+                mode: configuration.resolvedViewMode
+            )
             return
         }
 
         switch configuration.resolvedViewMode {
         case .week where family == .systemSmall:
-            self.content = Self.dayContent(snapshot: snapshot, date: date)
+            resolvedContent = Self.dayContent(snapshot: snapshot, date: date)
         case .week:
-            self.content = .week(Array(snapshot.dailyForecasts(startingAt: date).prefix(7)))
+            resolvedContent = .week(Array(snapshot.dailyForecasts(startingAt: date).prefix(7)))
         case .day:
-            self.content = Self.dayContent(snapshot: snapshot, date: date)
+            resolvedContent = Self.dayContent(snapshot: snapshot, date: date)
         case .hour:
             let hourStart = Self.forecastHourStart(for: date, timeZone: snapshot.timeZone)
             let limit = family == .systemSmall ? 3 : 6
             let hours = Array(snapshot.hourly.filter { $0.date >= hourStart }.prefix(limit))
-            self.content = hours.isEmpty
+            resolvedContent = hours.isEmpty
                 ? Self.dayContent(snapshot: snapshot, date: date)
                 : .hour(hours)
         }
+        self.content = resolvedContent
+        let resolvedMode: WeatherViewMode = switch resolvedContent {
+        case .failure: configuration.resolvedViewMode
+        case .day: .day
+        case .week: .week
+        case .hour: .hour
+        }
+        self.detailPresentation = WeatherDetailPresentation(
+            preset: configuration.resolvedDetailPreset,
+            family: family,
+            mode: resolvedMode
+        )
     }
 
     private static func dayContent(snapshot: WeatherSnapshot, date: Date) -> WeatherWidgetContent {
@@ -215,7 +237,8 @@ struct WeatherWidgetPresentation: Equatable, Sendable {
             case .temperature:
                 WeatherMetricValue(
                     detail: detail,
-                    text: WeatherValueFormatter.temperature(temperature, unit: unit),
+                    text: WeatherValueFormatter.temperature(temperature, unit: unit, includeUnit: false),
+                    unitSuffix: unit.temperatureSuffix,
                     spokenText: "Temperature \(WeatherValueFormatter.temperature(temperature, unit: unit))",
                     symbolName: "thermometer.medium"
                 )
@@ -223,6 +246,7 @@ struct WeatherWidgetPresentation: Equatable, Sendable {
                 WeatherMetricValue(
                     detail: detail,
                     text: condition.displayName,
+                    unitSuffix: nil,
                     spokenText: condition.displayName,
                     symbolName: condition.symbolName
                 )
@@ -231,6 +255,7 @@ struct WeatherWidgetPresentation: Equatable, Sendable {
                     WeatherMetricValue(
                         detail: detail,
                         text: $0,
+                        unitSuffix: nil,
                         spokenText: "Humidity \($0)",
                         symbolName: "humidity.fill"
                     )
@@ -240,6 +265,7 @@ struct WeatherWidgetPresentation: Equatable, Sendable {
                     WeatherMetricValue(
                         detail: detail,
                         text: $0,
+                        unitSuffix: nil,
                         spokenText: "Chance of rain \($0)",
                         symbolName: "drop.fill"
                     )
@@ -249,6 +275,7 @@ struct WeatherWidgetPresentation: Equatable, Sendable {
                     WeatherMetricValue(
                         detail: detail,
                         text: $0,
+                        unitSuffix: nil,
                         spokenText: "Wind \($0)",
                         symbolName: "wind"
                     )

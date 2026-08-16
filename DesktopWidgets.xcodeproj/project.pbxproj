@@ -37,6 +37,10 @@
 		A0000000000000000000001C /* WeatherPresentation.swift in Sources */ = {isa = PBXBuildFile; fileRef = F00000000000000000000015 /* WeatherPresentation.swift */; };
 		A0000000000000000000001D /* TimeAndDatePresentation.swift in Sources */ = {isa = PBXBuildFile; fileRef = F00000000000000000000016 /* TimeAndDatePresentation.swift */; };
 		A0000000000000000000001E /* TimeAndDatePresentation.swift in Sources */ = {isa = PBXBuildFile; fileRef = F00000000000000000000016 /* TimeAndDatePresentation.swift */; };
+		A0000000000000000000001F /* WeatherProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = F00000000000000000000017 /* WeatherProvider.swift */; };
+		A00000000000000000000020 /* WeatherProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = F00000000000000000000017 /* WeatherProvider.swift */; };
+		A00000000000000000000021 /* DesktopWidgetsURLRouter.swift in Sources */ = {isa = PBXBuildFile; fileRef = F00000000000000000000018 /* DesktopWidgetsURLRouter.swift */; };
+		A00000000000000000000022 /* DesktopWidgetsURLRouter.swift in Sources */ = {isa = PBXBuildFile; fileRef = F00000000000000000000018 /* DesktopWidgetsURLRouter.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -86,6 +90,8 @@
 		F00000000000000000000014 /* WidgetContractTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WidgetContractTests.swift; sourceTree = "<group>"; };
 		F00000000000000000000015 /* WeatherPresentation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WeatherPresentation.swift; sourceTree = "<group>"; };
 		F00000000000000000000016 /* TimeAndDatePresentation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimeAndDatePresentation.swift; sourceTree = "<group>"; };
+		F00000000000000000000017 /* WeatherProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WeatherProvider.swift; sourceTree = "<group>"; };
+		F00000000000000000000018 /* DesktopWidgetsURLRouter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DesktopWidgetsURLRouter.swift; sourceTree = "<group>"; };
 		P00000000000000000000001 /* DesktopWidgets.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = DesktopWidgets.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		P00000000000000000000002 /* DesktopWidgetsExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = DesktopWidgetsExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		P00000000000000000000003 /* DesktopWidgetsTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = DesktopWidgetsTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -185,6 +191,7 @@
 				F0000000000000000000000F /* WeatherConfiguration.swift */,
 				F00000000000000000000010 /* WeatherModels.swift */,
 				F00000000000000000000011 /* OpenMeteoWeatherService.swift */,
+				F00000000000000000000017 /* WeatherProvider.swift */,
 				F00000000000000000000012 /* WeatherWidget.swift */,
 				F00000000000000000000015 /* WeatherPresentation.swift */,
 			);
@@ -219,6 +226,7 @@
 			isa = PBXGroup;
 			children = (
 				F00000000000000000000008 /* WidgetIdentifier.swift */,
+				F00000000000000000000018 /* DesktopWidgetsURLRouter.swift */,
 			);
 			path = Models;
 			sourceTree = "<group>";
@@ -400,6 +408,7 @@
 				A00000000000000000000003 /* WidgetIdentifier.swift in Sources */,
 				A00000000000000000000004 /* WidgetTheme.swift in Sources */,
 				A0000000000000000000000B /* WidgetStatus.swift in Sources */,
+				A00000000000000000000021 /* DesktopWidgetsURLRouter.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -414,6 +423,7 @@
 				A00000000000000000000010 /* WeatherConfiguration.swift in Sources */,
 				A00000000000000000000011 /* WeatherModels.swift in Sources */,
 				A00000000000000000000012 /* OpenMeteoWeatherService.swift in Sources */,
+				A0000000000000000000001F /* WeatherProvider.swift in Sources */,
 				A00000000000000000000013 /* WeatherWidget.swift in Sources */,
 				A0000000000000000000001B /* WeatherPresentation.swift in Sources */,
 				A00000000000000000000008 /* WidgetIdentifier.swift in Sources */,
@@ -432,11 +442,13 @@
 				A00000000000000000000014 /* WeatherConfiguration.swift in Sources */,
 				A00000000000000000000015 /* WeatherModels.swift in Sources */,
 				A00000000000000000000016 /* OpenMeteoWeatherService.swift in Sources */,
+				A00000000000000000000020 /* WeatherProvider.swift in Sources */,
 				A00000000000000000000017 /* WeatherConfigurationTests.swift in Sources */,
 				A00000000000000000000018 /* WidgetContractTests.swift in Sources */,
 				A00000000000000000000019 /* WidgetIdentifier.swift in Sources */,
 				A0000000000000000000001A /* Calendar+WidgetTimeline.swift in Sources */,
 				A0000000000000000000001C /* WeatherPresentation.swift in Sources */,
+				A00000000000000000000022 /* DesktopWidgetsURLRouter.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -491,7 +503,7 @@
 			buildSettings = {
 				CODE_SIGN_ENTITLEMENTS = DesktopWidgetsApp/DesktopWidgetsApp.entitlements;
 				CODE_SIGN_STYLE = Manual;
-				CURRENT_PROJECT_VERSION = 9;
+				CURRENT_PROJECT_VERSION = 13;
 				DEVELOPMENT_TEAM = "";
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_PREVIEWS = YES;
@@ -515,7 +527,7 @@
 			buildSettings = {
 				CODE_SIGN_ENTITLEMENTS = DesktopWidgetsApp/DesktopWidgetsApp.entitlements;
 				CODE_SIGN_STYLE = Manual;
-				CURRENT_PROJECT_VERSION = 9;
+				CURRENT_PROJECT_VERSION = 13;
 				DEVELOPMENT_TEAM = "";
 				ENABLE_HARDENED_RUNTIME = YES;
 				GENERATE_INFOPLIST_FILE = YES;
@@ -539,7 +551,7 @@
 				APPLICATION_EXTENSION_API_ONLY = YES;
 				CODE_SIGN_ENTITLEMENTS = DesktopWidgetsExtension/DesktopWidgetsExtension.entitlements;
 				CODE_SIGN_STYLE = Manual;
-				CURRENT_PROJECT_VERSION = 9;
+				CURRENT_PROJECT_VERSION = 13;
 				DEVELOPMENT_TEAM = "";
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_PREVIEWS = YES;
@@ -565,7 +577,7 @@
 				APPLICATION_EXTENSION_API_ONLY = YES;
 				CODE_SIGN_ENTITLEMENTS = DesktopWidgetsExtension/DesktopWidgetsExtension.entitlements;
 				CODE_SIGN_STYLE = Manual;
-				CURRENT_PROJECT_VERSION = 9;
+				CURRENT_PROJECT_VERSION = 13;
 				DEVELOPMENT_TEAM = "";
 				ENABLE_HARDENED_RUNTIME = YES;
 				GENERATE_INFOPLIST_FILE = NO;
@@ -588,7 +600,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CODE_SIGN_STYLE = Manual;
-				CURRENT_PROJECT_VERSION = 9;
+				CURRENT_PROJECT_VERSION = 13;
 				DEVELOPMENT_TEAM = "";
 				GENERATE_INFOPLIST_FILE = YES;
 				MARKETING_VERSION = 0.1.0;
@@ -602,7 +614,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CODE_SIGN_STYLE = Manual;
-				CURRENT_PROJECT_VERSION = 9;
+				CURRENT_PROJECT_VERSION = 13;
 				DEVELOPMENT_TEAM = "";
 				GENERATE_INFOPLIST_FILE = YES;
 				MARKETING_VERSION = 0.1.0;

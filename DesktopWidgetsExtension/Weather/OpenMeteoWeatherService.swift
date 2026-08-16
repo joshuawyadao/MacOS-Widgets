@@ -37,6 +37,10 @@ protocol WeatherServing: Sendable {
     func forecast(location: WeatherLocation, unit: WeatherTemperatureUnit, locale: Locale) async throws -> WeatherSnapshot
 }
 
+protocol WeatherLocationSearching: Sendable {
+    func locations(matching query: String, locale: Locale) async throws -> [WeatherLocation]
+}
+
 enum WeatherLoadOutcome: Equatable, Sendable {
     case fresh(WeatherSnapshot)
     case stale(WeatherSnapshot, message: String)
@@ -108,41 +112,6 @@ struct WeatherLocation: Codable, Equatable, Hashable, Sendable {
     )
 }
 
-struct OpenMeteoLocationSearchService: Sendable {
-    private let session: URLSession
-
-    init(session: URLSession = .shared) {
-        self.session = session
-    }
-
-    func locations(matching query: String, locale: Locale, limit: Int = 8) async throws -> [WeatherLocation] {
-        let trimmed = query.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard trimmed.count >= 2 else { return [] }
-
-        do {
-            let url = try OpenMeteoWeatherService.geocodingURL(
-                city: trimmed,
-                count: limit,
-                languageCode: locale.language.languageCode?.identifier ?? "en"
-            )
-            var request = URLRequest(url: url)
-            request.timeoutInterval = 6
-            request.setValue("MacOS-Widgets/0.1", forHTTPHeaderField: "User-Agent")
-
-            let (data, response) = try await session.data(for: request)
-            guard let httpResponse = response as? HTTPURLResponse,
-                  (200..<300).contains(httpResponse.statusCode) else {
-                throw WeatherServiceError.invalidResponse
-            }
-            return try OpenMeteoWeatherService.decodeLocations(data: data)
-        } catch let error as WeatherServiceError {
-            throw error
-        } catch {
-            throw WeatherServiceError.requestFailed(error.localizedDescription)
-        }
-    }
-}
-
 struct OpenMeteoWeatherService: WeatherServing {
     static let providerID = "open-meteo"
 
@@ -176,38 +145,6 @@ struct OpenMeteoWeatherService: WeatherServing {
             throw WeatherServiceError.invalidResponse
         }
         return data
-    }
-
-    static func geocodingURL(city: String, count: Int = 8, languageCode: String = "en") throws -> URL {
-        var components = URLComponents(string: "https://geocoding-api.open-meteo.com/v1/search")!
-        components.queryItems = [
-            URLQueryItem(name: "name", value: city),
-            URLQueryItem(name: "count", value: String(count)),
-            URLQueryItem(name: "language", value: languageCode),
-            URLQueryItem(name: "format", value: "json"),
-        ]
-        guard let url = components.url else { throw WeatherServiceError.invalidCity }
-        return url
-    }
-
-    static func decodeLocations(data: Data) throws -> [WeatherLocation] {
-        let response: GeocodingResponse
-        do {
-            response = try JSONDecoder().decode(GeocodingResponse.self, from: data)
-        } catch {
-            throw WeatherServiceError.invalidData
-        }
-
-        return (response.results ?? []).map { match in
-            WeatherLocation(
-                name: match.name,
-                latitude: match.latitude,
-                longitude: match.longitude,
-                timeZoneIdentifier: match.timezone,
-                adminArea: match.admin1,
-                country: match.country
-            )
-        }
     }
 
     static func forecastURL(location: WeatherLocation, unit: WeatherResolvedUnit) throws -> URL {
@@ -306,6 +243,68 @@ struct OpenMeteoWeatherService: WeatherServing {
 
 }
 
+struct OpenMeteoLocationSearchService: WeatherLocationSearching {
+    private let session: URLSession
+
+    init(session: URLSession = .shared) {
+        self.session = session
+    }
+
+    func locations(matching query: String, locale: Locale) async throws -> [WeatherLocation] {
+        let trimmedQuery = query.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard trimmedQuery.count >= 2 else { return [] }
+
+        do {
+            let url = try Self.geocodingURL(query: trimmedQuery, locale: locale)
+            var request = URLRequest(url: url)
+            request.timeoutInterval = 6
+            request.setValue("MacOS-Widgets/0.1", forHTTPHeaderField: "User-Agent")
+            let (data, response) = try await session.data(for: request)
+            guard let httpResponse = response as? HTTPURLResponse,
+                  (200..<300).contains(httpResponse.statusCode) else {
+                throw WeatherServiceError.invalidResponse
+            }
+            return try Self.decodeLocations(data: data)
+        } catch let error as WeatherServiceError {
+            throw error
+        } catch {
+            throw WeatherServiceError.requestFailed(error.localizedDescription)
+        }
+    }
+
+    static func geocodingURL(query: String, locale: Locale) throws -> URL {
+        var components = URLComponents(string: "https://geocoding-api.open-meteo.com/v1/search")!
+        components.queryItems = [
+            URLQueryItem(name: "name", value: query),
+            URLQueryItem(name: "count", value: "10"),
+            URLQueryItem(name: "language", value: locale.language.languageCode?.identifier ?? "en"),
+            URLQueryItem(name: "format", value: "json"),
+        ]
+        guard let url = components.url else { throw WeatherServiceError.invalidResponse }
+        return url
+    }
+
+    static func decodeLocations(data: Data) throws -> [WeatherLocation] {
+        let response: GeocodingResponse
+        do {
+            response = try JSONDecoder().decode(GeocodingResponse.self, from: data)
+        } catch {
+            throw WeatherServiceError.invalidData
+        }
+
+        return (response.results ?? []).map { result in
+            WeatherLocation(
+                name: result.name,
+                latitude: result.latitude,
+                longitude: result.longitude,
+                timeZoneIdentifier: result.timezone ?? TimeZone.autoupdatingCurrent.identifier,
+                adminArea: result.adminArea,
+                country: result.country
+            )
+        }
+    }
+}
+
 struct WeatherSnapshotCache: Sendable {
     private static let maximumStaleAge: TimeInterval = 24 * 60 * 60
     private static let maximumStoredEntries = 12
@@ -370,19 +369,6 @@ private extension Array {
     }
 }
 
-private struct GeocodingResponse: Decodable {
-    let results: [GeocodingResult]?
-}
-
-private struct GeocodingResult: Decodable {
-    let name: String
-    let latitude: Double
-    let longitude: Double
-    let timezone: String
-    let admin1: String?
-    let country: String?
-}
-
 private struct ForecastResponse: Decodable {
     let timezone: String
     let current: CurrentForecast
@@ -443,5 +429,27 @@ private struct DailyForecast: Decodable {
         case precipitationProbability = "precipitation_probability_max"
         case weatherCode = "weather_code"
         case windSpeed = "wind_speed_10m_max"
+    }
+}
+
+private struct GeocodingResponse: Decodable {
+    let results: [GeocodingResult]?
+}
+
+private struct GeocodingResult: Decodable {
+    let name: String
+    let latitude: Double
+    let longitude: Double
+    let timezone: String?
+    let adminArea: String?
+    let country: String?
+
+    enum CodingKeys: String, CodingKey {
+        case name
+        case latitude
+        case longitude
+        case timezone
+        case adminArea = "admin1"
+        case country
     }
 }

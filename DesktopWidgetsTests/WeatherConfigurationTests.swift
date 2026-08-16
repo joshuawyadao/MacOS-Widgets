@@ -4,8 +4,48 @@ import WidgetKit
 import XCTest
 
 final class WeatherConfigurationTests: XCTestCase {
+    func testV7StringTransportRoundTripsTheSelectedCity() throws {
+        let tokyo = WeatherLocation(
+            name: "Tokyo",
+            latitude: 35.6762,
+            longitude: 139.6503,
+            timeZoneIdentifier: "Asia/Tokyo",
+            adminArea: "Tokyo",
+            country: "Japan"
+        )
+        let configuration = WeatherV7ConfigurationIntent()
+        configuration.city = WeatherCityChoice.identifier(for: tokyo)
+
+        XCTAssertEqual(configuration.resolvedLocation, tokyo)
+        XCTAssertEqual(WeatherCityChoice.location(for: configuration.city), tokyo)
+    }
+
+    func testLargeForecastUsesExpandedDashboardLayout() {
+        let snapshot = WeatherSnapshot.sample()
+
+        let medium = WeatherWidgetPresentation(
+            date: snapshot.fetchedAt,
+            configuration: .referencePreview(),
+            snapshot: snapshot,
+            state: .loaded,
+            family: .systemMedium,
+            locale: Locale(identifier: "en_US")
+        )
+        let large = WeatherWidgetPresentation(
+            date: snapshot.fetchedAt,
+            configuration: .referencePreview(),
+            snapshot: snapshot,
+            state: .loaded,
+            family: .systemLarge,
+            locale: Locale(identifier: "en_US")
+        )
+
+        XCTAssertFalse(medium.usesExpandedForecastLayout)
+        XCTAssertTrue(large.usesExpandedForecastLayout)
+    }
+
     func testNewConfigurationStartsWithPortlandAndMinimalPreset() {
-        let configuration = PresetWeatherConfigurationIntent()
+        let configuration = WeatherV7ConfigurationIntent()
 
         XCTAssertEqual(configuration.resolvedLocation, .portland)
         XCTAssertEqual(configuration.resolvedDetails, [.temperature])
@@ -13,8 +53,8 @@ final class WeatherConfigurationTests: XCTestCase {
 
     func testConfigurationUsesDocumentedDefaultsAndDefensiveFallbacks() {
         for value in [nil, "unknown-choice"] {
-            let configuration = PresetWeatherConfigurationIntent.referencePreview()
-            configuration.city = nil
+            let configuration = WeatherV7ConfigurationIntent.referencePreview()
+            configuration.city = value
             configuration.viewMode = value
             configuration.temperatureUnit = value
             configuration.detailPreset = value
@@ -38,7 +78,7 @@ final class WeatherConfigurationTests: XCTestCase {
         ]
 
         for preset in WeatherDetailPreset.allCases {
-            let configuration = PresetWeatherConfigurationIntent.referencePreview()
+            let configuration = WeatherV7ConfigurationIntent.referencePreview()
             configuration.detailPreset = preset.rawValue
 
             XCTAssertEqual(configuration.resolvedDetailPreset, preset)
@@ -95,7 +135,7 @@ final class WeatherConfigurationTests: XCTestCase {
 
         for (family, requestedMode, expectedMode, expectedColumns) in expectations {
             let context = "family=\(family), mode=\(requestedMode.rawValue)"
-            let configuration = PresetWeatherConfigurationIntent.referencePreview()
+            let configuration = WeatherV7ConfigurationIntent.referencePreview()
             configuration.viewMode = requestedMode.rawValue
             let presentation = WeatherWidgetPresentation(
                 date: date,
@@ -111,7 +151,83 @@ final class WeatherConfigurationTests: XCTestCase {
         }
     }
 
-    func testWeatherPresentationCoversEveryFamilyModeAndDetailPreset() {
+    func testColumnForecastsUseCompactTemperaturesAndViewSpecificDetailBudgets() {
+        let snapshot = WeatherSnapshot.sample()
+        let expectedWeekLimits: [WidgetFamily: Int] = [
+            .systemSmall: 2,
+            .systemMedium: 2,
+            .systemLarge: 3,
+        ]
+        let expectedDayLimits: [WidgetFamily: Int] = [
+            .systemSmall: 2,
+            .systemMedium: 3,
+            .systemLarge: 5,
+        ]
+
+        for family in [WidgetFamily.systemSmall, .systemMedium, .systemLarge] {
+            let week = WeatherDetailPresentation(preset: .full, family: family, mode: .week)
+            let day = WeatherDetailPresentation(preset: .full, family: family, mode: .day)
+            XCTAssertEqual(week.limit, expectedWeekLimits[family], "week family=\(family)")
+            XCTAssertEqual(day.limit, expectedDayLimits[family], "day family=\(family)")
+        }
+
+        let configuration = WeatherV7ConfigurationIntent.referencePreview()
+        let presentation = WeatherWidgetPresentation(
+            date: snapshot.fetchedAt,
+            configuration: configuration,
+            snapshot: snapshot,
+            state: .loaded,
+            family: .systemMedium,
+            locale: Locale(identifier: "en_US")
+        )
+        let temperature = presentation.metricValues(for: snapshot.daily[0]).first {
+            $0.detail == .temperature
+        }
+        XCTAssertEqual(temperature?.text, "63°")
+        XCTAssertEqual(temperature?.unitSuffix, "F")
+        XCTAssertEqual(temperature?.displayText, "63°F")
+        XCTAssertEqual(temperature?.spokenText, "Temperature 63°F")
+    }
+
+    func testAttributionLinkIsForwardedToTheDefaultBrowser() {
+        XCTAssertEqual(
+            DesktopWidgetsURLRouter.externalURL(for: WeatherWidgetPresentation.attributionURL),
+            WeatherWidgetPresentation.attributionURL
+        )
+        XCTAssertNil(DesktopWidgetsURLRouter.externalURL(for: URL(string: "desktop-widgets://weather")!))
+        XCTAssertEqual(WeatherWidgetPresentation.attributionURL.host(), "open-meteo.com")
+    }
+
+    func testProviderLoadsTheSelectedCityInsteadOfTheDefault() async throws {
+        let root = FileManager.default.temporaryDirectory
+            .appendingPathComponent(UUID().uuidString, isDirectory: true)
+        defer { try? FileManager.default.removeItem(at: root) }
+        let service = RecordingWeatherService()
+        let provider = WeatherProvider(
+            service: service,
+            cache: WeatherSnapshotCache(directoryURL: root)
+        )
+        let configuration = WeatherV7ConfigurationIntent.referencePreview()
+        let tokyo = WeatherLocation(
+            name: "Tokyo",
+            latitude: 35.6762,
+            longitude: 139.6503,
+            timeZoneIdentifier: "Asia/Tokyo",
+            adminArea: "Tokyo",
+            country: "Japan"
+        )
+        configuration.city = WeatherCityChoice.identifier(for: tokyo)
+        let expectedLocation = tokyo
+
+        let entry = await provider.entry(for: configuration, date: Date.now)
+        let requestedLocation = await service.requestedLocation
+
+        XCTAssertEqual(requestedLocation, expectedLocation)
+        XCTAssertEqual(entry.configuration.resolvedLocation, expectedLocation)
+        XCTAssertEqual(entry.snapshot?.locationName, expectedLocation.displayName)
+    }
+
+    func testWeatherPresentationCoversEveryFamilyModeAndDetailPreset() throws {
         let snapshot = WeatherSnapshot.sample()
         let locale = Locale(identifier: "en_US")
 
@@ -119,7 +235,7 @@ final class WeatherConfigurationTests: XCTestCase {
             for mode in WeatherViewMode.allCases {
                 for preset in WeatherDetailPreset.allCases {
                     let context = "family=\(family), mode=\(mode.rawValue), preset=\(preset.rawValue)"
-                    let configuration = PresetWeatherConfigurationIntent.referencePreview()
+                    let configuration = WeatherV7ConfigurationIntent.referencePreview()
                     configuration.viewMode = mode.rawValue
                     configuration.detailPreset = preset.rawValue
                     let presentation = WeatherWidgetPresentation(
@@ -130,16 +246,17 @@ final class WeatherConfigurationTests: XCTestCase {
                         family: family,
                         locale: locale
                     )
+                    let renderedMode = try XCTUnwrap(presentation.renderedMode, context)
+                    let detailLimit = WeatherDetailLimits.maximum(for: family, mode: renderedMode)
 
-                    XCTAssertNotNil(presentation.renderedMode, context)
                     XCTAssertLessThanOrEqual(
                         presentation.detailPresentation.visibleDetails.count,
-                        WeatherDetailLimits.maximum(for: family),
+                        detailLimit,
                         context
                     )
                     XCTAssertEqual(
                         presentation.detailPresentation.hiddenCount,
-                        max(0, preset.details.count - WeatherDetailLimits.maximum(for: family)),
+                        max(0, preset.details.count - detailLimit),
                         context
                     )
                     XCTAssertEqual(
@@ -170,7 +287,7 @@ final class WeatherConfigurationTests: XCTestCase {
 
     func testWeatherPresentationRepresentsStaleFailureAndEmptyHourFallbackStates() {
         let snapshot = WeatherSnapshot.sample()
-        let configuration = PresetWeatherConfigurationIntent.referencePreview()
+        let configuration = WeatherV7ConfigurationIntent.referencePreview()
         configuration.viewMode = WeatherViewMode.hour.rawValue
 
         let stale = WeatherWidgetPresentation(
@@ -236,17 +353,13 @@ final class WeatherConfigurationTests: XCTestCase {
         XCTAssertFalse(days.contains(snapshot.daily[0]))
     }
 
-    func testCityEntitiesRoundTripWithoutAnotherNetworkLookup() async throws {
-        let portland = WeatherLocationEntity.portland
-        let restored = try await WeatherLocationQuery().entities(for: [portland.id])
-        let suggestions = try await WeatherLocationQuery().suggestedEntities()
-
-        XCTAssertEqual(restored, [portland])
-        XCTAssertEqual(suggestions.first, portland)
-        XCTAssertTrue(suggestions.contains { $0.location.name == "Tokyo" })
-    }
-
     func testOptionsProvidersReturnStableIDsAndDefaults() async throws {
+        let cities = try await WeatherCityOptionsProvider().results()
+        let defaultCity = await WeatherCityOptionsProvider().defaultResult()
+        XCTAssertEqual(cities.items.count, WeatherCityChoice.suggestions.count)
+        XCTAssertEqual(defaultCity, WeatherCityChoice.identifier(for: .portland))
+        XCTAssertEqual(WeatherCityChoice.location(for: defaultCity), .portland)
+
         let modes = try await WeatherViewModeOptionsProvider().results()
         let defaultMode = await WeatherViewModeOptionsProvider().defaultResult()
         XCTAssertEqual(Set(modes.items), Set(WeatherViewMode.allCases.map(\.rawValue)))
@@ -347,11 +460,6 @@ final class WeatherConfigurationTests: XCTestCase {
     }
 
     func testRequestURLsIncludeCityUnitsAndAllDetailVariables() throws {
-        let geocodingURL = try OpenMeteoWeatherService.geocodingURL(city: "Portland, Oregon")
-        let geocodingItems = URLComponents(url: geocodingURL, resolvingAgainstBaseURL: false)?.queryItems ?? []
-        XCTAssertEqual(geocodingItems.first(where: { $0.name == "name" })?.value, "Portland, Oregon")
-        XCTAssertEqual(geocodingItems.first(where: { $0.name == "count" })?.value, "8")
-
         let location = WeatherLocation(
             name: "Portland",
             latitude: 45.52345,
@@ -379,14 +487,27 @@ final class WeatherConfigurationTests: XCTestCase {
         XCTAssertEqual(items.first(where: { $0.name == "timeformat" })?.value, "unixtime")
     }
 
-    func testGeocodingResultsBecomeDistinctSearchableCityChoices() throws {
-        let locations = try OpenMeteoWeatherService.decodeLocations(data: Data(Self.locationFixture.utf8))
+    func testGeocodingRequestAndResponseProvideSelectableCityCoordinates() throws {
+        let url = try OpenMeteoLocationSearchService.geocodingURL(
+            query: "Portland",
+            locale: Locale(identifier: "en_US")
+        )
+        let items = URLComponents(url: url, resolvingAgainstBaseURL: false)?.queryItems ?? []
+        XCTAssertEqual(url.host(), "geocoding-api.open-meteo.com")
+        XCTAssertEqual(items.first(where: { $0.name == "name" })?.value, "Portland")
+        XCTAssertEqual(items.first(where: { $0.name == "count" })?.value, "10")
 
+        let locations = try OpenMeteoLocationSearchService.decodeLocations(
+            data: Data(Self.geocodingFixture.utf8)
+        )
         XCTAssertEqual(locations.count, 2)
         XCTAssertEqual(locations[0], .portland)
-        XCTAssertEqual(locations[0].displayName, "Portland, Oregon, United States")
-        XCTAssertEqual(locations[0].qualifier, "Oregon, United States")
-        XCTAssertEqual(locations[1].displayName, "Portland, Maine, United States")
+        XCTAssertEqual(locations[1].name, "Portland")
+        XCTAssertEqual(locations[1].adminArea, "Maine")
+        XCTAssertNotEqual(
+            WeatherCityChoice.identifier(for: locations[0]),
+            WeatherCityChoice.identifier(for: locations[1])
+        )
     }
 
     func testForecastDecodingNormalizesCurrentHourlyAndDailyData() throws {
@@ -554,7 +675,7 @@ final class WeatherConfigurationTests: XCTestCase {
     }
     """
 
-    private static let locationFixture = """
+    private static let geocodingFixture = """
     {
       "results": [
         {
@@ -567,8 +688,8 @@ final class WeatherConfigurationTests: XCTestCase {
         },
         {
           "name": "Portland",
-          "latitude": 43.6591,
-          "longitude": -70.2568,
+          "latitude": 43.65737,
+          "longitude": -70.2589,
           "timezone": "America/New_York",
           "admin1": "Maine",
           "country": "United States"
@@ -576,6 +697,7 @@ final class WeatherConfigurationTests: XCTestCase {
       ]
     }
     """
+
 }
 
 private struct StubWeatherService: WeatherServing {
@@ -583,5 +705,28 @@ private struct StubWeatherService: WeatherServing {
 
     func forecast(location: WeatherLocation, unit: WeatherTemperatureUnit, locale: Locale) async throws -> WeatherSnapshot {
         try result.get()
+    }
+}
+
+private actor RecordingWeatherService: WeatherServing {
+    private(set) var requestedLocation: WeatherLocation?
+
+    func forecast(
+        location: WeatherLocation,
+        unit: WeatherTemperatureUnit,
+        locale: Locale
+    ) async throws -> WeatherSnapshot {
+        requestedLocation = location
+        let sample = WeatherSnapshot.sample()
+        return WeatherSnapshot(
+            locationName: location.displayName,
+            providerID: sample.providerID,
+            timeZoneIdentifier: location.timeZoneIdentifier,
+            fetchedAt: sample.fetchedAt,
+            unit: unit.resolved(for: locale),
+            current: sample.current,
+            hourly: sample.hourly,
+            daily: sample.daily
+        )
     }
 }

@@ -110,12 +110,12 @@ struct ContentView: View {
                 CustomizationItem(
                     symbol: "building.2",
                     title: "City",
-                    detail: "Start typing, then select the right city from the matching suggestions."
+                    detail: "Type at least two letters in Search City, then open Matching City and choose the right suggestion."
                 )
                 CustomizationItem(
                     symbol: "calendar.day.timeline.leading",
                     title: "Forecast view",
-                    detail: "Switch between the week, today, and the next six hours."
+                    detail: "Switch between the week, today, and the next six hours. Large widgets add an expanded current-weather dashboard."
                 )
                 CustomizationItem(
                     symbol: "thermometer.medium",
@@ -141,7 +141,7 @@ struct ContentView: View {
                 Text("Weather detail presets")
                     .font(.headline)
 
-                Text("Minimal, Simple, Rain, and Comfort fit Small. Detailed is designed for Medium or Large, and Full is designed for Large. If a preset is larger than the widget, it keeps the first details that fit and shows a “Showing X of Y” notice.")
+                Text("Day view fits 2 details on Small, 3 on Medium, and 5 on Large. Week and Hour use tighter limits of 2 on Small or Medium and 3 on Large so forecast columns stay readable. Larger presets keep the first details that fit and show a “Showing X of Y” notice.")
                     .font(.callout)
                     .foregroundStyle(.secondary)
             }

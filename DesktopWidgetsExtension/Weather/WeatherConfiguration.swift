@@ -61,6 +61,7 @@ enum WeatherResolvedUnit: String, Codable, Sendable {
 
     var temperatureAPIValue: String { self == .fahrenheit ? "fahrenheit" : "celsius" }
     var temperatureSymbol: String { self == .fahrenheit ? "°F" : "°C" }
+    var temperatureSuffix: String { self == .fahrenheit ? "F" : "C" }
     var windAPIValue: String { self == .celsius ? "kmh" : "mph" }
     var windSymbol: String { self == .celsius ? "km/h" : "mph" }
     var precipitationAPIValue: String { self == .fahrenheit ? "inch" : "mm" }
@@ -88,8 +89,8 @@ enum WeatherDetailPreset: String, CaseIterable, Hashable, Sendable, WeatherStrin
         case .simple: "Simple — Temperature + Condition"
         case .rain: "Rain — Temperature + Rain chance"
         case .comfort: "Comfort — Temperature + Humidity"
-        case .detailed: "Detailed — 3 details · Medium or Large"
-        case .full: "Full — All 5 details · Large"
+        case .detailed: "Detailed — 3 details · Large or Medium Day"
+        case .full: "Full — All 5 details · Large Day"
         }
     }
 
@@ -121,8 +122,19 @@ enum WeatherDetailLimits {
         return details.filter { seen.insert($0.rawValue).inserted }.prefix(maximum).map { $0 }
     }
 
-    static func maximum(for family: WidgetFamily) -> Int {
-        switch family {
+    static func maximum(for family: WidgetFamily, mode: WeatherViewMode = .day) -> Int {
+        if mode != .day {
+            switch family {
+            case .systemSmall, .systemMedium:
+                return 2
+            case .systemLarge:
+                return 3
+            default:
+                return 2
+            }
+        }
+
+        return switch family {
         case .systemSmall:
             small
         case .systemMedium:
@@ -144,108 +156,90 @@ struct WeatherDetailPresentation: Equatable, Sendable {
         max(0, totalCount - visibleDetails.count)
     }
 
-    init(preset: WeatherDetailPreset, family: WidgetFamily) {
+    init(
+        preset: WeatherDetailPreset,
+        family: WidgetFamily,
+        mode: WeatherViewMode = .day
+    ) {
         let details = preset.details
-        let limit = WeatherDetailLimits.maximum(for: family)
+        let limit = WeatherDetailLimits.maximum(for: family, mode: mode)
         self.visibleDetails = WeatherDetailLimits.limited(details, maximum: limit)
         self.totalCount = details.count
         self.limit = limit
     }
 }
 
-struct WeatherLocationEntity: AppEntity, Hashable {
-    static let typeDisplayRepresentation: TypeDisplayRepresentation = "City"
-    static let defaultQuery = WeatherLocationQuery()
-
-    let location: WeatherLocation
-
-    var id: String {
-        guard let data = try? JSONEncoder().encode(location) else { return location.displayName }
-        return data.base64EncodedString()
-    }
-
-    var displayRepresentation: DisplayRepresentation {
-        DisplayRepresentation(
-            title: "\(location.name)",
-            subtitle: "\(location.qualifier)"
-        )
-    }
-
-    init(location: WeatherLocation) {
-        self.location = location
-    }
-
-    init?(id: String) {
-        guard let data = Data(base64Encoded: id),
-              let location = try? JSONDecoder().decode(WeatherLocation.self, from: data) else {
-            return nil
-        }
-        self.location = location
-    }
-
-    static let portland = Self(location: .portland)
-
-    static let suggestions: [Self] = [
+enum WeatherCityChoice {
+    static let suggestions: [WeatherLocation] = [
         .portland,
-        Self(location: WeatherLocation(
+        WeatherLocation(
             name: "Seattle",
             latitude: 47.6062,
             longitude: -122.3321,
             timeZoneIdentifier: "America/Los_Angeles",
             adminArea: "Washington",
             country: "United States"
-        )),
-        Self(location: WeatherLocation(
+        ),
+        WeatherLocation(
             name: "New York",
             latitude: 40.7128,
             longitude: -74.0060,
             timeZoneIdentifier: "America/New_York",
             adminArea: "New York",
             country: "United States"
-        )),
-        Self(location: WeatherLocation(
+        ),
+        WeatherLocation(
             name: "London",
             latitude: 51.5074,
             longitude: -0.1278,
             timeZoneIdentifier: "Europe/London",
             adminArea: "England",
             country: "United Kingdom"
-        )),
-        Self(location: WeatherLocation(
+        ),
+        WeatherLocation(
             name: "Tokyo",
             latitude: 35.6762,
             longitude: 139.6503,
             timeZoneIdentifier: "Asia/Tokyo",
             adminArea: "Tokyo",
             country: "Japan"
-        )),
+        ),
     ]
-}
 
-struct WeatherLocationQuery: EntityStringQuery {
-    init() {}
-
-    func entities(for identifiers: [WeatherLocationEntity.ID]) async throws -> [WeatherLocationEntity] {
-        identifiers.compactMap(WeatherLocationEntity.init(id:))
+    static func identifier(for location: WeatherLocation) -> String {
+        let encoder = JSONEncoder()
+        encoder.outputFormatting = [.sortedKeys]
+        return (try? encoder.encode(location).base64EncodedString()) ?? ""
     }
 
-    func suggestedEntities() async throws -> [WeatherLocationEntity] {
-        WeatherLocationEntity.suggestions
-    }
-
-    func entities(matching string: String) async throws -> [WeatherLocationEntity] {
-        let query = string.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard query.count >= 2 else {
-            return WeatherLocationEntity.suggestions.filter {
-                $0.location.displayName.localizedCaseInsensitiveContains(query)
-            }
+    static func location(for identifier: String?) -> WeatherLocation? {
+        guard let identifier,
+              let data = Data(base64Encoded: identifier),
+              let location = try? JSONDecoder().decode(WeatherLocation.self, from: data) else {
+            return nil
         }
+        return location
+    }
 
-        let matches = try await OpenMeteoLocationSearchService().locations(
-            matching: query,
-            locale: .autoupdatingCurrent
+    static func collection(for locations: [WeatherLocation]) -> IntentItemCollection<String> {
+        IntentItemCollection(
+            promptLabel: "Choose a matching city",
+            sections: [
+                IntentItemSection(
+                    items: locations.map { location in
+                        let title: LocalizedStringResource = "\(location.name)"
+                        let subtitle: LocalizedStringResource? = location.qualifier.isEmpty
+                            ? nil
+                            : "\(location.qualifier)"
+                        return IntentItem(
+                            identifier(for: location),
+                            title: title,
+                            subtitle: subtitle
+                        )
+                    }
+                )
+            ]
         )
-        return matches.map(WeatherLocationEntity.init(location:))
     }
 }
 
@@ -297,15 +291,52 @@ struct WeatherDetailPresetOptionsProvider: DynamicOptionsProvider {
     }
 }
 
-struct PresetWeatherConfigurationIntent: WidgetConfigurationIntent {
+struct WeatherCityOptionsProvider: DynamicOptionsProvider {
+    @IntentParameterDependency<WeatherV7ConfigurationIntent>(\.$citySearch)
+    private var intent
+
+    func results() async throws -> IntentItemCollection<String> {
+        let query = intent?.citySearch
+            .trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        guard query.count >= 2 else {
+            return WeatherCityChoice.collection(for: WeatherCityChoice.suggestions)
+        }
+
+        do {
+            let matches = try await OpenMeteoLocationSearchService().locations(
+                matching: query,
+                locale: .autoupdatingCurrent
+            )
+            return WeatherCityChoice.collection(for: matches)
+        } catch {
+            let localMatches = WeatherCityChoice.suggestions.filter {
+                $0.displayName.localizedCaseInsensitiveContains(query)
+            }
+            return WeatherCityChoice.collection(for: localMatches)
+        }
+    }
+
+    func defaultResult() async -> String? {
+        WeatherCityChoice.identifier(for: .portland)
+    }
+}
+
+struct WeatherV7ConfigurationIntent: WidgetConfigurationIntent {
     static let title: LocalizedStringResource = "Customize Weather"
-    static let description = IntentDescription("Search for a city, choose a forecast view, and apply a group of weather details in one click.")
+    static let description = IntentDescription("Type a city, choose its matching result, select a forecast view, and apply a group of weather details in one click.")
 
     @Parameter(
-        title: "City",
-        description: "Start typing, then choose the matching city from the list. Portland is used until you choose one."
+        title: "Search City",
+        description: "Type at least two letters, then open Matching City to see suggestions."
     )
-    var city: WeatherLocationEntity?
+    var citySearch: String?
+
+    @Parameter(
+        title: "Matching City",
+        description: "Choose the exact city from the results for your search.",
+        optionsProvider: WeatherCityOptionsProvider()
+    )
+    var city: String?
 
     @Parameter(title: "Forecast View", optionsProvider: WeatherViewModeOptionsProvider())
     var viewMode: String?
@@ -315,18 +346,19 @@ struct PresetWeatherConfigurationIntent: WidgetConfigurationIntent {
 
     @Parameter(
         title: "Details Preset",
-        description: "One click applies the whole group. Small shows 2 details, Medium 3, and Large 5.",
+        description: "One click applies the whole group. Day supports 2, 3, or 5 details by size; Week and Hour use tighter limits.",
         optionsProvider: WeatherDetailPresetOptionsProvider()
     )
     var detailPreset: String?
 
     init() {
-        city = .portland
+        citySearch = "Portland"
+        city = WeatherCityChoice.identifier(for: .portland)
         detailPreset = WeatherDetailPreset.minimal.rawValue
     }
 
     var resolvedLocation: WeatherLocation {
-        city?.location ?? .portland
+        WeatherCityChoice.location(for: city) ?? .portland
     }
 
     var resolvedCity: String {

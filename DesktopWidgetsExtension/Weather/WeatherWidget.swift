@@ -2,104 +2,6 @@ import AppIntents
 import SwiftUI
 import WidgetKit
 
-struct WeatherEntry: TimelineEntry {
-    let date: Date
-    let configuration: PresetWeatherConfigurationIntent
-    let snapshot: WeatherSnapshot?
-    let state: WeatherEntryState
-}
-
-struct WeatherProvider: AppIntentTimelineProvider {
-    private let service: any WeatherServing
-    private let cache: WeatherSnapshotCache
-
-    init(
-        service: any WeatherServing = OpenMeteoWeatherService(),
-        cache: WeatherSnapshotCache = WeatherSnapshotCache()
-    ) {
-        self.service = service
-        self.cache = cache
-    }
-
-    func placeholder(in context: Context) -> WeatherEntry {
-        WeatherEntry(
-            date: .now,
-            configuration: .referencePreview(),
-            snapshot: .sample(),
-            state: .loaded
-        )
-    }
-
-    func snapshot(
-        for configuration: PresetWeatherConfigurationIntent,
-        in context: Context
-    ) async -> WeatherEntry {
-        if context.isPreview {
-            return WeatherEntry(
-                date: .now,
-                configuration: configuration,
-                snapshot: .sample(),
-                state: .loaded
-            )
-        }
-        return await loadEntry(configuration: configuration, date: .now)
-    }
-
-    func timeline(
-        for configuration: PresetWeatherConfigurationIntent,
-        in context: Context
-    ) async -> Timeline<WeatherEntry> {
-        let now = Date.now
-        let loaded = await loadEntry(configuration: configuration, date: now)
-
-        switch loaded.state {
-        case let .failed(_, retryable):
-            return Timeline(
-                entries: [loaded],
-                policy: retryable ? .after(now.addingTimeInterval(30 * 60)) : .never
-            )
-        case .loaded, .stale:
-            let dates = WeatherTimelinePolicy.dates(
-                startingAt: now,
-                count: 7,
-                timeZone: loaded.snapshot?.timeZone ?? .autoupdatingCurrent
-            )
-            let entries = dates.map { date in
-                WeatherEntry(
-                    date: date,
-                    configuration: configuration,
-                    snapshot: loaded.snapshot,
-                    state: loaded.state
-                )
-            }
-            return Timeline(entries: entries, policy: .after(now.addingTimeInterval(60 * 60)))
-        }
-    }
-
-    private func loadEntry(configuration: PresetWeatherConfigurationIntent, date: Date) async -> WeatherEntry {
-        let outcome = await WeatherLoader(service: service, cache: cache).load(
-            location: configuration.resolvedLocation,
-            unit: configuration.resolvedTemperatureUnit,
-            locale: .autoupdatingCurrent
-        )
-
-        switch outcome {
-        case let .fresh(snapshot):
-            return WeatherEntry(date: date, configuration: configuration, snapshot: snapshot, state: .loaded)
-        case let .stale(snapshot, message):
-            return WeatherEntry(date: date, configuration: configuration, snapshot: snapshot, state: .stale(message))
-        case let .failed(message, retryable):
-            return WeatherEntry(
-                date: date,
-                configuration: configuration,
-                snapshot: nil,
-                state: .failed(message, retryable: retryable)
-            )
-        }
-    }
-
-}
-
 struct WeatherWidgetView: View {
     @Environment(\.widgetFamily) private var family
     @Environment(\.widgetRenderingMode) private var renderingMode
@@ -145,9 +47,21 @@ struct WeatherWidgetView: View {
             case let .day(current, forecast):
                 dayView(current: current, forecast: forecast, snapshot: snapshot)
             case let .week(days):
-                weekView(days)
+                if presentation.usesExpandedForecastLayout {
+                    expandedForecastDashboard(snapshot: snapshot) {
+                        weekView(days)
+                    }
+                } else {
+                    weekView(days)
+                }
             case let .hour(hours):
-                hourView(hours)
+                if presentation.usesExpandedForecastLayout {
+                    expandedForecastDashboard(snapshot: snapshot) {
+                        hourView(hours)
+                    }
+                } else {
+                    hourView(hours)
+                }
             case .failure:
                 failureView
             }
@@ -159,27 +73,29 @@ struct WeatherWidgetView: View {
             if hiddenDetailCount > 0 {
                 detailLimitNotice
             }
+
+            if family == .systemSmall {
+                HStack {
+                    Spacer(minLength: 0)
+                    attributionControl(compact: true)
+                }
+            }
         }
         .accessibilityElement(children: .contain)
     }
 
     private var header: some View {
         HStack(alignment: .firstTextBaseline, spacing: 8) {
-            Text(presentation.locationName)
+            Text(headerLocationName)
                 .font(.system(size: family == .systemSmall ? 14 : 17, weight: .medium, design: .monospaced))
                 .lineLimit(1)
                 .minimumScaleFactor(0.7)
                 .accessibilityLabel("Weather for \(presentation.locationName)")
 
-            Spacer(minLength: 4)
-
-            Link(destination: WeatherWidgetPresentation.attributionURL) {
-                Text("Open-Meteo")
-                    .font(.system(size: 8, weight: .medium))
-                    .underline()
-                    .opacity(0.82)
+            if family != .systemSmall {
+                Spacer(minLength: 4)
+                attributionControl(compact: true)
             }
-            .accessibilityLabel("Weather data by Open-Meteo")
         }
     }
 
@@ -213,6 +129,77 @@ struct WeatherWidgetView: View {
         }
     }
 
+    private func expandedForecastDashboard<ForecastContent: View>(
+        snapshot: WeatherSnapshot,
+        @ViewBuilder forecastContent: () -> ForecastContent
+    ) -> some View {
+        VStack(spacing: 12) {
+            expandedCurrentSummary(snapshot)
+
+            Divider()
+                .overlay(Color.white.opacity(0.3))
+
+            forecastContent()
+                .frame(maxHeight: .infinity, alignment: .center)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+
+    private func expandedCurrentSummary(_ snapshot: WeatherSnapshot) -> some View {
+        let hourlyPoint = snapshot.hourly.last(where: { $0.date <= entry.date })
+        let current = if let hourlyPoint, hourlyPoint.date > snapshot.current.date {
+            hourlyPoint
+        } else {
+            snapshot.current
+        }
+        let details = presentation.metricValues(for: current)
+        let forecast = snapshot.dailyForecast(for: entry.date)
+
+        return HStack(alignment: .center, spacing: 16) {
+            Image(systemName: current.condition.symbolName)
+                .symbolRenderingMode(.multicolor)
+                .font(.system(size: 58))
+                .frame(width: 72, height: 72)
+                .widgetAccentable()
+
+            VStack(alignment: .leading, spacing: 3) {
+                if let temperature = details.first(where: { $0.detail == .temperature }) {
+                    temperatureLabel(temperature, size: 50)
+                }
+
+                Text(current.condition.displayName)
+                    .font(.system(size: 15, weight: .bold, design: .rounded))
+                    .lineLimit(1)
+
+                if let forecast {
+                    Text(
+                        "High \(WeatherValueFormatter.temperature(forecast.highTemperature, unit: snapshot.unit, includeUnit: false))  ·  Low \(WeatherValueFormatter.temperature(forecast.lowTemperature, unit: snapshot.unit, includeUnit: false))"
+                    )
+                    .font(.caption.weight(.semibold))
+                    .monospacedDigit()
+                }
+            }
+
+            Spacer(minLength: 8)
+
+            VStack(alignment: .trailing, spacing: 8) {
+                ForEach(details.filter { $0.detail != .temperature && $0.detail != .condition }) { value in
+                    Label(value.text, systemImage: value.symbolName)
+                        .font(.system(size: 13, weight: .semibold, design: .rounded))
+                        .lineLimit(1)
+                }
+            }
+        }
+        .frame(maxWidth: .infinity)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(
+            (["Current weather", current.condition.displayName] + details
+                .filter { $0.detail != .condition }
+                .map(\.spokenText))
+                .joined(separator: ", ")
+        )
+    }
+
     private func dayView(
         current: WeatherPoint,
         forecast: DailyWeather?,
@@ -240,12 +227,11 @@ struct WeatherWidgetView: View {
             Spacer(minLength: 0)
 
             VStack(alignment: .trailing, spacing: 5) {
-                if visibleDetails.contains(.temperature) {
-                    Text(WeatherValueFormatter.temperature(current.temperature, unit: snapshot.unit))
-                        .font(.system(size: family == .systemLarge ? 58 : 38, weight: .bold, design: .rounded))
-                        .monospacedDigit()
-                        .minimumScaleFactor(0.65)
-                        .lineLimit(1)
+                if let temperature = details.first(where: { $0.detail == .temperature }) {
+                    temperatureLabel(
+                        temperature,
+                        size: family == .systemLarge ? 58 : (family == .systemSmall ? 34 : 38)
+                    )
 
                     if let forecast {
                         Text(
@@ -295,15 +281,10 @@ struct WeatherWidgetView: View {
 
             ForEach(values) { value in
                 if value.detail == .temperature {
-                    Text(value.text)
-                        .font(
-                            .system(
-                                size: family == .systemLarge ? 18 : (spacious ? 21 : 15),
-                                weight: .bold,
-                                design: .rounded
-                            )
-                        )
-                        .monospacedDigit()
+                    temperatureLabel(
+                        value,
+                        size: family == .systemLarge ? 21 : (spacious ? 20 : 15)
+                    )
                 } else {
                     metricLabel(value)
                 }
@@ -324,6 +305,24 @@ struct WeatherWidgetView: View {
         .font(.system(size: family == .systemLarge ? 11 : 9, weight: .semibold, design: .rounded))
         .lineLimit(1)
         .minimumScaleFactor(0.7)
+    }
+
+    private func temperatureLabel(
+        _ value: WeatherMetricValue,
+        size: CGFloat
+    ) -> some View {
+        Text(value.displayText)
+            .font(.system(size: size, weight: .bold, design: .rounded))
+            .monospacedDigit()
+            .lineLimit(1)
+            .minimumScaleFactor(0.55)
+            .fixedSize(horizontal: false, vertical: true)
+    }
+
+    private var headerLocationName: String {
+        guard family == .systemSmall else { return presentation.locationName }
+        return presentation.locationName.split(separator: ",", maxSplits: 1).first.map(String.init)
+            ?? presentation.locationName
     }
 
     private func staleLabel(_ snapshot: WeatherSnapshot) -> some View {
@@ -380,11 +379,24 @@ struct WeatherWidgetView: View {
                     .fixedSize(horizontal: false, vertical: true)
             }
 
-            Link("Weather data by Open-Meteo", destination: WeatherWidgetPresentation.attributionURL)
-                .font(.system(size: 9))
-                .underline()
+            attributionControl(compact: false)
         }
         .accessibilityElement(children: .combine)
+    }
+
+    @ViewBuilder
+    private func attributionControl(compact: Bool) -> some View {
+        Link(destination: WeatherWidgetPresentation.attributionURL) {
+            attributionLabel(compact: compact)
+        }
+        .accessibilityLabel("Weather data by Open-Meteo")
+    }
+
+    private func attributionLabel(compact: Bool) -> some View {
+        Text(compact ? "Open-Meteo" : "Weather data by Open-Meteo")
+            .font(.system(size: compact ? 8 : 9, weight: .medium))
+            .underline()
+            .opacity(compact ? 0.82 : 1)
     }
 
 }
@@ -395,7 +407,7 @@ struct WeatherWidget: Widget {
     var body: some WidgetConfiguration {
         AppIntentConfiguration(
             kind: Self.kind,
-            intent: PresetWeatherConfigurationIntent.self,
+            intent: WeatherV7ConfigurationIntent.self,
             provider: WeatherProvider()
         ) { entry in
             WeatherWidgetView(entry: entry)
@@ -429,8 +441,8 @@ struct WeatherWidget: Widget {
     )
 }
 
-private var weatherDayPreviewConfiguration: PresetWeatherConfigurationIntent {
-    let configuration = PresetWeatherConfigurationIntent.referencePreview()
+private var weatherDayPreviewConfiguration: WeatherV7ConfigurationIntent {
+    let configuration = WeatherV7ConfigurationIntent.referencePreview()
     configuration.viewMode = WeatherViewMode.day.rawValue
     configuration.detailPreset = WeatherDetailPreset.comfort.rawValue
     return configuration
