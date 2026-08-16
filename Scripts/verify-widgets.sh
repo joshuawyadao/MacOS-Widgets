@@ -2,11 +2,38 @@
 
 set -euo pipefail
 
+resolve_developer_dir() {
+    if [[ -n "${XCODE_DEVELOPER_DIR:-}" ]]; then
+        echo "$XCODE_DEVELOPER_DIR"
+        return
+    fi
+
+    if [[ -n "${DEVELOPER_DIR:-}" ]]; then
+        echo "$DEVELOPER_DIR"
+        return
+    fi
+
+    local system_selected
+    system_selected="$(xcode-select --print-path 2>/dev/null || true)"
+    if [[ -x "$system_selected/usr/bin/xcodebuild" ]]; then
+        echo "$system_selected"
+        return
+    fi
+
+    if [[ -x "/Applications/Xcode.app/Contents/Developer/usr/bin/xcodebuild" ]]; then
+        echo "/Applications/Xcode.app/Contents/Developer"
+        return
+    fi
+
+    echo "FAIL: Select a full Xcode installation or set DEVELOPER_DIR." >&2
+    return 1
+}
+
 readonly SCRIPT_DIRECTORY="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 readonly PROJECT_ROOT="$(cd "$SCRIPT_DIRECTORY/.." && pwd)"
 readonly PROJECT_PATH="$PROJECT_ROOT/DesktopWidgets.xcodeproj"
 readonly SCHEME="DesktopWidgets"
-readonly XCODE_DEVELOPER_DIR="${XCODE_DEVELOPER_DIR:-/Applications/Xcode.app/Contents/Developer}"
+readonly SELECTED_DEVELOPER_DIR="$(resolve_developer_dir)"
 readonly VERIFY_DIRECTORY="$(mktemp -d "${TMPDIR:-/tmp}/desktop-widgets-verify.XXXXXX")"
 readonly DERIVED_DATA_PATH="$VERIFY_DIRECTORY/DerivedData"
 
@@ -44,7 +71,7 @@ require_contains() {
 }
 
 echo "[1/3] Running the complete Debug test suite"
-DEVELOPER_DIR="$XCODE_DEVELOPER_DIR" xcodebuild test -quiet \
+DEVELOPER_DIR="$SELECTED_DEVELOPER_DIR" xcodebuild test -quiet \
     -project "$PROJECT_PATH" \
     -scheme "$SCHEME" \
     -configuration Debug \
@@ -53,7 +80,7 @@ DEVELOPER_DIR="$XCODE_DEVELOPER_DIR" xcodebuild test -quiet \
     CODE_SIGNING_ALLOWED=NO
 
 echo "[2/3] Building a fresh unsigned Release app and widget extension"
-DEVELOPER_DIR="$XCODE_DEVELOPER_DIR" xcodebuild build -quiet \
+DEVELOPER_DIR="$SELECTED_DEVELOPER_DIR" xcodebuild build -quiet \
     -project "$PROJECT_PATH" \
     -scheme "$SCHEME" \
     -configuration Release \
