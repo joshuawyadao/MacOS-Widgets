@@ -12,7 +12,7 @@ Deepen the existing verification gate so it checks the content each widget will 
 - [x] Add a Time & Date presentation contract and make the SwiftUI view consume its layout adaptation, formatted date/time/period, and combined accessibility label.
 - [x] Test all family/layout combinations and all family/date-format/time-format combinations.
 - [x] Run the complete verification gate from fresh build artifacts and record the result (37 tests plus Release bundle and metadata checks passed on August 16, 2026).
-- [ ] Save the isolated feature branch and complete the PR review cycle against the Weather feature branch.
+- [x] Save the isolated feature branch and complete PR #3's review cycle against the Weather feature branch (Brooks 100/100, Codex found no major issues, and CI Verify passed).
 
 ## Open questions
 - None. The remaining acceptance checks exercise operating-system UI or visual behavior that XCTest cannot control reliably.
