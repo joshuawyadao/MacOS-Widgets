@@ -14,9 +14,9 @@ The Weather widget recreates the supplied reference's quiet visual rhythm: a mon
 | City | Start typing at least two characters, then select a matching city from the suggestion list. Each result includes its region and country so similarly named cities are easy to distinguish. Portland, Oregon is the default. |
 | Forecast View | **Week** shows seven days on medium and large widgets; a small widget focuses on today. **Day** shows current conditions and today's high/low. **Hour** shows the next six hours, or three on a small widget. |
 | Temperature Units | **Automatic** follows the Mac's regional temperature and wind conventions. Explicit Fahrenheit uses mph; explicit Celsius uses km/h. |
-| Details | Open one selectable list and click Temperature, Condition, Humidity, Chance of rain, or Wind to check or uncheck it. The list allows 2 choices on Small, 3 on Medium, and all 5 on Large. |
+| Details Preset | Apply several details with one selection: **Minimal** (Temperature), **Simple** (Temperature + Condition), **Rain** (Temperature + Rain chance), **Comfort** (Temperature + Humidity), **Detailed** (Temperature + Condition + Humidity), or **Full** (all five details). |
 
-The native editor enforces a minimum of one detail and the maximum for the widget's current size. If a configured widget is later resized smaller, the widget keeps the first choices that fit and displays a compact **Showing X of Y · Size limit N** notice. Temperature is the defensive fallback if macOS restores an empty or invalid configuration.
+Minimal, Simple, Rain, and Comfort fit Small widgets. Detailed is intended for Medium or Large, and Full is intended for Large. If a preset contains more than the current size can display, the widget keeps the first 2 details on Small or first 3 on Medium and displays a compact **Showing X of Y · Size limit N** notice. Minimal is the defensive fallback if macOS restores an empty or invalid configuration.
 
 Each placed widget owns its configuration. One instance can show Portland's week in Fahrenheit while another shows Tokyo's next six hours in Celsius.
 
@@ -50,13 +50,13 @@ Apple WeatherKit was not selected because Apple's [WeatherKit account setup](htt
 
 ## Desktop acceptance checklist
 
-Automated tests cover stable configuration defaults, searchable city identity, detail-list choices and limits, request construction, response decoding, WMO mapping, unit formatting, city errors, and cached forecast round trips. WidgetKit's editor, network sandbox, and final layout still need a short desktop check:
+Automated tests cover stable configuration defaults, searchable city identity, every detail preset, size limits, request construction, response decoding, WMO mapping, unit formatting, city errors, and cached forecast round trips. WidgetKit's editor, network sandbox, and final layout still need a short desktop check:
 
 - [ ] Run the app once, add Weather in small, medium, and large sizes, and confirm Portland data loads.
 - [ ] Type part of a city name, confirm suggestions appear with region/country qualifiers, select one, and confirm it appears instead of Portland.
 - [ ] Switch among Week, Day, and Hour and confirm each presentation changes immediately.
-- [ ] Click details in the single selection list and confirm Small stops at 2, Medium at 3, and Large at 5.
-- [ ] Configure a Large widget with 5 details, resize it to Small, and confirm only 2 render alongside a **Showing 2 of 5** notice.
+- [ ] Select each Details Preset and confirm the whole group applies with one selection.
+- [ ] Choose Full on a Large widget, resize it to Small, and confirm only 2 details render alongside a **Showing 2 of 5** notice.
 - [ ] Disconnect networking after one successful load and confirm the saved forecast plus last-updated label appears.
 - [ ] Search for a clearly invalid city and confirm no result can replace the widget's existing selection.
 - [ ] Verify the Open-Meteo link is visible and opens the provider site.

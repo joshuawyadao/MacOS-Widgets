@@ -123,9 +123,9 @@ struct ContentView: View {
                     detail: "Match this Mac automatically or choose Fahrenheit or Celsius."
                 )
                 CustomizationItem(
-                    symbol: "checklist",
-                    title: "Details",
-                    detail: "Click the details you want in one list. The allowed count follows the widget size."
+                    symbol: "square.stack.3d.up",
+                    title: "Details preset",
+                    detail: "Apply a useful group such as Simple, Rain, Comfort, Detailed, or Full with one click."
                 )
             }
         }
@@ -138,10 +138,10 @@ struct ContentView: View {
                 .foregroundStyle(WidgetTheme.accent)
 
             VStack(alignment: .leading, spacing: 4) {
-                Text("Weather detail limits")
+                Text("Weather detail presets")
                     .font(.headline)
 
-                Text("Choose up to 2 details on Small, 3 on Medium, or 5 on Large. The editor prevents extra selections. If you resize a configured widget smaller, the widget keeps the first details that fit and shows a “Showing X of Y” notice.")
+                Text("Minimal, Simple, Rain, and Comfort fit Small. Detailed is designed for Medium or Large, and Full is designed for Large. If a preset is larger than the widget, it keeps the first details that fit and shows a “Showing X of Y” notice.")
                     .font(.callout)
                     .foregroundStyle(.secondary)
             }

@@ -3,8 +3,8 @@ import Foundation
 import XCTest
 
 final class WeatherConfigurationTests: XCTestCase {
-    func testNewConfigurationStartsWithPortlandAndTemperatureSelected() {
-        let configuration = SearchableWeatherConfigurationIntent()
+    func testNewConfigurationStartsWithPortlandAndMinimalPreset() {
+        let configuration = PresetWeatherConfigurationIntent()
 
         XCTAssertEqual(configuration.resolvedLocation, .portland)
         XCTAssertEqual(configuration.resolvedDetails, [.temperature])
@@ -12,29 +12,37 @@ final class WeatherConfigurationTests: XCTestCase {
 
     func testConfigurationUsesDocumentedDefaultsAndDefensiveFallbacks() {
         for value in [nil, "unknown-choice"] {
-            let configuration = SearchableWeatherConfigurationIntent.referencePreview()
+            let configuration = PresetWeatherConfigurationIntent.referencePreview()
             configuration.city = nil
             configuration.viewMode = value
             configuration.temperatureUnit = value
+            configuration.detailPreset = value
 
             XCTAssertEqual(configuration.resolvedCity, "Portland, Oregon, United States")
             XCTAssertEqual(configuration.resolvedViewMode, .week)
             XCTAssertEqual(configuration.resolvedTemperatureUnit, .automatic)
+            XCTAssertEqual(configuration.resolvedDetailPreset, .minimal)
             XCTAssertEqual(configuration.resolvedDetails, [.temperature])
         }
     }
 
-    func testEveryDetailCanBeSelectedAndEmptySelectionKeepsTemperatureVisible() {
-        let configuration = SearchableWeatherConfigurationIntent.referencePreview()
-        configuration.details = WeatherDetail.allCases.map(WeatherDetailEntity.init(detail:))
+    func testEveryDetailPresetResolvesToItsDocumentedGroup() {
+        let expected: [WeatherDetailPreset: [WeatherDetail]] = [
+            .minimal: [.temperature],
+            .simple: [.temperature, .condition],
+            .rain: [.temperature, .precipitation],
+            .comfort: [.temperature, .humidity],
+            .detailed: [.temperature, .condition, .humidity],
+            .full: [.temperature, .condition, .humidity, .precipitation, .wind],
+        ]
 
-        XCTAssertEqual(
-            configuration.resolvedDetails,
-            [.temperature, .condition, .humidity, .precipitation, .wind]
-        )
+        for preset in WeatherDetailPreset.allCases {
+            let configuration = PresetWeatherConfigurationIntent.referencePreview()
+            configuration.detailPreset = preset.rawValue
 
-        configuration.details = []
-        XCTAssertEqual(configuration.resolvedDetails, [.temperature])
+            XCTAssertEqual(configuration.resolvedDetailPreset, preset)
+            XCTAssertEqual(configuration.resolvedDetails, expected[preset])
+        }
     }
 
     func testDetailLimitsDeduplicateAndCapSelectionsForEveryWidgetSize() {
@@ -64,14 +72,6 @@ final class WeatherConfigurationTests: XCTestCase {
         XCTAssertTrue(suggestions.contains { $0.location.name == "Tokyo" })
     }
 
-    func testDetailQueryReturnsClickableStableChoices() async throws {
-        let details = try await WeatherDetailQuery().suggestedEntities()
-        let restored = try await WeatherDetailQuery().entities(for: details.map(\.id))
-
-        XCTAssertEqual(details.map(\.detail), WeatherDetail.allCases)
-        XCTAssertEqual(restored, details)
-    }
-
     func testOptionsProvidersReturnStableIDsAndDefaults() async throws {
         let modes = try await WeatherViewModeOptionsProvider().results()
         let defaultMode = await WeatherViewModeOptionsProvider().defaultResult()
@@ -82,6 +82,11 @@ final class WeatherConfigurationTests: XCTestCase {
         let defaultUnit = await WeatherTemperatureUnitOptionsProvider().defaultResult()
         XCTAssertEqual(Set(units.items), Set(WeatherTemperatureUnit.allCases.map(\.rawValue)))
         XCTAssertEqual(defaultUnit, WeatherTemperatureUnit.automatic.rawValue)
+
+        let presets = try await WeatherDetailPresetOptionsProvider().results()
+        let defaultPreset = await WeatherDetailPresetOptionsProvider().defaultResult()
+        XCTAssertEqual(Set(presets.items), Set(WeatherDetailPreset.allCases.map(\.rawValue)))
+        XCTAssertEqual(defaultPreset, WeatherDetailPreset.minimal.rawValue)
     }
 
     func testTemperatureUnitsResolveAndFormatPredictably() {

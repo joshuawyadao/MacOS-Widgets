@@ -71,34 +71,41 @@ enum WeatherDetail: String, CaseIterable, Hashable, Sendable {
     case humidity
     case precipitation
     case wind
+}
 
-    var displayName: String {
+enum WeatherDetailPreset: String, CaseIterable, Hashable, Sendable, WeatherStringOption {
+    case minimal
+    case simple
+    case rain
+    case comfort
+    case detailed
+    case full
+
+    var displayName: LocalizedStringResource {
         switch self {
-        case .temperature: "Temperature"
-        case .condition: "Condition"
-        case .humidity: "Humidity"
-        case .precipitation: "Chance of rain"
-        case .wind: "Wind"
+        case .minimal: "Minimal — Temperature"
+        case .simple: "Simple — Temperature + Condition"
+        case .rain: "Rain — Temperature + Rain chance"
+        case .comfort: "Comfort — Temperature + Humidity"
+        case .detailed: "Detailed — 3 details · Medium or Large"
+        case .full: "Full — All 5 details · Large"
         }
     }
 
-    var editorDescription: String {
+    var details: [WeatherDetail] {
         switch self {
-        case .temperature: "Current or forecast temperature"
-        case .condition: "Written weather description"
-        case .humidity: "Relative humidity percentage"
-        case .precipitation: "Precipitation probability"
-        case .wind: "Wind speed"
-        }
-    }
-
-    var symbolName: String {
-        switch self {
-        case .temperature: "thermometer.medium"
-        case .condition: "cloud.sun.fill"
-        case .humidity: "humidity.fill"
-        case .precipitation: "drop.fill"
-        case .wind: "wind"
+        case .minimal:
+            [.temperature]
+        case .simple:
+            [.temperature, .condition]
+        case .rain:
+            [.temperature, .precipitation]
+        case .comfort:
+            [.temperature, .humidity]
+        case .detailed:
+            [.temperature, .condition, .humidity]
+        case .full:
+            WeatherDetail.allCases
         }
     }
 }
@@ -210,37 +217,6 @@ struct WeatherLocationQuery: EntityStringQuery {
     }
 }
 
-struct WeatherDetailEntity: AppEntity, Hashable {
-    static let typeDisplayRepresentation: TypeDisplayRepresentation = "Weather detail"
-    static let defaultQuery = WeatherDetailQuery()
-
-    let detail: WeatherDetail
-
-    var id: String { detail.rawValue }
-
-    var displayRepresentation: DisplayRepresentation {
-        DisplayRepresentation(
-            title: "\(detail.displayName)",
-            subtitle: "\(detail.editorDescription)",
-            image: .init(systemName: detail.symbolName)
-        )
-    }
-
-    static let temperature = Self(detail: .temperature)
-}
-
-struct WeatherDetailQuery: EntityQuery {
-    init() {}
-
-    func entities(for identifiers: [WeatherDetailEntity.ID]) async throws -> [WeatherDetailEntity] {
-        identifiers.compactMap(WeatherDetail.init(rawValue:)).map(WeatherDetailEntity.init(detail:))
-    }
-
-    func suggestedEntities() async throws -> [WeatherDetailEntity] {
-        WeatherDetail.allCases.map(WeatherDetailEntity.init(detail:))
-    }
-}
-
 private enum WeatherOptionItems {
     static func collection<Option: WeatherStringOption>(
         for optionType: Option.Type,
@@ -279,9 +255,19 @@ struct WeatherTemperatureUnitOptionsProvider: DynamicOptionsProvider {
     }
 }
 
-struct SearchableWeatherConfigurationIntent: WidgetConfigurationIntent {
+struct WeatherDetailPresetOptionsProvider: DynamicOptionsProvider {
+    func results() async throws -> IntentItemCollection<String> {
+        WeatherOptionItems.collection(for: WeatherDetailPreset.self, prompt: "Choose a weather detail preset")
+    }
+
+    func defaultResult() async -> String? {
+        WeatherDetailPreset.minimal.rawValue
+    }
+}
+
+struct PresetWeatherConfigurationIntent: WidgetConfigurationIntent {
     static let title: LocalizedStringResource = "Customize Weather"
-    static let description = IntentDescription("Search for a city, choose a forecast view, and select the details shown.")
+    static let description = IntentDescription("Search for a city, choose a forecast view, and apply a group of weather details in one click.")
 
     @Parameter(
         title: "City",
@@ -296,20 +282,15 @@ struct SearchableWeatherConfigurationIntent: WidgetConfigurationIntent {
     var temperatureUnit: String?
 
     @Parameter(
-        title: "Details",
-        description: "Choose up to 2 on Small, 3 on Medium, or 5 on Large.",
-        size: [
-            .systemSmall: .init(min: 1, max: 2),
-            .systemMedium: .init(min: 1, max: 3),
-            .systemLarge: .init(min: 1, max: 5),
-        ],
-        query: WeatherDetailQuery()
+        title: "Details Preset",
+        description: "One click applies the whole group. Small shows 2 details, Medium 3, and Large 5.",
+        optionsProvider: WeatherDetailPresetOptionsProvider()
     )
-    var details: [WeatherDetailEntity]?
+    var detailPreset: String?
 
     init() {
         city = .portland
-        details = [.temperature]
+        detailPreset = WeatherDetailPreset.minimal.rawValue
     }
 
     var resolvedLocation: WeatherLocation {
@@ -328,9 +309,12 @@ struct SearchableWeatherConfigurationIntent: WidgetConfigurationIntent {
         temperatureUnit.flatMap(WeatherTemperatureUnit.init(rawValue:)) ?? .automatic
     }
 
+    var resolvedDetailPreset: WeatherDetailPreset {
+        detailPreset.flatMap(WeatherDetailPreset.init(rawValue:)) ?? .minimal
+    }
+
     var resolvedDetails: [WeatherDetail] {
-        let selection = WeatherDetailLimits.limited((details ?? []).map(\.detail), maximum: WeatherDetailLimits.large)
-        return selection.isEmpty ? [.temperature] : selection
+        resolvedDetailPreset.details
     }
 
     static func referencePreview() -> Self {

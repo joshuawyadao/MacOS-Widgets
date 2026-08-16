@@ -10,7 +10,7 @@ enum WeatherEntryState: Equatable, Sendable {
 
 struct WeatherEntry: TimelineEntry {
     let date: Date
-    let configuration: SearchableWeatherConfigurationIntent
+    let configuration: PresetWeatherConfigurationIntent
     let snapshot: WeatherSnapshot?
     let state: WeatherEntryState
 }
@@ -37,7 +37,7 @@ struct WeatherProvider: AppIntentTimelineProvider {
     }
 
     func snapshot(
-        for configuration: SearchableWeatherConfigurationIntent,
+        for configuration: PresetWeatherConfigurationIntent,
         in context: Context
     ) async -> WeatherEntry {
         if context.isPreview {
@@ -52,7 +52,7 @@ struct WeatherProvider: AppIntentTimelineProvider {
     }
 
     func timeline(
-        for configuration: SearchableWeatherConfigurationIntent,
+        for configuration: PresetWeatherConfigurationIntent,
         in context: Context
     ) async -> Timeline<WeatherEntry> {
         let now = Date.now
@@ -82,7 +82,7 @@ struct WeatherProvider: AppIntentTimelineProvider {
         }
     }
 
-    private func loadEntry(configuration: SearchableWeatherConfigurationIntent, date: Date) async -> WeatherEntry {
+    private func loadEntry(configuration: PresetWeatherConfigurationIntent, date: Date) async -> WeatherEntry {
         let outcome = await WeatherLoader(service: service, cache: cache).load(
             location: configuration.resolvedLocation,
             unit: configuration.resolvedTemperatureUnit,
@@ -519,7 +519,7 @@ struct WeatherWidget: Widget {
     var body: some WidgetConfiguration {
         AppIntentConfiguration(
             kind: Self.kind,
-            intent: SearchableWeatherConfigurationIntent.self,
+            intent: PresetWeatherConfigurationIntent.self,
             provider: WeatherProvider()
         ) { entry in
             WeatherWidgetView(entry: entry)
@@ -553,12 +553,9 @@ struct WeatherWidget: Widget {
     )
 }
 
-private var weatherDayPreviewConfiguration: SearchableWeatherConfigurationIntent {
-    let configuration = SearchableWeatherConfigurationIntent.referencePreview()
+private var weatherDayPreviewConfiguration: PresetWeatherConfigurationIntent {
+    let configuration = PresetWeatherConfigurationIntent.referencePreview()
     configuration.viewMode = WeatherViewMode.day.rawValue
-    configuration.details = [
-        WeatherDetailEntity(detail: .temperature),
-        WeatherDetailEntity(detail: .humidity),
-    ]
+    configuration.detailPreset = WeatherDetailPreset.comfort.rawValue
     return configuration
 }
