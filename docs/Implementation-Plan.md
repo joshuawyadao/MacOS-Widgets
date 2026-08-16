@@ -1,18 +1,18 @@
 # Plan
 
-Provide one repeatable, local verification gate for the ready Time & Date and Weather widgets so deterministic behavior and packaging do not need to be retested manually before each commit.
+Deepen the existing verification gate so it checks the content each widget will present for every supported size and configuration, without relying on brittle screenshots or launching the macOS widget editor.
 
 ## Scope
-- In: Configuration round trips, timeline policies, Weather size limits, existing formatting/data/cache coverage, fresh Debug tests, an unsigned Release build, extension embedding, widget identities, App Intent metadata, and contributor guidance.
-- Out: Automating macOS's system-owned desktop placement, Edit Widget popover, Liquid Glass appearance, and real-world WidgetKit refresh timing.
+- In: Shared presentation contracts used by both SwiftUI views and tests; Weather family/view/preset/state behavior; Time & Date family/layout/format behavior; accessibility strings; existing configuration, timeline, service, cache, Release bundle, identity, and App Intent metadata checks.
+- Out: macOS-owned desktop placement, Edit Widget persistence, Liquid Glass/tinted rendering, live VoiceOver traversal, link activation, and real-world WidgetKit scheduling.
 
 ## Action items
-- [x] Add shared contract tests for stable, distinct widget identities and minute/hour timeline scheduling.
-- [x] Cover every Time & Date layout/date/clock combination and every independent date/time font pair.
-- [x] Extract and test one Weather detail-presentation policy across Small, Medium, and Large families.
-- [x] Add `Scripts/verify-widgets.sh` as the single pre-commit verification command.
-- [x] Make the command run all tests, build Release from fresh artifacts, and validate the embedded WidgetKit extension and both App Intent schemas.
-- [x] Run the complete gate, review its output, and document the final result (31 tests plus Release bundle and metadata checks passed on August 16, 2026).
+- [x] Add a Weather presentation contract and make the SwiftUI view consume its family adaptation, forecast selection, titles, detail limits, state, location, and attribution decisions.
+- [x] Test all 54 Weather family/view/preset combinations plus stale data, permanent failure, exhausted hourly data, and forecast-city midnight rollover.
+- [x] Add a Time & Date presentation contract and make the SwiftUI view consume its layout adaptation, formatted date/time/period, and combined accessibility label.
+- [x] Test all family/layout combinations and all family/date-format/time-format combinations.
+- [x] Run the complete verification gate from fresh build artifacts and record the result (37 tests plus Release bundle and metadata checks passed on August 16, 2026).
+- [x] Save the isolated feature branch and complete PR #3's review cycle against the Weather feature branch (Brooks 100/100, Codex found no major issues, and CI Verify passed).
 
 ## Open questions
-- None. A short hands-on acceptance check remains appropriate before releases that change editor or visual behavior because those surfaces belong to macOS rather than the app's test process.
+- None. The remaining acceptance checks exercise operating-system UI or visual behavior that XCTest cannot control reliably.

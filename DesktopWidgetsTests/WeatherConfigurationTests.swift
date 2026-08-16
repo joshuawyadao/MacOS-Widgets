@@ -80,6 +80,162 @@ final class WeatherConfigurationTests: XCTestCase {
         XCTAssertEqual(large.limit, 5)
     }
 
+    func testWeatherPresentationAdaptsWeekAndHourViewsToEveryWidgetFamily() {
+        let snapshot = WeatherSnapshot.sample()
+        let date = snapshot.fetchedAt
+
+        let expectations: [(WidgetFamily, WeatherViewMode, WeatherViewMode, Int)] = [
+            (.systemSmall, .week, .day, 0),
+            (.systemMedium, .week, .week, 7),
+            (.systemLarge, .week, .week, 7),
+            (.systemSmall, .hour, .hour, 3),
+            (.systemMedium, .hour, .hour, 6),
+            (.systemLarge, .hour, .hour, 6),
+        ]
+
+        for (family, requestedMode, expectedMode, expectedColumns) in expectations {
+            let context = "family=\(family), mode=\(requestedMode.rawValue)"
+            let configuration = PresetWeatherConfigurationIntent.referencePreview()
+            configuration.viewMode = requestedMode.rawValue
+            let presentation = WeatherWidgetPresentation(
+                date: date,
+                configuration: configuration,
+                snapshot: snapshot,
+                state: .loaded,
+                family: family,
+                locale: Locale(identifier: "en_US")
+            )
+
+            XCTAssertEqual(presentation.renderedMode, expectedMode, context)
+            XCTAssertEqual(presentation.forecastColumnCount, expectedColumns, context)
+        }
+    }
+
+    func testWeatherPresentationCoversEveryFamilyModeAndDetailPreset() {
+        let snapshot = WeatherSnapshot.sample()
+        let locale = Locale(identifier: "en_US")
+
+        for family in [WidgetFamily.systemSmall, .systemMedium, .systemLarge] {
+            for mode in WeatherViewMode.allCases {
+                for preset in WeatherDetailPreset.allCases {
+                    let context = "family=\(family), mode=\(mode.rawValue), preset=\(preset.rawValue)"
+                    let configuration = PresetWeatherConfigurationIntent.referencePreview()
+                    configuration.viewMode = mode.rawValue
+                    configuration.detailPreset = preset.rawValue
+                    let presentation = WeatherWidgetPresentation(
+                        date: snapshot.fetchedAt,
+                        configuration: configuration,
+                        snapshot: snapshot,
+                        state: .loaded,
+                        family: family,
+                        locale: locale
+                    )
+
+                    XCTAssertNotNil(presentation.renderedMode, context)
+                    XCTAssertLessThanOrEqual(
+                        presentation.detailPresentation.visibleDetails.count,
+                        WeatherDetailLimits.maximum(for: family),
+                        context
+                    )
+                    XCTAssertEqual(
+                        presentation.detailPresentation.hiddenCount,
+                        max(0, preset.details.count - WeatherDetailLimits.maximum(for: family)),
+                        context
+                    )
+                    XCTAssertEqual(
+                        presentation.detailLimitNotice == nil,
+                        presentation.detailPresentation.hiddenCount == 0,
+                        context
+                    )
+                    XCTAssertEqual(presentation.forecastTitles.count, presentation.forecastColumnCount, context)
+                    XCTAssertEqual(
+                        presentation.forecastAccessibilityLabels.count,
+                        presentation.forecastColumnCount,
+                        context
+                    )
+                    XCTAssertTrue(presentation.forecastTitles.allSatisfy { !$0.isEmpty }, context)
+                    XCTAssertTrue(presentation.forecastAccessibilityLabels.allSatisfy { !$0.isEmpty }, context)
+                    if presentation.renderedMode == .day {
+                        XCTAssertFalse(presentation.dayAccessibilityLabel?.isEmpty ?? true, context)
+                    } else {
+                        XCTAssertNil(presentation.dayAccessibilityLabel, context)
+                    }
+                    XCTAssertEqual(presentation.locationName, snapshot.locationName, context)
+                    XCTAssertFalse(presentation.showsStaleStatus, context)
+                    XCTAssertNil(presentation.failureMessage, context)
+                }
+            }
+        }
+    }
+
+    func testWeatherPresentationRepresentsStaleFailureAndEmptyHourFallbackStates() {
+        let snapshot = WeatherSnapshot.sample()
+        let configuration = PresetWeatherConfigurationIntent.referencePreview()
+        configuration.viewMode = WeatherViewMode.hour.rawValue
+
+        let stale = WeatherWidgetPresentation(
+            date: snapshot.fetchedAt,
+            configuration: configuration,
+            snapshot: snapshot,
+            state: .stale("Offline"),
+            family: .systemMedium,
+            locale: Locale(identifier: "en_US")
+        )
+        XCTAssertTrue(stale.showsStaleStatus)
+        XCTAssertEqual(stale.renderedMode, .hour)
+
+        let failure = WeatherWidgetPresentation(
+            date: snapshot.fetchedAt,
+            configuration: configuration,
+            snapshot: nil,
+            state: .failed("City not found", retryable: false),
+            family: .systemSmall,
+            locale: Locale(identifier: "en_US")
+        )
+        XCTAssertNil(failure.renderedMode)
+        XCTAssertEqual(failure.failureMessage, "City not found")
+        XCTAssertEqual(failure.locationName, configuration.resolvedCity)
+
+        let afterForecast = WeatherWidgetPresentation(
+            date: snapshot.hourly.last!.date.addingTimeInterval(60 * 60),
+            configuration: configuration,
+            snapshot: snapshot,
+            state: .loaded,
+            family: .systemMedium,
+            locale: Locale(identifier: "en_US")
+        )
+        XCTAssertEqual(afterForecast.renderedMode, .day)
+        XCTAssertEqual(afterForecast.forecastColumnCount, 0)
+    }
+
+    func testWeatherPresentationAdvancesTheWeekAcrossCityMidnight() {
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.timeZone = TimeZone(identifier: "America/Los_Angeles")!
+        let beforeMidnight = calendar.date(from: DateComponents(
+            year: 2026,
+            month: 8,
+            day: 9,
+            hour: 23,
+            minute: 45
+        ))!
+        let snapshot = WeatherSnapshot.sample(now: beforeMidnight)
+        let afterMidnight = calendar.date(byAdding: .minute, value: 30, to: beforeMidnight)!
+        let presentation = WeatherWidgetPresentation(
+            date: afterMidnight,
+            configuration: .referencePreview(),
+            snapshot: snapshot,
+            state: .loaded,
+            family: .systemMedium,
+            locale: Locale(identifier: "en_US")
+        )
+
+        guard case let .week(days) = presentation.content else {
+            return XCTFail("Expected a week presentation")
+        }
+        XCTAssertEqual(days.first, snapshot.daily[1])
+        XCTAssertFalse(days.contains(snapshot.daily[0]))
+    }
+
     func testCityEntitiesRoundTripWithoutAnotherNetworkLookup() async throws {
         let portland = WeatherLocationEntity.portland
         let restored = try await WeatherLocationQuery().entities(for: [portland.id])

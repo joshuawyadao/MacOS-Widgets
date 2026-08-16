@@ -135,7 +135,7 @@ enum WeatherDetailLimits {
     }
 }
 
-struct WeatherDetailPresentation {
+struct WeatherDetailPresentation: Equatable, Sendable {
     let visibleDetails: [WeatherDetail]
     let totalCount: Int
     let limit: Int

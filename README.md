@@ -38,9 +38,9 @@ Run the repository's verification gate before committing or pushing:
 ./Scripts/verify-widgets.sh
 ```
 
-The command starts with fresh build artifacts, runs the complete `DesktopWidgetsTests` suite, builds the app and extension in Release mode, and verifies that both widget identities and both App Intent configuration schemas are present in the embedded extension. The behavior suite covers every Time & Date layout/format/font combination, timeline scheduling, Weather editor defaults and presets, size-specific detail limits, Open-Meteo request/response mapping, unit formatting, city errors, and cached fallback data.
+The command starts with fresh build artifacts, runs the complete `DesktopWidgetsTests` suite, builds the app and extension in Release mode, and verifies that both widget identities and both App Intent configuration schemas are present in the embedded extension. The behavior suite uses presentation contracts shared with the SwiftUI views to cover every Time & Date size/layout/format combination and every Weather size/view/preset combination. It also covers accessibility text, timeline scheduling, Weather loading/stale/failure states, cross-midnight and exhausted-hour fallbacks, Open-Meteo request/response mapping, unit formatting, city errors, and cached fallback data.
 
-This removes the need to manually retest deterministic configuration and data behavior before every commit. Apple still owns desktop placement, the Edit Widget interface, Liquid Glass rendering, and refresh scheduling, so use each widget's short desktop acceptance checklist before a release or after a visual/editor change.
+This removes the need to manually retest deterministic configuration, layout selection, and data behavior before every commit. Apple still owns desktop placement, the Edit Widget interface and persistence, Liquid Glass rendering, live VoiceOver navigation, and refresh scheduling, so use each widget's short desktop acceptance checklist before a release or after a visual/editor change.
 
 You can still run the tests alone from Xcode with **Product → Test**. Set `KEEP_WIDGET_VERIFY_ARTIFACTS=1` when running the script if you want to inspect its temporary build products after it finishes.
 
