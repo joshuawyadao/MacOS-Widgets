@@ -1,5 +1,6 @@
 import AppIntents
 import Foundation
+import WidgetKit
 import XCTest
 
 final class WeatherConfigurationTests: XCTestCase {
@@ -60,6 +61,23 @@ final class WeatherConfigurationTests: XCTestCase {
             WeatherDetailLimits.limited(duplicated, maximum: WeatherDetailLimits.large),
             [.temperature, .humidity, .wind, .condition]
         )
+    }
+
+    func testFullPresetAdaptsVisibleDetailsAndWarningToEveryWidgetFamily() {
+        let small = WeatherDetailPresentation(preset: .full, family: .systemSmall)
+        XCTAssertEqual(small.visibleDetails, [.temperature, .condition])
+        XCTAssertEqual(small.hiddenCount, 3)
+        XCTAssertEqual(small.limit, 2)
+
+        let medium = WeatherDetailPresentation(preset: .full, family: .systemMedium)
+        XCTAssertEqual(medium.visibleDetails, [.temperature, .condition, .humidity])
+        XCTAssertEqual(medium.hiddenCount, 2)
+        XCTAssertEqual(medium.limit, 3)
+
+        let large = WeatherDetailPresentation(preset: .full, family: .systemLarge)
+        XCTAssertEqual(large.visibleDetails, WeatherDetail.allCases)
+        XCTAssertEqual(large.hiddenCount, 0)
+        XCTAssertEqual(large.limit, 5)
     }
 
     func testCityEntitiesRoundTripWithoutAnotherNetworkLookup() async throws {
@@ -138,6 +156,38 @@ final class WeatherConfigurationTests: XCTestCase {
         XCTAssertEqual(visibleDays.first, snapshot.daily[1])
         XCTAssertEqual(snapshot.dailyForecast(for: afterMidnight), snapshot.daily[1])
         XCTAssertFalse(visibleDays.contains(snapshot.daily[0]))
+    }
+
+    func testWeatherTimelineUsesTheForecastCityHourBoundaries() {
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.timeZone = TimeZone(identifier: "Asia/Kathmandu")!
+        let start = calendar.date(from: DateComponents(
+            year: 2026,
+            month: 8,
+            day: 9,
+            hour: 10,
+            minute: 37
+        ))!
+
+        let dates = WeatherTimelinePolicy.dates(
+            startingAt: start,
+            count: 3,
+            timeZone: calendar.timeZone
+        )
+
+        XCTAssertEqual(dates[0], start)
+        XCTAssertEqual(dates[1], calendar.date(from: DateComponents(
+            year: 2026,
+            month: 8,
+            day: 9,
+            hour: 11
+        )))
+        XCTAssertEqual(dates[2], calendar.date(from: DateComponents(
+            year: 2026,
+            month: 8,
+            day: 9,
+            hour: 12
+        )))
     }
 
     func testRequestURLsIncludeCityUnitsAndAllDetailVariables() throws {

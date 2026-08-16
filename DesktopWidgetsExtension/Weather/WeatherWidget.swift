@@ -65,7 +65,7 @@ struct WeatherProvider: AppIntentTimelineProvider {
                 policy: retryable ? .after(now.addingTimeInterval(30 * 60)) : .never
             )
         case .loaded, .stale:
-            let dates = timelineDates(
+            let dates = WeatherTimelinePolicy.dates(
                 startingAt: now,
                 count: 7,
                 timeZone: loaded.snapshot?.timeZone ?? .autoupdatingCurrent
@@ -104,14 +104,6 @@ struct WeatherProvider: AppIntentTimelineProvider {
         }
     }
 
-    private func timelineDates(startingAt date: Date, count: Int, timeZone: TimeZone) -> [Date] {
-        var calendar = Calendar(identifier: .gregorian)
-        calendar.timeZone = timeZone
-        let hourStart = calendar.dateInterval(of: .hour, for: date)?.start ?? date
-        return (0..<count).compactMap { offset in
-            offset == 0 ? date : calendar.date(byAdding: .hour, value: offset, to: hourStart)
-        }
-    }
 }
 
 struct WeatherWidgetView: View {
@@ -413,24 +405,19 @@ struct WeatherWidgetView: View {
     }
 
     private var visibleDetails: [WeatherDetail] {
-        WeatherDetailLimits.limited(entry.configuration.resolvedDetails, maximum: detailLimit)
+        detailPresentation.visibleDetails
     }
 
     private var hiddenDetailCount: Int {
-        max(0, entry.configuration.resolvedDetails.count - visibleDetails.count)
+        detailPresentation.hiddenCount
+    }
+
+    private var detailPresentation: WeatherDetailPresentation {
+        WeatherDetailPresentation(preset: entry.configuration.resolvedDetailPreset, family: family)
     }
 
     private var detailLimit: Int {
-        switch family {
-        case .systemSmall:
-            WeatherDetailLimits.small
-        case .systemMedium:
-            WeatherDetailLimits.medium
-        case .systemLarge:
-            WeatherDetailLimits.large
-        default:
-            WeatherDetailLimits.small
-        }
+        detailPresentation.limit
     }
 
     private var familyName: String {
@@ -444,7 +431,7 @@ struct WeatherWidgetView: View {
 
     private var detailLimitNotice: some View {
         Label(
-            "Showing \(visibleDetails.count) of \(entry.configuration.resolvedDetails.count) · \(familyName) limit \(detailLimit)",
+            "Showing \(visibleDetails.count) of \(detailPresentation.totalCount) · \(familyName) limit \(detailLimit)",
             systemImage: "info.circle.fill"
         )
         .font(.system(size: 9, weight: .semibold))

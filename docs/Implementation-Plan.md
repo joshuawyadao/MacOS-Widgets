@@ -1,18 +1,18 @@
 # Plan
 
-Make Weather details quicker to configure in the native macOS widget editor by replacing the system's one-at-a-time collection picker with one-click presets while preserving size-safe rendering.
+Provide one repeatable, local verification gate for the ready Time & Date and Weather widgets so deterministic behavior and packaging do not need to be retested manually before each commit.
 
 ## Scope
-- In: Six useful detail presets, Small/Medium/Large render limits, resize protection, user guidance, tests, docs, clean builds, and a local branch checkpoint.
-- Out: Device-location permission, a custom companion-app settings store, replacing Apple's WidgetKit editor, and changes to the weather provider.
+- In: Configuration round trips, timeline policies, Weather size limits, existing formatting/data/cache coverage, fresh Debug tests, an unsigned Release build, extension embedding, widget identities, App Intent metadata, and contributor guidance.
+- Out: Automating macOS's system-owned desktop placement, Edit Widget popover, Liquid Glass appearance, and real-world WidgetKit refresh timing.
 
 ## Action items
-- [x] Replace the collection picker with Minimal, Simple, Rain, Comfort, Detailed, and Full presets.
-- [x] Keep 2/3/5 render limits for Small/Medium/Large and preserve the resize warning.
-- [x] Explain each preset and its intended widget sizes in the editor, companion app, and documentation.
-- [x] Add deterministic coverage for every preset, fallback behavior, and size limiting.
-- [x] Run the complete test suite plus fresh unsigned Debug and Release builds.
-- [x] Review the scoped diff, install build 9 locally, and commit the completed enhancement.
+- [x] Add shared contract tests for stable, distinct widget identities and minute/hour timeline scheduling.
+- [x] Cover every Time & Date layout/date/clock combination and every independent date/time font pair.
+- [x] Extract and test one Weather detail-presentation policy across Small, Medium, and Large families.
+- [x] Add `Scripts/verify-widgets.sh` as the single pre-commit verification command.
+- [x] Make the command run all tests, build Release from fresh artifacts, and validate the embedded WidgetKit extension and both App Intent schemas.
+- [x] Run the complete gate, review its output, and document the final result (31 tests plus Release bundle and metadata checks passed on August 16, 2026).
 
 ## Open questions
-- None. WidgetKit does not expose a persistent multi-select popup, so a single preset parameter is the supported native interaction that avoids repeated picker navigation.
+- None. A short hands-on acceptance check remains appropriate before releases that change editor or visual behavior because those surfaces belong to macOS rather than the app's test process.

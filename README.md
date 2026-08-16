@@ -30,12 +30,18 @@ Weather uses Open-Meteo's keyless API for this personal, noncommercial build, di
 
 See [Time and Date widget](docs/Time-And-Date-Widget.md) and [Weather widget](docs/Weather-Widget.md) for customization, data-source, privacy, and display notes.
 
-## Test widget configuration and weather mapping
+## Verify both widgets before committing
 
-The shared `DesktopWidgets` scheme covers date and clock styles, Weather editor defaults, Open-Meteo request/response mapping, unit formatting, city errors, and cached fallback data. Run it from Xcode with **Product → Test**, or use:
+Run the repository's verification gate before committing or pushing:
 
 ```sh
-DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer xcodebuild test -project DesktopWidgets.xcodeproj -scheme DesktopWidgets -destination 'platform=macOS' CODE_SIGNING_ALLOWED=NO
+./Scripts/verify-widgets.sh
 ```
+
+The command starts with fresh build artifacts, runs the complete `DesktopWidgetsTests` suite, builds the app and extension in Release mode, and verifies that both widget identities and both App Intent configuration schemas are present in the embedded extension. The behavior suite covers every Time & Date layout/format/font combination, timeline scheduling, Weather editor defaults and presets, size-specific detail limits, Open-Meteo request/response mapping, unit formatting, city errors, and cached fallback data.
+
+This removes the need to manually retest deterministic configuration and data behavior before every commit. Apple still owns desktop placement, the Edit Widget interface, Liquid Glass rendering, and refresh scheduling, so use each widget's short desktop acceptance checklist before a release or after a visual/editor change.
+
+You can still run the tests alone from Xcode with **Product → Test**. Set `KEEP_WIDGET_VERIFY_ARTIFACTS=1` when running the script if you want to inspect its temporary build products after it finishes.
 
 The free teamless signing setup intentionally omits Apple's provisioning-profile-only Data Protection entitlement. macOS can therefore replace the widget with an opaque privacy placeholder while the Mac is locked.

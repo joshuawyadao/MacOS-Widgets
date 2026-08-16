@@ -1,5 +1,18 @@
 import Foundation
 
+enum WeatherTimelinePolicy {
+    static func dates(startingAt date: Date, count: Int, timeZone: TimeZone) -> [Date] {
+        guard count > 0 else { return [] }
+
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.timeZone = timeZone
+        let hourStart = calendar.dateInterval(of: .hour, for: date)?.start ?? date
+        return (0..<count).compactMap { offset in
+            offset == 0 ? date : calendar.date(byAdding: .hour, value: offset, to: hourStart)
+        }
+    }
+}
+
 enum WeatherCondition: String, Codable, Sendable {
     case clear
     case partlyCloudy

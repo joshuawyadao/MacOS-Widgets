@@ -30,6 +30,9 @@
 		A00000000000000000000015 /* WeatherModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = F00000000000000000000010 /* WeatherModels.swift */; };
 		A00000000000000000000016 /* OpenMeteoWeatherService.swift in Sources */ = {isa = PBXBuildFile; fileRef = F00000000000000000000011 /* OpenMeteoWeatherService.swift */; };
 		A00000000000000000000017 /* WeatherConfigurationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F00000000000000000000013 /* WeatherConfigurationTests.swift */; };
+		A00000000000000000000018 /* WidgetContractTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F00000000000000000000014 /* WidgetContractTests.swift */; };
+		A00000000000000000000019 /* WidgetIdentifier.swift in Sources */ = {isa = PBXBuildFile; fileRef = F00000000000000000000008 /* WidgetIdentifier.swift */; };
+		A0000000000000000000001A /* Calendar+WidgetTimeline.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0000000000000000000000A /* Calendar+WidgetTimeline.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -76,6 +79,7 @@
 		F00000000000000000000011 /* OpenMeteoWeatherService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OpenMeteoWeatherService.swift; sourceTree = "<group>"; };
 		F00000000000000000000012 /* WeatherWidget.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WeatherWidget.swift; sourceTree = "<group>"; };
 		F00000000000000000000013 /* WeatherConfigurationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WeatherConfigurationTests.swift; sourceTree = "<group>"; };
+		F00000000000000000000014 /* WidgetContractTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WidgetContractTests.swift; sourceTree = "<group>"; };
 		P00000000000000000000001 /* DesktopWidgets.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = DesktopWidgets.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		P00000000000000000000002 /* DesktopWidgetsExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = DesktopWidgetsExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		P00000000000000000000003 /* DesktopWidgetsTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = DesktopWidgetsTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -250,6 +254,7 @@
 			children = (
 				F0000000000000000000000E /* TimeAndDateConfigurationTests.swift */,
 				F00000000000000000000013 /* WeatherConfigurationTests.swift */,
+				F00000000000000000000014 /* WidgetContractTests.swift */,
 			);
 			path = DesktopWidgetsTests;
 			sourceTree = "<group>";
@@ -417,6 +422,9 @@
 				A00000000000000000000015 /* WeatherModels.swift in Sources */,
 				A00000000000000000000016 /* OpenMeteoWeatherService.swift in Sources */,
 				A00000000000000000000017 /* WeatherConfigurationTests.swift in Sources */,
+				A00000000000000000000018 /* WidgetContractTests.swift in Sources */,
+				A00000000000000000000019 /* WidgetIdentifier.swift in Sources */,
+				A0000000000000000000001A /* Calendar+WidgetTimeline.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
