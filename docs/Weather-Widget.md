@@ -50,14 +50,13 @@ Apple WeatherKit was not selected because Apple's [WeatherKit account setup](htt
 
 ## Desktop acceptance checklist
 
-`./Scripts/verify-widgets.sh` covers stable configuration defaults, searchable city identity, every detail preset, size limits across all widget families, city-time-zone scheduling, request construction, response decoding, WMO mapping, unit formatting, city errors, cached forecast round trips, the Release extension bundle, and its App Intent metadata. WidgetKit's editor, network sandbox, and final layout still need a short desktop check:
+`./Scripts/verify-widgets.sh` covers stable configuration defaults, searchable city identity, all 54 family/view/preset presentation combinations, accessible forecast titles, detail limits and notices, loaded/stale/failure states, exhausted-hour fallback, forecast-city midnight rollover, city-time-zone scheduling, request construction, response decoding, WMO mapping, unit formatting, city errors, cached forecast round trips, the Release extension bundle, and its App Intent metadata.
 
-- [ ] Run the app once, add Weather in small, medium, and large sizes, and confirm Portland data loads.
-- [ ] Type part of a city name, confirm suggestions appear with region/country qualifiers, select one, and confirm it appears instead of Portland.
-- [ ] Switch among Week, Day, and Hour and confirm each presentation changes immediately.
-- [ ] Select each Details Preset and confirm the whole group applies with one selection.
-- [ ] Choose Full on a Large widget, resize it to Small, and confirm only 2 details render alongside a **Showing 2 of 5** notice.
-- [ ] Disconnect networking after one successful load and confirm the saved forecast plus last-updated label appears.
-- [ ] Search for a clearly invalid city and confirm no result can replace the widget's existing selection.
+Those automated contracts are consumed by the SwiftUI view, so configuration and size behavior do not need to be manually repeated before each commit. The remaining checklist is intentionally limited to macOS-owned integration and visual behavior:
+
+- [ ] Add one Weather widget and confirm macOS exposes the City, Forecast View, Temperature Units, and Details Preset editor rows.
+- [ ] Type part of a city name and confirm macOS displays the returned region/country suggestions and persists the selected result after reopening the editor.
+- [ ] Disconnect networking after one successful load and confirm the extension's sandbox allows the cached forecast to remain visible on the desktop.
 - [ ] Verify the Open-Meteo link is visible and opens the provider site.
 - [ ] Compare Clear Light, Clear Dark, and Tinted appearances and confirm the content stays readable.
+- [ ] Use VoiceOver once to confirm the system traverses each combined forecast label in a sensible order.

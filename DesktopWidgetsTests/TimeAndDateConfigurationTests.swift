@@ -1,5 +1,6 @@
 import AppIntents
 import Foundation
+import WidgetKit
 import XCTest
 
 final class TimeAndDateConfigurationTests: XCTestCase {
@@ -127,6 +128,66 @@ final class TimeAndDateConfigurationTests: XCTestCase {
 
                 XCTAssertEqual(configuration.resolvedDateFont, dateFont)
                 XCTAssertEqual(configuration.resolvedTimeFont, timeFont)
+            }
+        }
+    }
+
+    func testPresentationAdaptsEveryLayoutToEveryWidgetFamily() {
+        let expected: [TimeAndDateLayout: [WidgetFamily: TimeAndDateArrangement]] = [
+            .reference: [.systemSmall: .verticalDateFirst, .systemMedium: .classicWide, .systemLarge: .classicWide],
+            .stacked: [.systemSmall: .verticalDateFirst, .systemMedium: .verticalDateFirst, .systemLarge: .verticalDateFirst],
+            .timeFirst: [.systemSmall: .verticalTimeFirst, .systemMedium: .verticalTimeFirst, .systemLarge: .verticalTimeFirst],
+            .centered: [.systemSmall: .centeredDateFirst, .systemMedium: .centeredDateFirst, .systemLarge: .centeredDateFirst],
+            .inline: [.systemSmall: .verticalDateFirst, .systemMedium: .horizontalDateFirst, .systemLarge: .horizontalDateFirst],
+        ]
+        let date = makeDate(year: 2026, month: 8, day: 9, hour: 21, minute: 9)
+
+        for layout in TimeAndDateLayout.allCases {
+            for family in [WidgetFamily.systemSmall, .systemMedium, .systemLarge] {
+                let context = "layout=\(layout.rawValue), family=\(family)"
+                let configuration = TimeAndDateStringConfigurationIntent.referencePreview()
+                configuration.layout = layout.rawValue
+                let presentation = TimeAndDatePresentation(
+                    date: date,
+                    configuration: configuration,
+                    family: family,
+                    locale: locale,
+                    timeZone: timeZone
+                )
+
+                XCTAssertEqual(presentation.arrangement, expected[layout]?[family], context)
+                XCTAssertFalse(presentation.dateText.isEmpty, context)
+                XCTAssertFalse(presentation.timeText.isEmpty, context)
+                XCTAssertFalse(presentation.accessibilityLabel.isEmpty, context)
+            }
+        }
+    }
+
+    func testPresentationCoversEveryFormatAndFamilyCombination() {
+        let date = makeDate(year: 2026, month: 8, day: 9, hour: 21, minute: 9)
+
+        for family in [WidgetFamily.systemSmall, .systemMedium, .systemLarge] {
+            for dateFormat in TimeAndDateDateFormat.allCases {
+                for timeFormat in TimeAndDateTimeFormat.allCases {
+                    let context = "family=\(family), date=\(dateFormat.rawValue), time=\(timeFormat.rawValue)"
+                    let configuration = TimeAndDateStringConfigurationIntent.referencePreview()
+                    configuration.dateFormat = dateFormat.rawValue
+                    configuration.timeFormat = timeFormat.rawValue
+                    let presentation = TimeAndDatePresentation(
+                        date: date,
+                        configuration: configuration,
+                        family: family,
+                        locale: locale,
+                        timeZone: timeZone
+                    )
+
+                    XCTAssertEqual(presentation.periodText == nil, timeFormat == .twentyFourHour, context)
+                    XCTAssertTrue(presentation.accessibilityLabel.contains(presentation.dateText), context)
+                    XCTAssertTrue(presentation.accessibilityLabel.contains(presentation.timeText), context)
+                    if let period = presentation.periodText {
+                        XCTAssertTrue(presentation.accessibilityLabel.contains(period), context)
+                    }
+                }
             }
         }
     }
