@@ -50,7 +50,7 @@ Apple WeatherKit was not selected because Apple's [WeatherKit account setup](htt
 
 ## Desktop acceptance checklist
 
-Automated tests cover stable configuration defaults, searchable city identity, every detail preset, size limits, request construction, response decoding, WMO mapping, unit formatting, city errors, and cached forecast round trips. WidgetKit's editor, network sandbox, and final layout still need a short desktop check:
+`./Scripts/verify-widgets.sh` covers stable configuration defaults, searchable city identity, every detail preset, size limits across all widget families, city-time-zone scheduling, request construction, response decoding, WMO mapping, unit formatting, city errors, cached forecast round trips, the Release extension bundle, and its App Intent metadata. WidgetKit's editor, network sandbox, and final layout still need a short desktop check:
 
 - [ ] Run the app once, add Weather in small, medium, and large sizes, and confirm Portland data loads.
 - [ ] Type part of a city name, confirm suggestions appear with region/country qualifiers, select one, and confirm it appears instead of Portland.

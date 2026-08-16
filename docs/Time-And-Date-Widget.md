@@ -35,7 +35,7 @@ Each font choice includes a square `Aa` specimen rendered with that macOS font. 
 
 ## Desktop acceptance checklist
 
-The automated suite verifies every formatter, every dynamic option provider, fallback behavior, and two independent configurations. WidgetKit's desktop editor and restart persistence still require a short check on the Mac that will use the widget:
+`./Scripts/verify-widgets.sh` verifies every formatter and dynamic option provider, every arrangement/date/clock combination, every independent date/time font pair, fallback behavior, minute scheduling, the Release extension bundle, and its App Intent metadata. WidgetKit's desktop editor and restart persistence still require a short check on the Mac that will use the widget:
 
 - [ ] Add small, medium, and large Time & Date widgets and confirm no date, time, or AM/PM text is clipped.
 - [ ] Configure one instance with the default Classic/12-hour choices and a second instance with Side by side/ISO/24-hour choices; confirm the two instances remain visually different.

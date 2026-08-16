@@ -101,6 +101,36 @@ final class TimeAndDateConfigurationTests: XCTestCase {
         XCTAssertEqual(second.resolvedTimeFont, .systemMonospaced)
     }
 
+    func testEveryLayoutDateAndClockCombinationRoundTrips() {
+        for layout in TimeAndDateLayout.allCases {
+            for dateFormat in TimeAndDateDateFormat.allCases {
+                for timeFormat in TimeAndDateTimeFormat.allCases {
+                    let configuration = TimeAndDateStringConfigurationIntent()
+                    configuration.layout = layout.rawValue
+                    configuration.dateFormat = dateFormat.rawValue
+                    configuration.timeFormat = timeFormat.rawValue
+
+                    XCTAssertEqual(configuration.resolvedLayout, layout)
+                    XCTAssertEqual(configuration.resolvedDateFormat, dateFormat)
+                    XCTAssertEqual(configuration.resolvedTimeFormat, timeFormat)
+                }
+            }
+        }
+    }
+
+    func testEveryDateAndTimeFontPairRoundTripsIndependently() {
+        for dateFont in TimeAndDateFont.allCases {
+            for timeFont in TimeAndDateFont.allCases {
+                let configuration = TimeAndDateStringConfigurationIntent()
+                configuration.dateFont = dateFont.rawValue
+                configuration.timeFont = timeFont.rawValue
+
+                XCTAssertEqual(configuration.resolvedDateFont, dateFont)
+                XCTAssertEqual(configuration.resolvedTimeFont, timeFont)
+            }
+        }
+    }
+
     func testEveryOptionsProviderReturnsAllStableIDsAndAValidDefault() async throws {
         assertProvider(
             results: try await TimeAndDateLayoutOptionsProvider().results(),

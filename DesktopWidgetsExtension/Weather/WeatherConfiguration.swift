@@ -1,5 +1,6 @@
 import AppIntents
 import Foundation
+import WidgetKit
 
 protocol WeatherStringOption: CaseIterable, RawRepresentable where RawValue == String {
     var displayName: LocalizedStringResource { get }
@@ -118,6 +119,37 @@ enum WeatherDetailLimits {
     static func limited(_ details: [WeatherDetail], maximum: Int) -> [WeatherDetail] {
         var seen = Set<WeatherDetail.RawValue>()
         return details.filter { seen.insert($0.rawValue).inserted }.prefix(maximum).map { $0 }
+    }
+
+    static func maximum(for family: WidgetFamily) -> Int {
+        switch family {
+        case .systemSmall:
+            small
+        case .systemMedium:
+            medium
+        case .systemLarge:
+            large
+        default:
+            small
+        }
+    }
+}
+
+struct WeatherDetailPresentation {
+    let visibleDetails: [WeatherDetail]
+    let totalCount: Int
+    let limit: Int
+
+    var hiddenCount: Int {
+        max(0, totalCount - visibleDetails.count)
+    }
+
+    init(preset: WeatherDetailPreset, family: WidgetFamily) {
+        let details = preset.details
+        let limit = WeatherDetailLimits.maximum(for: family)
+        self.visibleDetails = WeatherDetailLimits.limited(details, maximum: limit)
+        self.totalCount = details.count
+        self.limit = limit
     }
 }
 
