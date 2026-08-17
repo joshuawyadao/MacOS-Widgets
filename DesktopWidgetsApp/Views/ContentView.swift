@@ -110,7 +110,7 @@ struct ContentView: View {
                 CustomizationItem(
                     symbol: "building.2",
                     title: "City",
-                    detail: "Type at least two letters in Search City, then open Matching City and choose the right suggestion."
+                    detail: "Type at least two letters in Search City, then open Matching City to choose from up to 20 state-and-country-labeled results."
                 )
                 CustomizationItem(
                     symbol: "calendar.day.timeline.leading",
@@ -141,7 +141,7 @@ struct ContentView: View {
                 Text("Weather detail presets")
                     .font(.headline)
 
-                Text("Day view fits 2 details on Small, 3 on Medium, and 5 on Large. Week and Hour use tighter limits of 2 on Small or Medium and 3 on Large so forecast columns stay readable. Larger presets keep the first details that fit and show a “Showing X of Y” notice.")
+                Text("Day view fits 2 details on Small, 3 on Medium, and 5 on Large. Narrow Week and Hour columns show 1 detail on Small or Medium and 2 on Large so labels stay readable. Larger presets keep the first details that fit and show a “Showing X of Y” notice.")
                     .font(.callout)
                     .foregroundStyle(.secondary)
             }

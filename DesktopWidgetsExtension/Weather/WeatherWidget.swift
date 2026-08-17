@@ -8,6 +8,10 @@ struct WeatherWidgetView: View {
 
     let entry: WeatherEntry
 
+    private var layout: WeatherWidgetLayoutMetrics {
+        WeatherWidgetLayoutMetrics(family: family)
+    }
+
     private var presentation: WeatherWidgetPresentation {
         WeatherWidgetPresentation(
             date: entry.date,
@@ -40,7 +44,7 @@ struct WeatherWidgetView: View {
     }
 
     private func loadedView(_ snapshot: WeatherSnapshot) -> some View {
-        VStack(alignment: .leading, spacing: family == .systemSmall ? 8 : 10) {
+        VStack(alignment: .leading, spacing: layout.contentSpacing) {
             header
 
             switch presentation.content {
@@ -87,9 +91,9 @@ struct WeatherWidgetView: View {
     private var header: some View {
         HStack(alignment: .firstTextBaseline, spacing: 8) {
             Text(headerLocationName)
-                .font(.system(size: family == .systemSmall ? 14 : 17, weight: .medium, design: .monospaced))
+                .font(.system(size: layout.headerFontSize, weight: .medium, design: .monospaced))
                 .lineLimit(1)
-                .minimumScaleFactor(0.7)
+                .minimumScaleFactor(0.75)
                 .accessibilityLabel("Weather for \(presentation.locationName)")
 
             if family != .systemSmall {
@@ -100,7 +104,7 @@ struct WeatherWidgetView: View {
     }
 
     private func weekView(_ days: [DailyWeather]) -> some View {
-        HStack(alignment: .top, spacing: 0) {
+        HStack(alignment: .top, spacing: layout.forecastColumnSpacing) {
             ForEach(Array(days.enumerated()), id: \.offset) { index, day in
                 forecastColumn(
                     title: presentation.forecastTitles[index],
@@ -115,7 +119,7 @@ struct WeatherWidgetView: View {
     }
 
     private func hourView(_ hours: [WeatherPoint]) -> some View {
-        HStack(alignment: .top, spacing: 0) {
+        HStack(alignment: .top, spacing: layout.forecastColumnSpacing) {
             ForEach(Array(hours.enumerated()), id: \.offset) { index, hour in
                 forecastColumn(
                     title: presentation.forecastTitles[index],
@@ -133,7 +137,7 @@ struct WeatherWidgetView: View {
         snapshot: WeatherSnapshot,
         @ViewBuilder forecastContent: () -> ForecastContent
     ) -> some View {
-        VStack(spacing: 12) {
+        VStack(spacing: layout.expandedSectionSpacing) {
             expandedCurrentSummary(snapshot)
 
             Divider()
@@ -155,16 +159,19 @@ struct WeatherWidgetView: View {
         let details = presentation.metricValues(for: current)
         let forecast = snapshot.dailyForecast(for: entry.date)
 
-        return HStack(alignment: .center, spacing: 16) {
+        return HStack(alignment: .center, spacing: layout.dayHorizontalSpacing) {
             Image(systemName: current.condition.symbolName)
                 .symbolRenderingMode(.multicolor)
-                .font(.system(size: 58))
-                .frame(width: 72, height: 72)
+                .font(.system(size: layout.expandedIconSize))
+                .frame(
+                    width: layout.expandedIconSize + 12,
+                    height: layout.expandedIconSize + 12
+                )
                 .widgetAccentable()
 
-            VStack(alignment: .leading, spacing: 3) {
+            VStack(alignment: .leading, spacing: 5) {
                 if let temperature = details.first(where: { $0.detail == .temperature }) {
-                    temperatureLabel(temperature, size: 50)
+                    temperatureLabel(temperature, size: layout.expandedTemperatureSize)
                 }
 
                 Text(current.condition.displayName)
@@ -182,7 +189,7 @@ struct WeatherWidgetView: View {
 
             Spacer(minLength: 8)
 
-            VStack(alignment: .trailing, spacing: 8) {
+            VStack(alignment: .trailing, spacing: layout.forecastVerticalSpacing) {
                 ForEach(details.filter { $0.detail != .temperature && $0.detail != .condition }) { value in
                     Label(value.text, systemImage: value.symbolName)
                         .font(.system(size: 13, weight: .semibold, design: .rounded))
@@ -207,14 +214,14 @@ struct WeatherWidgetView: View {
     ) -> some View {
         let details = presentation.metricValues(for: current)
 
-        return HStack(alignment: .center, spacing: family == .systemSmall ? 10 : 20) {
-            VStack(alignment: .leading, spacing: 4) {
+        return HStack(alignment: .center, spacing: layout.dayHorizontalSpacing) {
+            VStack(alignment: .leading, spacing: family == .systemSmall ? 4 : 6) {
                 Text("Today")
                     .font(.headline)
 
                 Image(systemName: current.condition.symbolName)
                     .symbolRenderingMode(.multicolor)
-                    .font(.system(size: family == .systemLarge ? 66 : 44))
+                    .font(.system(size: layout.dayIconSize))
                     .widgetAccentable()
 
                 if visibleDetails.contains(.condition) {
@@ -226,12 +233,9 @@ struct WeatherWidgetView: View {
 
             Spacer(minLength: 0)
 
-            VStack(alignment: .trailing, spacing: 5) {
+            VStack(alignment: .trailing, spacing: family == .systemSmall ? 4 : 7) {
                 if let temperature = details.first(where: { $0.detail == .temperature }) {
-                    temperatureLabel(
-                        temperature,
-                        size: family == .systemLarge ? 58 : (family == .systemSmall ? 34 : 38)
-                    )
+                    temperatureLabel(temperature, size: layout.dayTemperatureSize)
 
                     if let forecast {
                         Text(
@@ -259,13 +263,11 @@ struct WeatherWidgetView: View {
         isCurrent: Bool,
         accessibilityLabel: String
     ) -> some View {
-        let spacious = values.count == 1 && values.first?.detail == .temperature
-
-        return VStack(spacing: family == .systemLarge ? 7 : 5) {
+        return VStack(spacing: layout.forecastVerticalSpacing) {
             Text(title)
                 .font(
                     .system(
-                        size: family == .systemLarge ? 17 : (spacious ? 17 : 14),
+                        size: layout.forecastTitleSize,
                         weight: isCurrent ? .black : .bold,
                         design: .rounded
                     )
@@ -275,16 +277,13 @@ struct WeatherWidgetView: View {
 
             Image(systemName: condition.symbolName)
                 .symbolRenderingMode(.multicolor)
-                .font(.system(size: family == .systemLarge ? 30 : (spacious ? 30 : 23)))
-                .frame(height: family == .systemLarge ? 34 : (spacious ? 34 : 26))
+                .font(.system(size: layout.forecastIconSize))
+                .frame(height: layout.forecastIconSize + 4)
                 .widgetAccentable()
 
             ForEach(values) { value in
                 if value.detail == .temperature {
-                    temperatureLabel(
-                        value,
-                        size: family == .systemLarge ? 21 : (spacious ? 20 : 15)
-                    )
+                    temperatureLabel(value, size: layout.forecastTemperatureSize)
                 } else {
                     metricLabel(value)
                 }
@@ -302,9 +301,10 @@ struct WeatherWidgetView: View {
                 Label(value.text, systemImage: value.symbolName)
             }
         }
-        .font(.system(size: family == .systemLarge ? 11 : 9, weight: .semibold, design: .rounded))
-        .lineLimit(1)
-        .minimumScaleFactor(0.7)
+        .font(.system(size: layout.metricFontSize, weight: .semibold, design: .rounded))
+        .lineLimit(value.detail == .condition ? 2 : 1)
+        .multilineTextAlignment(.center)
+        .minimumScaleFactor(0.75)
     }
 
     private func temperatureLabel(
@@ -315,7 +315,7 @@ struct WeatherWidgetView: View {
             .font(.system(size: size, weight: .bold, design: .rounded))
             .monospacedDigit()
             .lineLimit(1)
-            .minimumScaleFactor(0.55)
+            .minimumScaleFactor(0.7)
             .fixedSize(horizontal: false, vertical: true)
     }
 
@@ -441,9 +441,27 @@ struct WeatherWidget: Widget {
     )
 }
 
+#Preview("Hour", as: .systemLarge) {
+    WeatherWidget()
+} timeline: {
+    WeatherEntry(
+        date: WeatherSnapshot.sample().fetchedAt,
+        configuration: weatherHourPreviewConfiguration,
+        snapshot: .sample(),
+        state: .loaded
+    )
+}
+
 private var weatherDayPreviewConfiguration: WeatherV7ConfigurationIntent {
     let configuration = WeatherV7ConfigurationIntent.referencePreview()
     configuration.viewMode = WeatherViewMode.day.rawValue
     configuration.detailPreset = WeatherDetailPreset.comfort.rawValue
+    return configuration
+}
+
+private var weatherHourPreviewConfiguration: WeatherV7ConfigurationIntent {
+    let configuration = WeatherV7ConfigurationIntent.referencePreview()
+    configuration.viewMode = WeatherViewMode.hour.rawValue
+    configuration.detailPreset = WeatherDetailPreset.rain.rawValue
     return configuration
 }

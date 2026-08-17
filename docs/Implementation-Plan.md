@@ -1,21 +1,20 @@
 # Plan
 
-Finish the Weather widget's selected-city delivery, searchable editor flow, and expanded large-family presentation while preserving the automated presentation contracts.
+Improve Weather city selection and legibility by supplying a larger, uniquely labeled result set to macOS and applying explicit Small, Medium, and Large layout metrics with safer forecast-detail budgets.
 
 ## Scope
-- In: Search-backed city suggestions with exact coordinate delivery, an expanded large-family dashboard, a fresh WidgetKit/App Intent identity, regression tests, and migration guidance.
-- Out: macOS-owned Liquid Glass/tinted rendering, live VoiceOver traversal, and real-world WidgetKit scheduling.
+- In: Open-Meteo result count and labeling, Weather family-specific spacing and typography, detail-density limits, regression coverage, build migration guidance, and Weather documentation.
+- Out: Replacing macOS's system-owned App Intent editor, changing Liquid Glass behavior, or adding a custom companion-app configuration store.
 
 ## Action items
-- [x] Reproduce the remaining selected-city failure from the live build-11 timeline: macOS serialized Tokyo correctly, then rejected the custom entity type before calling its query and delivered `WeatherV5LocationEntity(nil)` to the provider.
-- [x] Reproduce the build-12 editor issue in exported App Intents metadata: the `CLPlacemark` City parameter had no dynamic-options support, so macOS had no app-provided city list to show.
-- [x] Replace the placemark parameter with primitive string transport: Search City feeds a dependent Matching City provider, and the selected result safely encodes the exact provider-neutral location.
-- [x] Restore Open-Meteo geocoding with state/country subtitles so duplicate city names remain distinguishable.
-- [x] Give large Week and Hour widgets a current-conditions hero, high/low, selected detail values, and a separate forecast strip instead of stretching the medium layout.
-- [x] Assign a fresh build-13 Weather widget and intent identity so macOS cannot reuse the broken build-12 configuration payload.
-- [x] Add focused regression tests for city-result round trips, duplicate-name geocoding, selected-location provider delivery, and large-family layout selection.
-- [x] Run the complete verification gate from fresh build artifacts: all 42 Debug tests passed, followed by a fresh unsigned Release build, extension embedding, the v7 widget identity, and a dynamic Matching City parameter in exported metadata.
-- [ ] Re-add the build-13 Weather widget and repeat the searchable-city and expanded-large desktop acceptance checks.
+- [x] Confirm the screenshot's editor identity and preserve the build-13 string-backed Search City and Matching City transport.
+- [x] Return up to 20 geocoding matches and give same-named cities unique visible titles with state and country context.
+- [x] Add explicit Small, Medium, and Large layout metrics for headers, day summaries, forecast columns, and inter-item spacing.
+- [x] Reduce Week and Hour detail density where narrow columns would clip or crowd labels while retaining the existing limit notice.
+- [x] Extend tests for result counts, unique city labels, family layout metrics, and every family/view/preset combination.
+- [x] Update the host guidance, README, and Weather documentation with the current editor flow, size behavior, and build migration step.
+- [x] Run the complete widget verification gate: all 44 tests, fresh Release compilation, extension embedding, widget identities, and App Intent editor metadata passed.
+- [x] Commit and push the completed implementation to the current Weather feature branch.
 
 ## Open questions
-- The build 13 re-add is required because WidgetKit and LinkServices configuration storage is system-owned and the earlier placemark payload cannot be migrated reliably into the new primitive string schema.
+- None.

@@ -154,9 +154,9 @@ final class WeatherConfigurationTests: XCTestCase {
     func testColumnForecastsUseCompactTemperaturesAndViewSpecificDetailBudgets() {
         let snapshot = WeatherSnapshot.sample()
         let expectedWeekLimits: [WidgetFamily: Int] = [
-            .systemSmall: 2,
-            .systemMedium: 2,
-            .systemLarge: 3,
+            .systemSmall: 1,
+            .systemMedium: 1,
+            .systemLarge: 2,
         ]
         let expectedDayLimits: [WidgetFamily: Int] = [
             .systemSmall: 2,
@@ -187,6 +187,23 @@ final class WeatherConfigurationTests: XCTestCase {
         XCTAssertEqual(temperature?.unitSuffix, "F")
         XCTAssertEqual(temperature?.displayText, "63°F")
         XCTAssertEqual(temperature?.spokenText, "Temperature 63°F")
+    }
+
+    func testEveryWidgetFamilyUsesDistinctReadableLayoutMetrics() {
+        let small = WeatherWidgetLayoutMetrics(family: .systemSmall)
+        let medium = WeatherWidgetLayoutMetrics(family: .systemMedium)
+        let large = WeatherWidgetLayoutMetrics(family: .systemLarge)
+
+        XCTAssertLessThan(small.headerFontSize, medium.headerFontSize)
+        XCTAssertLessThan(medium.headerFontSize, large.headerFontSize)
+        XCTAssertLessThan(small.dayTemperatureSize, medium.dayTemperatureSize)
+        XCTAssertLessThan(medium.dayTemperatureSize, large.dayTemperatureSize)
+        XCTAssertGreaterThanOrEqual(small.forecastColumnSpacing, 4)
+        XCTAssertGreaterThanOrEqual(medium.forecastColumnSpacing, 4)
+        XCTAssertGreaterThanOrEqual(large.forecastColumnSpacing, 4)
+        XCTAssertGreaterThanOrEqual(small.forecastVerticalSpacing, 4)
+        XCTAssertGreaterThan(medium.forecastVerticalSpacing, small.forecastVerticalSpacing)
+        XCTAssertGreaterThan(large.forecastVerticalSpacing, medium.forecastVerticalSpacing)
     }
 
     func testAttributionLinkIsForwardedToTheDefaultBrowser() {
@@ -495,7 +512,10 @@ final class WeatherConfigurationTests: XCTestCase {
         let items = URLComponents(url: url, resolvingAgainstBaseURL: false)?.queryItems ?? []
         XCTAssertEqual(url.host(), "geocoding-api.open-meteo.com")
         XCTAssertEqual(items.first(where: { $0.name == "name" })?.value, "Portland")
-        XCTAssertEqual(items.first(where: { $0.name == "count" })?.value, "10")
+        XCTAssertEqual(
+            items.first(where: { $0.name == "count" })?.value,
+            String(WeatherCityChoice.maximumSearchResults)
+        )
 
         let locations = try OpenMeteoLocationSearchService.decodeLocations(
             data: Data(Self.geocodingFixture.utf8)
@@ -508,6 +528,30 @@ final class WeatherConfigurationTests: XCTestCase {
             WeatherCityChoice.identifier(for: locations[0]),
             WeatherCityChoice.identifier(for: locations[1])
         )
+        XCTAssertEqual(
+            locations.map(WeatherCityChoice.displayTitle(for:)),
+            ["Portland, Oregon, United States", "Portland, Maine, United States"]
+        )
+    }
+
+    func testCityResultsKeepDistinctMatchesAndCapThePopupAtTwenty() {
+        let locations = (0..<25).map { index in
+            WeatherLocation(
+                name: "Portland",
+                latitude: 40 + Double(index) / 10,
+                longitude: -120 - Double(index) / 10,
+                timeZoneIdentifier: "America/Los_Angeles",
+                adminArea: "Region \(index)",
+                country: "United States"
+            )
+        }
+        let duplicate = locations[3]
+
+        let normalized = WeatherCityChoice.normalized(locations + [duplicate])
+
+        XCTAssertEqual(normalized.count, WeatherCityChoice.maximumSearchResults)
+        XCTAssertEqual(Set(normalized.map(WeatherCityChoice.identifier(for:))).count, normalized.count)
+        XCTAssertEqual(Set(normalized.map(WeatherCityChoice.displayTitle(for:))).count, normalized.count)
     }
 
     func testForecastDecodingNormalizesCurrentHourlyAndDailyData() throws {

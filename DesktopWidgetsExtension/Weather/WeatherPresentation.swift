@@ -1,6 +1,111 @@
 import Foundation
 import WidgetKit
 
+struct WeatherWidgetLayoutMetrics: Equatable, Sendable {
+    let contentSpacing: CGFloat
+    let forecastColumnSpacing: CGFloat
+    let forecastVerticalSpacing: CGFloat
+    let headerFontSize: CGFloat
+    let dayHorizontalSpacing: CGFloat
+    let dayIconSize: CGFloat
+    let dayTemperatureSize: CGFloat
+    let forecastTitleSize: CGFloat
+    let forecastIconSize: CGFloat
+    let forecastTemperatureSize: CGFloat
+    let metricFontSize: CGFloat
+    let expandedSectionSpacing: CGFloat
+    let expandedIconSize: CGFloat
+    let expandedTemperatureSize: CGFloat
+
+    init(family: WidgetFamily) {
+        switch family {
+        case .systemSmall:
+            self.init(
+                contentSpacing: 6,
+                forecastColumnSpacing: 6,
+                forecastVerticalSpacing: 4,
+                headerFontSize: 13,
+                dayHorizontalSpacing: 12,
+                dayIconSize: 40,
+                dayTemperatureSize: 32,
+                forecastTitleSize: 13,
+                forecastIconSize: 22,
+                forecastTemperatureSize: 15,
+                metricFontSize: 9,
+                expandedSectionSpacing: 8,
+                expandedIconSize: 44,
+                expandedTemperatureSize: 38
+            )
+        case .systemLarge:
+            self.init(
+                contentSpacing: 12,
+                forecastColumnSpacing: 8,
+                forecastVerticalSpacing: 8,
+                headerFontSize: 18,
+                dayHorizontalSpacing: 28,
+                dayIconSize: 70,
+                dayTemperatureSize: 56,
+                forecastTitleSize: 17,
+                forecastIconSize: 30,
+                forecastTemperatureSize: 20,
+                metricFontSize: 11,
+                expandedSectionSpacing: 14,
+                expandedIconSize: 60,
+                expandedTemperatureSize: 50
+            )
+        default:
+            self.init(
+                contentSpacing: 10,
+                forecastColumnSpacing: 4,
+                forecastVerticalSpacing: 6,
+                headerFontSize: 16,
+                dayHorizontalSpacing: 24,
+                dayIconSize: 50,
+                dayTemperatureSize: 40,
+                forecastTitleSize: 15,
+                forecastIconSize: 27,
+                forecastTemperatureSize: 18,
+                metricFontSize: 9,
+                expandedSectionSpacing: 10,
+                expandedIconSize: 52,
+                expandedTemperatureSize: 44
+            )
+        }
+    }
+
+    private init(
+        contentSpacing: CGFloat,
+        forecastColumnSpacing: CGFloat,
+        forecastVerticalSpacing: CGFloat,
+        headerFontSize: CGFloat,
+        dayHorizontalSpacing: CGFloat,
+        dayIconSize: CGFloat,
+        dayTemperatureSize: CGFloat,
+        forecastTitleSize: CGFloat,
+        forecastIconSize: CGFloat,
+        forecastTemperatureSize: CGFloat,
+        metricFontSize: CGFloat,
+        expandedSectionSpacing: CGFloat,
+        expandedIconSize: CGFloat,
+        expandedTemperatureSize: CGFloat
+    ) {
+        self.contentSpacing = contentSpacing
+        self.forecastColumnSpacing = forecastColumnSpacing
+        self.forecastVerticalSpacing = forecastVerticalSpacing
+        self.headerFontSize = headerFontSize
+        self.dayHorizontalSpacing = dayHorizontalSpacing
+        self.dayIconSize = dayIconSize
+        self.dayTemperatureSize = dayTemperatureSize
+        self.forecastTitleSize = forecastTitleSize
+        self.forecastIconSize = forecastIconSize
+        self.forecastTemperatureSize = forecastTemperatureSize
+        self.metricFontSize = metricFontSize
+        self.expandedSectionSpacing = expandedSectionSpacing
+        self.expandedIconSize = expandedIconSize
+        self.expandedTemperatureSize = expandedTemperatureSize
+    }
+}
+
 enum WeatherEntryState: Equatable, Sendable {
     case loaded
     case stale(String)

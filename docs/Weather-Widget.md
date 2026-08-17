@@ -5,25 +5,25 @@ The Weather widget recreates the supplied reference's quiet visual rhythm: a mon
 ## Add and customize it
 
 1. Open `DesktopWidgets.xcodeproj`, select **My Mac**, and run the `DesktopWidgets` scheme once.
-2. Remove any Weather widget installed from build 12 or earlier. Build 13 adds a reliable string-backed city search and uses a fresh widget and intent identity.
+2. Remove the existing Weather widget before adding build 14. An editor titled **Location** with a red pin is the retired placemark widget; the current editor exposes separate **Search City** and **Matching City** rows.
 3. Control-click the desktop, choose **Edit Widgets**, search for **Desktop Widgets**, and add **Weather**.
 4. Control-click the placed widget and choose **Edit Weather**.
 5. Configure these settings for that widget instance:
 
 | Setting | Behavior |
 | --- | --- |
-| Search City + Matching City | Type at least two letters in **Search City**, then open **Matching City** and choose the exact result. The result list includes the state or country where available, so cities with the same name remain distinct. The selected result supplies its exact coordinate and time zone to the forecast service. Portland, Oregon is the default. |
+| Search City + Matching City | Type at least two letters in **Search City**, then open **Matching City** and choose the exact result. Up to 20 results use full city, state, and country labels, so same-named cities remain distinct instead of collapsing into one row. The selected result supplies its exact coordinate and time zone to the forecast service. Portland, Oregon is the default. |
 | Forecast View | **Week** shows seven days on medium and large widgets; a small widget focuses on today. **Day** shows current conditions and today's high/low. **Hour** shows the next six hours, or three on a small widget. Large Week and Hour views add a current-conditions hero, high/low, and selected details above the forecast strip. |
 | Temperature Units | **Automatic** follows the Mac's regional temperature and wind conventions. Explicit Fahrenheit uses mph; explicit Celsius uses km/h. |
 | Details Preset | Apply several details with one selection: **Minimal** (Temperature), **Simple** (Temperature + Condition), **Rain** (Temperature + Rain chance), **Comfort** (Temperature + Humidity), **Detailed** (Temperature + Condition + Humidity), or **Full** (all five details). |
 
-Day view can show the first 2 details on Small, 3 on Medium, or all 5 on Large. The denser Week and Hour columns show at most 2 details on Small and Medium or 3 on Large. If a preset contains more than that presentation can display, the widget keeps the first details that fit and displays a compact **Showing X of Y · Size limit N** notice. Minimal is the defensive fallback if macOS restores an empty or invalid configuration.
+Day view can show the first 2 details on Small, 3 on Medium, or all 5 on Large. The narrower Week and Hour columns show 1 detail on Small and Medium or 2 on Large. Each family has its own header, icon, temperature, column-gap, and vertical-spacing metrics. If a preset contains more than that presentation can display, the widget keeps the first details that fit and displays a compact **Showing X of Y · Size limit N** notice. Minimal is the defensive fallback if macOS restores an empty or invalid configuration.
 
 Each placed widget owns its configuration. One instance can show Portland's week in Fahrenheit while another shows Tokyo's next six hours in Celsius.
 
 ## Data source and refresh behavior
 
-This personal, subscription-free build uses [Open-Meteo's Forecast API](https://open-meteo.com/en/docs) and [Geocoding API](https://open-meteo.com/en/docs/geocoding-api). The dependent Matching City list searches Open-Meteo after at least two characters and stores the selected result's resolved name, coordinate, and time zone in the widget configuration. Each refresh sends that coordinate to Open-Meteo and requests current conditions, seven daily forecasts, and hourly forecasts. The normalized model includes temperature, relative humidity, precipitation probability, wind speed, and WMO weather condition codes.
+This personal, subscription-free build uses [Open-Meteo's Forecast API](https://open-meteo.com/en/docs) and [Geocoding API](https://open-meteo.com/en/docs/geocoding-api). The dependent Matching City list searches Open-Meteo after at least two characters, requests up to 20 matches, removes exact duplicates, and stores the selected result's resolved name, coordinate, and time zone in the widget configuration. Each refresh sends that coordinate to Open-Meteo and requests current conditions, seven daily forecasts, and hourly forecasts. The normalized model includes temperature, relative humidity, precipitation probability, wind speed, and WMO weather condition codes.
 
 The free endpoint is keyless and limited to noncommercial use under [Open-Meteo's current terms](https://open-meteo.com/en/terms). Forecast data is licensed under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/), so the widget displays a linked **Open-Meteo** credit next to the city. Values are normalized into the app's provider-neutral model and rounded for display. A commercial release must use an appropriately licensed provider or a paid Open-Meteo endpoint and must not embed an API key directly in a public client.
 
@@ -52,12 +52,13 @@ Apple WeatherKit was not selected because Apple's [WeatherKit account setup](htt
 
 ## Desktop acceptance checklist
 
-`./Scripts/verify-widgets.sh` covers stable configuration defaults, city-result encoding and coordinate delivery, geocoding requests and duplicate-name results, expanded large-family selection, all 54 family/view/preset presentation combinations, accessible forecast titles, detail limits and notices, loaded/stale/failure states, exhausted-hour fallback, forecast-city midnight rollover, city-time-zone scheduling, request construction, response decoding, WMO mapping, unit formatting, city errors, cached forecast round trips, the Release extension bundle, and its App Intent metadata.
+`./Scripts/verify-widgets.sh` covers stable configuration defaults, city-result encoding and coordinate delivery, the 20-result cap, duplicate-name labels, family-specific layout metrics, expanded large-family selection, all 54 family/view/preset presentation combinations, accessible forecast titles, detail limits and notices, loaded/stale/failure states, exhausted-hour fallback, forecast-city midnight rollover, city-time-zone scheduling, request construction, response decoding, WMO mapping, unit formatting, city errors, cached forecast round trips, the Release extension bundle, and its App Intent metadata.
 
 Those automated contracts are consumed by the SwiftUI view, so configuration and size behavior do not need to be manually repeated before each commit. The remaining checklist is intentionally limited to macOS-owned integration and visual behavior:
 
 - [ ] Add one Weather widget and confirm macOS exposes Search City, Matching City, Forecast View, Temperature Units, and Details Preset editor rows.
-- [ ] Type at least two letters in Search City, open Matching City, choose a result, and confirm the selection persists after reopening the editor and refreshes the widget with that city's forecast.
+- [ ] Type at least two letters in Search City, open Matching City, confirm several state/country-labeled results appear for a common name, choose one, and verify it persists and refreshes the forecast.
+- [ ] Add Small, Medium, and Large copies and confirm headers, temperatures, secondary metrics, limit notices, and attribution remain fully visible with comfortable gaps.
 - [ ] Compare Medium and Large Week or Hour widgets and confirm Large shows the expanded current-conditions dashboard above its forecast strip.
 - [ ] Disconnect networking after one successful load and confirm the extension's sandbox allows the cached forecast to remain visible on the desktop.
 - [ ] Verify the Open-Meteo link is visible and opens the provider site.

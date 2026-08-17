@@ -126,11 +126,11 @@ enum WeatherDetailLimits {
         if mode != .day {
             switch family {
             case .systemSmall, .systemMedium:
-                return 2
+                return 1
             case .systemLarge:
-                return 3
-            default:
                 return 2
+            default:
+                return 1
             }
         }
 
@@ -170,6 +170,8 @@ struct WeatherDetailPresentation: Equatable, Sendable {
 }
 
 enum WeatherCityChoice {
+    static let maximumSearchResults = 20
+
     static let suggestions: [WeatherLocation] = [
         .portland,
         WeatherLocation(
@@ -221,20 +223,29 @@ enum WeatherCityChoice {
         return location
     }
 
+    static func displayTitle(for location: WeatherLocation) -> String {
+        location.displayName
+    }
+
+    static func normalized(_ locations: [WeatherLocation]) -> [WeatherLocation] {
+        var seen = Set<String>()
+        return locations.filter { location in
+            seen.insert(identifier(for: location)).inserted
+        }
+        .prefix(maximumSearchResults)
+        .map { $0 }
+    }
+
     static func collection(for locations: [WeatherLocation]) -> IntentItemCollection<String> {
         IntentItemCollection(
             promptLabel: "Choose a matching city",
             sections: [
                 IntentItemSection(
-                    items: locations.map { location in
-                        let title: LocalizedStringResource = "\(location.name)"
-                        let subtitle: LocalizedStringResource? = location.qualifier.isEmpty
-                            ? nil
-                            : "\(location.qualifier)"
+                    items: normalized(locations).map { location in
+                        let title: LocalizedStringResource = "\(displayTitle(for: location))"
                         return IntentItem(
                             identifier(for: location),
-                            title: title,
-                            subtitle: subtitle
+                            title: title
                         )
                     }
                 )
