@@ -225,29 +225,40 @@ struct TimeAndDateWidget: Widget {
     }
 }
 
-#Preview(as: .systemSmall) {
-    TimeAndDateWidget()
-} timeline: {
-    TimeAndDateEntry(date: timeAndDatePreviewDate, configuration: .referencePreview())
-}
+#if DEBUG
+struct TimeAndDateWidget_Previews: PreviewProvider {
+    static var previews: some View {
+        Group {
+            TimeAndDateWidgetView(
+                entry: TimeAndDateEntry(date: timeAndDatePreviewDate, configuration: .referencePreview())
+            )
+            .previewContext(WidgetPreviewContext(family: .systemSmall))
+            .previewDisplayName("Small")
 
-#Preview(as: .systemMedium) {
-    TimeAndDateWidget()
-} timeline: {
-    TimeAndDateEntry(date: timeAndDatePreviewDate, configuration: .referencePreview())
-}
+            TimeAndDateWidgetView(
+                entry: TimeAndDateEntry(date: timeAndDatePreviewDate, configuration: .referencePreview())
+            )
+            .previewContext(WidgetPreviewContext(family: .systemMedium))
+            .previewDisplayName("Medium")
 
-#Preview("Alternate Configuration", as: .systemMedium) {
-    TimeAndDateWidget()
-} timeline: {
-    TimeAndDateEntry(date: timeAndDatePreviewDate, configuration: timeAndDateAlternatePreviewConfiguration)
-}
+            TimeAndDateWidgetView(
+                entry: TimeAndDateEntry(
+                    date: timeAndDatePreviewDate,
+                    configuration: timeAndDateAlternatePreviewConfiguration
+                )
+            )
+            .previewContext(WidgetPreviewContext(family: .systemMedium))
+            .previewDisplayName("Alternate Configuration")
 
-#Preview(as: .systemLarge) {
-    TimeAndDateWidget()
-} timeline: {
-    TimeAndDateEntry(date: timeAndDatePreviewDate, configuration: .referencePreview())
+            TimeAndDateWidgetView(
+                entry: TimeAndDateEntry(date: timeAndDatePreviewDate, configuration: .referencePreview())
+            )
+            .previewContext(WidgetPreviewContext(family: .systemLarge))
+            .previewDisplayName("Large")
+        }
+    }
 }
+#endif
 
 private var timeAndDateAlternatePreviewConfiguration: TimeAndDateStringConfigurationIntent {
     let configuration = TimeAndDateStringConfigurationIntent()

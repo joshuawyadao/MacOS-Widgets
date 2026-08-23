@@ -1,20 +1,18 @@
 # Plan
 
-Improve Weather city selection and legibility by supplying a larger, uniquely labeled result set to macOS and applying explicit Small, Medium, and Large layout metrics with safer forecast-detail budgets.
+Investigate recent Weather-widget commits for concrete regressions and apply the smallest safe fix backed by repo evidence. The current verification gate fails at build time on widget `#Preview` macros, so this run will replace the macro-based previews with compile-safe preview providers and re-run the widget verification script.
 
 ## Scope
-- In: Open-Meteo result count and labeling, Weather family-specific spacing and typography, detail-density limits, regression coverage, build migration guidance, and Weather documentation.
-- Out: Replacing macOS's system-owned App Intent editor, changing Liquid Glass behavior, or adding a custom companion-app configuration store.
+- In: Recent commit inspection, widget preview build failure, minimal preview-only code changes, verification rerun, and a short note in docs if behavior changed.
+- Out: Weather feature refactors, visual redesigns, data-flow changes, or speculative fixes without failing evidence.
 
 ## Action items
-- [x] Confirm the screenshot's editor identity and preserve the build-13 string-backed Search City and Matching City transport.
-- [x] Return up to 20 geocoding matches and give same-named cities unique visible titles with state and country context.
-- [x] Add explicit Small, Medium, and Large layout metrics for headers, day summaries, forecast columns, and inter-item spacing.
-- [x] Reduce Week and Hour detail density where narrow columns would clip or crowd labels while retaining the existing limit notice.
-- [x] Extend tests for result counts, unique city labels, family layout metrics, and every family/view/preset combination.
-- [x] Update the host guidance, README, and Weather documentation with the current editor flow, size behavior, and build migration step.
-- [x] Run the complete widget verification gate: all 44 tests, fresh Release compilation, extension embedding, widget identities, and App Intent editor metadata passed.
-- [x] Commit and push the completed implementation to the current Weather feature branch.
+- [x] Inspect recent commits since the last week and identify candidate regressions with concrete evidence.
+- [x] Run `./Scripts/verify-widgets.sh` to capture the current failing signal on `HEAD`.
+- [x] Replace `#Preview` macro blocks in the widget sources with non-macro preview providers that preserve the same sample states.
+- [x] Re-run `./Scripts/verify-widgets.sh` and confirm the build/test gate passes or capture any remaining concrete failure.
+- [x] Confirm no durable behavior or verification guidance changed beyond the build fix, so no additional docs updates were needed.
+- [ ] Commit and push the minimal fix on the current branch.
 
 ## Open questions
 - None.

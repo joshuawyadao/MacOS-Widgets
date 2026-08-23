@@ -419,38 +419,46 @@ struct WeatherWidget: Widget {
     }
 }
 
-#Preview("Week", as: .systemMedium) {
-    WeatherWidget()
-} timeline: {
-    WeatherEntry(
-        date: WeatherSnapshot.sample().fetchedAt,
-        configuration: .referencePreview(),
-        snapshot: .sample(),
-        state: .loaded
-    )
-}
+#if DEBUG
+struct WeatherWidget_Previews: PreviewProvider {
+    static var previews: some View {
+        Group {
+            WeatherWidgetView(
+                entry: WeatherEntry(
+                    date: WeatherSnapshot.sample().fetchedAt,
+                    configuration: .referencePreview(),
+                    snapshot: .sample(),
+                    state: .loaded
+                )
+            )
+            .previewContext(WidgetPreviewContext(family: .systemMedium))
+            .previewDisplayName("Week")
 
-#Preview("Day", as: .systemSmall) {
-    WeatherWidget()
-} timeline: {
-    WeatherEntry(
-        date: WeatherSnapshot.sample().fetchedAt,
-        configuration: weatherDayPreviewConfiguration,
-        snapshot: .sample(),
-        state: .loaded
-    )
-}
+            WeatherWidgetView(
+                entry: WeatherEntry(
+                    date: WeatherSnapshot.sample().fetchedAt,
+                    configuration: weatherDayPreviewConfiguration,
+                    snapshot: .sample(),
+                    state: .loaded
+                )
+            )
+            .previewContext(WidgetPreviewContext(family: .systemSmall))
+            .previewDisplayName("Day")
 
-#Preview("Hour", as: .systemLarge) {
-    WeatherWidget()
-} timeline: {
-    WeatherEntry(
-        date: WeatherSnapshot.sample().fetchedAt,
-        configuration: weatherHourPreviewConfiguration,
-        snapshot: .sample(),
-        state: .loaded
-    )
+            WeatherWidgetView(
+                entry: WeatherEntry(
+                    date: WeatherSnapshot.sample().fetchedAt,
+                    configuration: weatherHourPreviewConfiguration,
+                    snapshot: .sample(),
+                    state: .loaded
+                )
+            )
+            .previewContext(WidgetPreviewContext(family: .systemLarge))
+            .previewDisplayName("Hour")
+        }
+    }
 }
+#endif
 
 private var weatherDayPreviewConfiguration: WeatherV7ConfigurationIntent {
     let configuration = WeatherV7ConfigurationIntent.referencePreview()
