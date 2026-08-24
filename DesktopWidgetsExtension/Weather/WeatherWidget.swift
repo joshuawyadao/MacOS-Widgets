@@ -135,7 +135,7 @@ struct WeatherWidgetView: View {
         }
         .frame(
             maxWidth: .infinity,
-            maxHeight: layout.spreadsForecastVertically ? .infinity : nil,
+            maxHeight: layout.fillsForecastSection ? .infinity : nil,
             alignment: .top
         )
     }
@@ -155,7 +155,7 @@ struct WeatherWidgetView: View {
         }
         .frame(
             maxWidth: .infinity,
-            maxHeight: layout.spreadsForecastVertically ? .infinity : nil,
+            maxHeight: layout.fillsForecastSection ? .infinity : nil,
             alignment: .top
         )
     }
@@ -304,7 +304,7 @@ struct WeatherWidgetView: View {
                 .lineLimit(1)
                 .minimumScaleFactor(0.7)
 
-            if layout.spreadsForecastVertically {
+            if layout.usesFlexibleForecastItemSpacing {
                 Spacer(minLength: layout.forecastVerticalSpacing)
             }
 
@@ -314,7 +314,7 @@ struct WeatherWidgetView: View {
                 .frame(height: layout.forecastIconSize + 4)
                 .widgetAccentable()
 
-            if layout.spreadsForecastVertically {
+            if layout.usesFlexibleForecastItemSpacing {
                 Spacer(minLength: layout.forecastVerticalSpacing)
             }
 
@@ -326,7 +326,7 @@ struct WeatherWidgetView: View {
                 }
             }
         }
-        .frame(maxHeight: layout.spreadsForecastVertically ? .infinity : nil)
+        .frame(maxHeight: layout.fillsForecastSection ? .infinity : nil)
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(accessibilityLabel)
     }

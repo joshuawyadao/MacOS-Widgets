@@ -20,7 +20,8 @@ struct WeatherWidgetLayoutMetrics: Equatable, Sendable {
     let dayTemperatureMaximumWidth: CGFloat?
     let minimumTemperaturePointSize: CGFloat
     let usesStackedHeader: Bool
-    let spreadsForecastVertically: Bool
+    let fillsForecastSection: Bool
+    let usesFlexibleForecastItemSpacing: Bool
 
     init(family: WidgetFamily) {
         switch family {
@@ -44,7 +45,8 @@ struct WeatherWidgetLayoutMetrics: Equatable, Sendable {
                 dayTemperatureMaximumWidth: 78,
                 minimumTemperaturePointSize: 14,
                 usesStackedHeader: false,
-                spreadsForecastVertically: false
+                fillsForecastSection: false,
+                usesFlexibleForecastItemSpacing: false
             )
         case .systemLarge:
             self.init(
@@ -66,7 +68,8 @@ struct WeatherWidgetLayoutMetrics: Equatable, Sendable {
                 dayTemperatureMaximumWidth: nil,
                 minimumTemperaturePointSize: 13,
                 usesStackedHeader: true,
-                spreadsForecastVertically: true
+                fillsForecastSection: true,
+                usesFlexibleForecastItemSpacing: false
             )
         default:
             self.init(
@@ -88,7 +91,8 @@ struct WeatherWidgetLayoutMetrics: Equatable, Sendable {
                 dayTemperatureMaximumWidth: nil,
                 minimumTemperaturePointSize: 12,
                 usesStackedHeader: false,
-                spreadsForecastVertically: false
+                fillsForecastSection: false,
+                usesFlexibleForecastItemSpacing: false
             )
         }
     }
@@ -112,7 +116,8 @@ struct WeatherWidgetLayoutMetrics: Equatable, Sendable {
         dayTemperatureMaximumWidth: CGFloat?,
         minimumTemperaturePointSize: CGFloat,
         usesStackedHeader: Bool,
-        spreadsForecastVertically: Bool
+        fillsForecastSection: Bool,
+        usesFlexibleForecastItemSpacing: Bool
     ) {
         self.contentSpacing = contentSpacing
         self.forecastColumnSpacing = forecastColumnSpacing
@@ -132,7 +137,8 @@ struct WeatherWidgetLayoutMetrics: Equatable, Sendable {
         self.dayTemperatureMaximumWidth = dayTemperatureMaximumWidth
         self.minimumTemperaturePointSize = minimumTemperaturePointSize
         self.usesStackedHeader = usesStackedHeader
-        self.spreadsForecastVertically = spreadsForecastVertically
+        self.fillsForecastSection = fillsForecastSection
+        self.usesFlexibleForecastItemSpacing = usesFlexibleForecastItemSpacing
     }
 }
 

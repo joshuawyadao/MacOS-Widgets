@@ -1,19 +1,18 @@
 # Plan
 
-Refine the Weather widget’s Small, Medium, and Large layouts with stronger family-specific constraints so compact temperatures remain complete, seven-day forecasts have clearer separation, and expanded forecasts use their full height without clipping the location.
+Normalize only the Large Weather widget’s vertical rhythm by separating section filling from item spacing, keeping its expanded dashboard useful without stretching the weekday, icon, and temperature apart.
 
 ## Scope
-- In: Weather layout metrics, adaptive temperature rendering, family-specific headers, forecast section sizing, layout regression tests, and Weather appearance documentation.
-- Out: Forecast fetching, city selection, configuration behavior, signing, background treatment, and unrelated widget designs.
+- In: Large forecast-column spacing behavior, a focused regression contract, Weather appearance documentation, full verification, and branch saving.
+- Out: Small and Medium layouts, forecast data, city configuration, signing, background treatment, or a broader redesign.
 
 ## Action items
-[x] Add explicit compact-temperature, medium-grid, and large-header layout contracts in `WeatherPresentation.swift`.
-[x] Replace Small’s truncation-prone temperature scaling with bounded `ViewThatFits` fallbacks in `WeatherWidget.swift`.
-[x] Increase Medium’s visual separation while keeping all seven forecast columns readable.
-[x] Give Large a dedicated location row and balance its current summary and forecast across the available height.
-[x] Extend `WeatherConfigurationTests.swift` with regression assertions for the revised family-specific metrics.
-[x] Update `docs/Weather-Widget.md` with the new layout behavior and visual acceptance criteria.
-[x] Run `./Scripts/verify-widgets.sh`, review the scoped diff, and save the current Weather feature branch.
+[x] Add a red regression contract proving Large must fill its forecast section without flexible gaps inside each forecast column.
+[x] Split section-height behavior from forecast-item spacing in `WeatherPresentation.swift`.
+[x] Update `WeatherWidget.swift` so Large keeps fixed, coherent spacing between weekday, condition, and temperature.
+[x] Confirm Small and Medium layout metrics remain unchanged.
+[x] Update `docs/Weather-Widget.md` to describe the revised Large vertical rhythm.
+[x] Run the focused regression and `./Scripts/verify-widgets.sh`, review the scoped diff, and save the Weather feature branch.
 
 ## Open questions
 - None.
