@@ -17,7 +17,9 @@ struct WeatherWidgetLayoutMetrics: Equatable, Sendable {
     let expandedIconSize: CGFloat
     let expandedTemperatureSize: CGFloat
     let dayTemperatureMinimumWidth: CGFloat
-    let temperatureMinimumScaleFactor: CGFloat
+    let dayTemperatureMaximumWidth: CGFloat?
+    let minimumTemperaturePointSize: CGFloat
+    let usesStackedHeader: Bool
     let spreadsForecastVertically: Bool
 
     init(family: WidgetFamily) {
@@ -28,8 +30,8 @@ struct WeatherWidgetLayoutMetrics: Equatable, Sendable {
                 forecastColumnSpacing: 6,
                 forecastVerticalSpacing: 4,
                 headerFontSize: 13,
-                dayHorizontalSpacing: 6,
-                dayIconSize: 38,
+                dayHorizontalSpacing: 5,
+                dayIconSize: 34,
                 dayTemperatureSize: 28,
                 forecastTitleSize: 13,
                 forecastIconSize: 22,
@@ -38,15 +40,17 @@ struct WeatherWidgetLayoutMetrics: Equatable, Sendable {
                 expandedSectionSpacing: 8,
                 expandedIconSize: 44,
                 expandedTemperatureSize: 38,
-                dayTemperatureMinimumWidth: 66,
-                temperatureMinimumScaleFactor: 0.5,
+                dayTemperatureMinimumWidth: 72,
+                dayTemperatureMaximumWidth: 78,
+                minimumTemperaturePointSize: 14,
+                usesStackedHeader: false,
                 spreadsForecastVertically: false
             )
         case .systemLarge:
             self.init(
                 contentSpacing: 10,
-                forecastColumnSpacing: 7,
-                forecastVerticalSpacing: 10,
+                forecastColumnSpacing: 8,
+                forecastVerticalSpacing: 8,
                 headerFontSize: 15,
                 dayHorizontalSpacing: 28,
                 dayIconSize: 70,
@@ -59,27 +63,31 @@ struct WeatherWidgetLayoutMetrics: Equatable, Sendable {
                 expandedIconSize: 68,
                 expandedTemperatureSize: 54,
                 dayTemperatureMinimumWidth: 132,
-                temperatureMinimumScaleFactor: 0.65,
+                dayTemperatureMaximumWidth: nil,
+                minimumTemperaturePointSize: 13,
+                usesStackedHeader: true,
                 spreadsForecastVertically: true
             )
         default:
             self.init(
                 contentSpacing: 10,
-                forecastColumnSpacing: 7,
+                forecastColumnSpacing: 9,
                 forecastVerticalSpacing: 7,
                 headerFontSize: 15,
                 dayHorizontalSpacing: 20,
                 dayIconSize: 48,
                 dayTemperatureSize: 38,
-                forecastTitleSize: 14,
-                forecastIconSize: 24,
-                forecastTemperatureSize: 16,
+                forecastTitleSize: 13,
+                forecastIconSize: 22,
+                forecastTemperatureSize: 15,
                 metricFontSize: 9,
                 expandedSectionSpacing: 10,
                 expandedIconSize: 52,
                 expandedTemperatureSize: 44,
                 dayTemperatureMinimumWidth: 96,
-                temperatureMinimumScaleFactor: 0.6,
+                dayTemperatureMaximumWidth: nil,
+                minimumTemperaturePointSize: 12,
+                usesStackedHeader: false,
                 spreadsForecastVertically: false
             )
         }
@@ -101,7 +109,9 @@ struct WeatherWidgetLayoutMetrics: Equatable, Sendable {
         expandedIconSize: CGFloat,
         expandedTemperatureSize: CGFloat,
         dayTemperatureMinimumWidth: CGFloat,
-        temperatureMinimumScaleFactor: CGFloat,
+        dayTemperatureMaximumWidth: CGFloat?,
+        minimumTemperaturePointSize: CGFloat,
+        usesStackedHeader: Bool,
         spreadsForecastVertically: Bool
     ) {
         self.contentSpacing = contentSpacing
@@ -119,7 +129,9 @@ struct WeatherWidgetLayoutMetrics: Equatable, Sendable {
         self.expandedIconSize = expandedIconSize
         self.expandedTemperatureSize = expandedTemperatureSize
         self.dayTemperatureMinimumWidth = dayTemperatureMinimumWidth
-        self.temperatureMinimumScaleFactor = temperatureMinimumScaleFactor
+        self.dayTemperatureMaximumWidth = dayTemperatureMaximumWidth
+        self.minimumTemperaturePointSize = minimumTemperaturePointSize
+        self.usesStackedHeader = usesStackedHeader
         self.spreadsForecastVertically = spreadsForecastVertically
     }
 }

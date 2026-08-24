@@ -40,8 +40,8 @@ WidgetKit receives several future hourly entries from one forecast response and 
 
 - The widget declares a clear, removable WidgetKit container exactly like Time & Date. With macOS's Clear icon and widget style, the system may replace that background with Liquid Glass, tint, or blur; WidgetKit does not provide an API to remove the system-owned surface.
 - White text and multicolor SF Symbols follow the reference. Every forecast column combines its day or hour, condition, and selected values into one VoiceOver label so color and symbols are not the only source of meaning.
-- Temperatures render as one compact, scalable text run so WidgetKit cannot truncate the degree value and unit independently. The Small Today layout reserves a dedicated temperature column, allows the full value to scale before truncating, and stacks high/low values predictably. VoiceOver still announces the complete unit.
-- The small Week layout deliberately becomes a readable Today layout instead of compressing seven columns beyond legibility. Medium keeps all seven days but uses width-conscious type, symbols, and column gaps because Medium and Large share the same horizontal canvas. Large uses its extra height by spreading weekday, condition, and temperature through the lower forecast section while enlarging the current-conditions summary.
+- Temperatures render as one compact text run so WidgetKit cannot truncate the degree value and unit independently. Small Today reserves a bounded temperature column and uses a sequence of complete-text fallback sizes instead of an ellipsis-producing scale. High/low values remain stacked, and VoiceOver announces the complete unit.
+- The small Week layout deliberately becomes a readable Today layout instead of compressing seven columns beyond legibility. Medium keeps all seven days with smaller forecast type and symbols plus wider inter-column gaps because Medium and Large share the same horizontal canvas. Large gives the full location and attribution separate header rows, then divides the remaining height between the enlarged current summary and a vertically distributed forecast section.
 - Bright wallpapers can reduce white-text contrast. Clear Light generally provides the softest glass appearance, while a darker wallpaper region improves readability.
 
 ## Signing and networking
@@ -64,7 +64,7 @@ Those automated contracts are consumed by the SwiftUI view, so configuration and
 
 - [ ] Add one Weather widget and confirm macOS exposes City, Forecast View, Temperature Units, and Details Preset editor rows, with no raw encoded identifier visible.
 - [ ] Open City, type at least two letters, confirm several region/country-labeled results appear for a common name, choose one, and verify it persists and refreshes the forecast.
-- [ ] Add Small, Medium, and Large copies and confirm the Small temperature never ellipsizes, Medium forecast columns have visible gaps, and Large distributes forecast content through the lower section without an unused middle band.
+- [ ] Add Small, Medium, and Large copies and confirm Small always shows the full temperature and unit, Medium forecast columns have comfortable visible gaps, and Large shows the full location while distributing both dashboard sections through the available height.
 - [ ] Compare Medium and Large Week or Hour widgets and confirm Large shows the expanded current-conditions dashboard above its forecast strip.
 - [ ] Disconnect networking after one successful load and confirm the extension's sandbox allows the cached forecast to remain visible on the desktop.
 - [ ] Verify the Open-Meteo link is visible and opens the provider site.

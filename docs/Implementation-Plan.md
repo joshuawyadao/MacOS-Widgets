@@ -1,19 +1,19 @@
 # Plan
 
-Rebalance the Weather widget’s Small, Medium, and Large layouts so compact temperatures remain complete, seven-column forecasts breathe horizontally, and expanded forecasts use their vertical space deliberately.
+Refine the Weather widget’s Small, Medium, and Large layouts with stronger family-specific constraints so compact temperatures remain complete, seven-day forecasts have clearer separation, and expanded forecasts use their full height without clipping the location.
 
 ## Scope
-- In: Family-specific Weather layout metrics, small day-column sizing, medium forecast typography and gaps, large forecast vertical distribution, regression contracts, and Weather appearance documentation.
-- Out: Weather data behavior, configuration options, signing setup, widget background treatment, or a broader visual redesign.
+- In: Weather layout metrics, adaptive temperature rendering, family-specific headers, forecast section sizing, layout regression tests, and Weather appearance documentation.
+- Out: Forecast fetching, city selection, configuration behavior, signing, background treatment, and unrelated widget designs.
 
 ## Action items
-[x] Add family-specific layout contracts for minimum temperature width, scaling, and expanded vertical distribution in `WeatherPresentation.swift`.
-[x] Refactor the day row and temperature label in `WeatherWidget.swift` so Small preserves the complete temperature and high/low values.
-[x] Reduce Medium forecast density while retaining all seven days and readable weather symbols.
-[x] Spread Large forecast columns through the available lower section instead of leaving one unused vertical band.
-[x] Extend `WeatherConfigurationTests.swift` with explicit anti-clipping, spacing, and expanded-layout assertions.
-[x] Update `docs/Weather-Widget.md` to describe the revised family-specific layout behavior and acceptance checks.
-[x] Run the complete widget verification gate, review the diff for unrelated changes, and save the current Weather feature branch.
+[x] Add explicit compact-temperature, medium-grid, and large-header layout contracts in `WeatherPresentation.swift`.
+[x] Replace Small’s truncation-prone temperature scaling with bounded `ViewThatFits` fallbacks in `WeatherWidget.swift`.
+[x] Increase Medium’s visual separation while keeping all seven forecast columns readable.
+[x] Give Large a dedicated location row and balance its current summary and forecast across the available height.
+[x] Extend `WeatherConfigurationTests.swift` with regression assertions for the revised family-specific metrics.
+[x] Update `docs/Weather-Widget.md` with the new layout behavior and visual acceptance criteria.
+[x] Run `./Scripts/verify-widgets.sh`, review the scoped diff, and save the current Weather feature branch.
 
 ## Open questions
 - None.

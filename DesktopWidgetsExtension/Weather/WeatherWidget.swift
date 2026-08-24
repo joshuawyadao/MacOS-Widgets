@@ -88,19 +88,36 @@ struct WeatherWidgetView: View {
         .accessibilityElement(children: .contain)
     }
 
+    @ViewBuilder
     private var header: some View {
-        HStack(alignment: .firstTextBaseline, spacing: 8) {
-            Text(headerLocationName)
-                .font(.system(size: layout.headerFontSize, weight: .medium, design: .monospaced))
-                .lineLimit(1)
-                .minimumScaleFactor(0.75)
-                .accessibilityLabel("Weather for \(presentation.locationName)")
+        if layout.usesStackedHeader {
+            VStack(alignment: .leading, spacing: 3) {
+                locationLabel
 
-            if family != .systemSmall {
-                Spacer(minLength: 4)
-                attributionControl(compact: true)
+                HStack {
+                    Spacer(minLength: 0)
+                    attributionControl(compact: true)
+                }
+            }
+        } else {
+            HStack(alignment: .firstTextBaseline, spacing: 8) {
+                locationLabel
+
+                if family != .systemSmall {
+                    Spacer(minLength: 4)
+                    attributionControl(compact: true)
+                }
             }
         }
+    }
+
+    private var locationLabel: some View {
+        Text(headerLocationName)
+            .font(.system(size: layout.headerFontSize, weight: .medium, design: .monospaced))
+            .lineLimit(1)
+            .minimumScaleFactor(layout.usesStackedHeader ? 0.65 : 0.75)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .accessibilityLabel("Weather for \(presentation.locationName)")
     }
 
     private func weekView(_ days: [DailyWeather]) -> some View {
@@ -116,6 +133,11 @@ struct WeatherWidgetView: View {
                 .frame(maxWidth: .infinity)
             }
         }
+        .frame(
+            maxWidth: .infinity,
+            maxHeight: layout.spreadsForecastVertically ? .infinity : nil,
+            alignment: .top
+        )
     }
 
     private func hourView(_ hours: [WeatherPoint]) -> some View {
@@ -131,6 +153,11 @@ struct WeatherWidgetView: View {
                 .frame(maxWidth: .infinity)
             }
         }
+        .frame(
+            maxWidth: .infinity,
+            maxHeight: layout.spreadsForecastVertically ? .infinity : nil,
+            alignment: .top
+        )
     }
 
     private func expandedForecastDashboard<ForecastContent: View>(
@@ -139,6 +166,7 @@ struct WeatherWidgetView: View {
     ) -> some View {
         VStack(spacing: layout.expandedSectionSpacing) {
             expandedCurrentSummary(snapshot)
+                .frame(maxHeight: .infinity, alignment: .center)
 
             Divider()
                 .overlay(Color.white.opacity(0.3))
@@ -245,7 +273,11 @@ struct WeatherWidgetView: View {
                     metricLabel(value)
                 }
             }
-            .frame(minWidth: layout.dayTemperatureMinimumWidth, alignment: .trailing)
+            .frame(
+                minWidth: layout.dayTemperatureMinimumWidth,
+                maxWidth: layout.dayTemperatureMaximumWidth,
+                alignment: .trailing
+            )
             .layoutPriority(1)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -344,14 +376,27 @@ struct WeatherWidgetView: View {
         _ value: WeatherMetricValue,
         size: CGFloat
     ) -> some View {
-        Text(value.displayText)
+        ViewThatFits(in: .horizontal) {
+            temperatureText(value.displayText, size: size)
+            temperatureText(
+                value.displayText,
+                size: max(layout.minimumTemperaturePointSize, size * 0.84)
+            )
+            temperatureText(
+                value.displayText,
+                size: max(layout.minimumTemperaturePointSize, size * 0.68)
+            )
+            temperatureText(value.displayText, size: layout.minimumTemperaturePointSize)
+        }
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(value.spokenText)
+    }
+
+    private func temperatureText(_ text: String, size: CGFloat) -> some View {
+        Text(text)
             .font(.system(size: size, weight: .bold, design: .rounded))
             .monospacedDigit()
-            .lineLimit(1)
-            .minimumScaleFactor(layout.temperatureMinimumScaleFactor)
-            .allowsTightening(true)
-            .layoutPriority(1)
-            .fixedSize(horizontal: false, vertical: true)
+            .fixedSize(horizontal: true, vertical: true)
     }
 
     private var headerLocationName: String {
