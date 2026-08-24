@@ -276,7 +276,7 @@ struct OpenMeteoLocationSearchService: WeatherLocationSearching {
         var components = URLComponents(string: "https://geocoding-api.open-meteo.com/v1/search")!
         components.queryItems = [
             URLQueryItem(name: "name", value: query),
-            URLQueryItem(name: "count", value: String(WeatherCityChoice.maximumSearchResults)),
+            URLQueryItem(name: "count", value: String(WeatherCityCatalog.maximumSearchResults)),
             URLQueryItem(name: "language", value: locale.language.languageCode?.identifier ?? "en"),
             URLQueryItem(name: "format", value: "json"),
         ]

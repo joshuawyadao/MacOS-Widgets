@@ -9,7 +9,7 @@ final class WidgetContractTests: XCTestCase {
         )
         XCTAssertEqual(
             WidgetIdentifier.weather.rawValue,
-            "com.joshuawyadao.desktop-widgets.weather.search-v7"
+            "com.joshuawyadao.desktop-widgets.weather.entity-search-v8"
         )
         XCTAssertNotEqual(WidgetIdentifier.timeAndDate.rawValue, WidgetIdentifier.weather.rawValue)
     }

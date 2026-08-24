@@ -108,20 +108,28 @@ if [[ "$EXTENSION_POINT" != "com.apple.widgetkit-extension" ]]; then
 fi
 
 require_contains "$APP_INTENTS_METADATA" "TimeAndDateStringConfigurationIntent" "Time & Date configuration metadata"
-require_contains "$APP_INTENTS_METADATA" "WeatherV7ConfigurationIntent" "Weather configuration metadata"
-require_contains "$APP_INTENTS_METADATA" "citySearch" "Weather city search parameter"
-if ! jq -e '.actions.WeatherV7ConfigurationIntent.parameters[] | select(.name == "city") | .dynamicOptionsSupport > 0' "$APP_INTENTS_METADATA" >/dev/null; then
-    echo "FAIL: Weather Matching City parameter does not export dynamic options" >&2
+require_contains "$APP_INTENTS_METADATA" "WeatherV8ConfigurationIntent" "Weather configuration metadata"
+require_contains "$APP_INTENTS_METADATA" "WeatherV8CityEntity" "Weather searchable city entity"
+if grep -Fq 'citySearch' "$APP_INTENTS_METADATA"; then
+    echo "FAIL: Weather metadata still exposes the retired Search City field" >&2
     exit 1
 fi
-if grep -Fq 'WeatherV5LocationEntity' "$APP_INTENTS_METADATA"; then
-    echo "FAIL: Weather metadata still contains the broken custom city entity transport" >&2
+if ! jq -e '.actions.WeatherV8ConfigurationIntent.parameters[] | select(.name == "city") | (.dynamicOptionsSupport > 0 and .valueType.entity.wrapper.typeName == "WeatherV8CityEntity")' "$APP_INTENTS_METADATA" >/dev/null; then
+    echo "FAIL: Weather City parameter is not exported as a searchable city entity" >&2
+    exit 1
+fi
+if ! jq -e '.entities.WeatherV8CityEntity.defaultQueryIdentifier | endswith(".WeatherV8CityQuery")' "$APP_INTENTS_METADATA" >/dev/null; then
+    echo "FAIL: Weather city entity does not export its string-search query" >&2
+    exit 1
+fi
+if grep -Fq 'WeatherV7ConfigurationIntent' "$APP_INTENTS_METADATA"; then
+    echo "FAIL: Weather metadata still contains the retired two-field city configuration" >&2
     exit 1
 fi
 require_contains "$APP_INTENTS_METADATA" "detailPreset" "Weather preset editor parameter"
 
 strings "$EXTENSION_BINARY" > "$EXTENSION_STRINGS"
 require_contains "$EXTENSION_STRINGS" "com.joshuawyadao.desktop-widgets.time-and-date.configurable-v2-string" "Time & Date widget identity"
-require_contains "$EXTENSION_STRINGS" "com.joshuawyadao.desktop-widgets.weather.search-v7" "Weather widget identity"
+require_contains "$EXTENSION_STRINGS" "com.joshuawyadao.desktop-widgets.weather.entity-search-v8" "Weather widget identity"
 
 echo "PASS: Both widgets passed behavior tests, Release compilation, embedding, identity, and editor-metadata checks."

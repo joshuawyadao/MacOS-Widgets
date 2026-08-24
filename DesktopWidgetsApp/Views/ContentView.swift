@@ -110,7 +110,7 @@ struct ContentView: View {
                 CustomizationItem(
                     symbol: "building.2",
                     title: "City",
-                    detail: "Type at least two letters in Search City, then open Matching City to choose from up to 20 state-and-country-labeled results."
+                    detail: "Open City, type at least two letters, then choose from up to 20 clearly labeled matching places."
                 )
                 CustomizationItem(
                     symbol: "calendar.day.timeline.leading",

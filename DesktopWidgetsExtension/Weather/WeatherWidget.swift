@@ -407,7 +407,7 @@ struct WeatherWidget: Widget {
     var body: some WidgetConfiguration {
         AppIntentConfiguration(
             kind: Self.kind,
-            intent: WeatherV7ConfigurationIntent.self,
+            intent: WeatherV8ConfigurationIntent.self,
             provider: WeatherProvider()
         ) { entry in
             WeatherWidgetView(entry: entry)
@@ -460,15 +460,15 @@ struct WeatherWidget_Previews: PreviewProvider {
 }
 #endif
 
-private var weatherDayPreviewConfiguration: WeatherV7ConfigurationIntent {
-    let configuration = WeatherV7ConfigurationIntent.referencePreview()
+private var weatherDayPreviewConfiguration: WeatherV8ConfigurationIntent {
+    let configuration = WeatherV8ConfigurationIntent.referencePreview()
     configuration.viewMode = WeatherViewMode.day.rawValue
     configuration.detailPreset = WeatherDetailPreset.comfort.rawValue
     return configuration
 }
 
-private var weatherHourPreviewConfiguration: WeatherV7ConfigurationIntent {
-    let configuration = WeatherV7ConfigurationIntent.referencePreview()
+private var weatherHourPreviewConfiguration: WeatherV8ConfigurationIntent {
+    let configuration = WeatherV8ConfigurationIntent.referencePreview()
     configuration.viewMode = WeatherViewMode.hour.rawValue
     configuration.detailPreset = WeatherDetailPreset.rain.rawValue
     return configuration

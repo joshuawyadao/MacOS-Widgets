@@ -225,7 +225,7 @@ struct WeatherWidgetPresentation: Equatable, Sendable {
 
     init(
         date: Date,
-        configuration: WeatherV7ConfigurationIntent,
+        configuration: WeatherV8ConfigurationIntent,
         snapshot: WeatherSnapshot?,
         state: WeatherEntryState,
         family: WidgetFamily,

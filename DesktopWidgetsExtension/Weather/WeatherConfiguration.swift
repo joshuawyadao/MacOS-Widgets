@@ -169,7 +169,7 @@ struct WeatherDetailPresentation: Equatable, Sendable {
     }
 }
 
-enum WeatherCityChoice {
+enum WeatherCityCatalog {
     static let maximumSearchResults = 20
 
     static let suggestions: [WeatherLocation] = [
@@ -236,21 +236,76 @@ enum WeatherCityChoice {
         .map { $0 }
     }
 
-    static func collection(for locations: [WeatherLocation]) -> IntentItemCollection<String> {
-        IntentItemCollection(
-            promptLabel: "Choose a matching city",
-            sections: [
-                IntentItemSection(
-                    items: normalized(locations).map { location in
-                        let title: LocalizedStringResource = "\(displayTitle(for: location))"
-                        return IntentItem(
-                            identifier(for: location),
-                            title: title
-                        )
-                    }
-                )
-            ]
-        )
+}
+
+struct WeatherV8CityEntity: AppEntity, Hashable {
+    static let typeDisplayRepresentation: TypeDisplayRepresentation = "City"
+    static let defaultQuery = WeatherV8CityQuery()
+
+    let location: WeatherLocation
+
+    var id: String {
+        WeatherCityCatalog.identifier(for: location)
+    }
+
+    var displayRepresentation: DisplayRepresentation {
+        let title: LocalizedStringResource = "\(location.name)"
+        let subtitle: LocalizedStringResource = "\(location.qualifier)"
+        return DisplayRepresentation(title: title, subtitle: subtitle)
+    }
+
+    init(location: WeatherLocation) {
+        self.location = location
+    }
+
+    init?(id: String) {
+        guard let location = WeatherCityCatalog.location(for: id) else { return nil }
+        self.location = location
+    }
+
+    static let portland = Self(location: .portland)
+}
+
+struct WeatherV8CityQuery: EntityStringQuery {
+    private let searchService: any WeatherLocationSearching
+
+    init() {
+        self.searchService = OpenMeteoLocationSearchService()
+    }
+
+    init(searchService: any WeatherLocationSearching) {
+        self.searchService = searchService
+    }
+
+    func entities(for identifiers: [WeatherV8CityEntity.ID]) async throws -> [WeatherV8CityEntity] {
+        identifiers.compactMap(WeatherV8CityEntity.init(id:))
+    }
+
+    func suggestedEntities() async throws -> [WeatherV8CityEntity] {
+        WeatherCityCatalog.suggestions.map(WeatherV8CityEntity.init(location:))
+    }
+
+    func defaultResult() async -> WeatherV8CityEntity? {
+        .portland
+    }
+
+    func entities(matching string: String) async throws -> [WeatherV8CityEntity] {
+        let query = string.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard query.count >= 2 else {
+            return try await suggestedEntities()
+        }
+
+        do {
+            let matches = try await searchService.locations(
+                matching: query,
+                locale: .autoupdatingCurrent
+            )
+            return WeatherCityCatalog.normalized(matches).map(WeatherV8CityEntity.init(location:))
+        } catch {
+            return WeatherCityCatalog.suggestions
+                .filter { $0.displayName.localizedCaseInsensitiveContains(query) }
+                .map(WeatherV8CityEntity.init(location:))
+        }
     }
 }
 
@@ -302,52 +357,15 @@ struct WeatherDetailPresetOptionsProvider: DynamicOptionsProvider {
     }
 }
 
-struct WeatherCityOptionsProvider: DynamicOptionsProvider {
-    @IntentParameterDependency<WeatherV7ConfigurationIntent>(\.$citySearch)
-    private var intent
-
-    func results() async throws -> IntentItemCollection<String> {
-        let query = intent?.citySearch
-            .trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
-        guard query.count >= 2 else {
-            return WeatherCityChoice.collection(for: WeatherCityChoice.suggestions)
-        }
-
-        do {
-            let matches = try await OpenMeteoLocationSearchService().locations(
-                matching: query,
-                locale: .autoupdatingCurrent
-            )
-            return WeatherCityChoice.collection(for: matches)
-        } catch {
-            let localMatches = WeatherCityChoice.suggestions.filter {
-                $0.displayName.localizedCaseInsensitiveContains(query)
-            }
-            return WeatherCityChoice.collection(for: localMatches)
-        }
-    }
-
-    func defaultResult() async -> String? {
-        WeatherCityChoice.identifier(for: .portland)
-    }
-}
-
-struct WeatherV7ConfigurationIntent: WidgetConfigurationIntent {
+struct WeatherV8ConfigurationIntent: WidgetConfigurationIntent {
     static let title: LocalizedStringResource = "Customize Weather"
-    static let description = IntentDescription("Type a city, choose its matching result, select a forecast view, and apply a group of weather details in one click.")
+    static let description = IntentDescription("Search for a city, select a forecast view, and apply a group of weather details in one click.")
 
     @Parameter(
-        title: "Search City",
-        description: "Type at least two letters, then open Matching City to see suggestions."
+        title: "City",
+        description: "Type at least two letters and choose a matching city from the results."
     )
-    var citySearch: String?
-
-    @Parameter(
-        title: "Matching City",
-        description: "Choose the exact city from the results for your search.",
-        optionsProvider: WeatherCityOptionsProvider()
-    )
-    var city: String?
+    var city: WeatherV8CityEntity?
 
     @Parameter(title: "Forecast View", optionsProvider: WeatherViewModeOptionsProvider())
     var viewMode: String?
@@ -363,13 +381,12 @@ struct WeatherV7ConfigurationIntent: WidgetConfigurationIntent {
     var detailPreset: String?
 
     init() {
-        citySearch = "Portland"
-        city = WeatherCityChoice.identifier(for: .portland)
+        city = .portland
         detailPreset = WeatherDetailPreset.minimal.rawValue
     }
 
     var resolvedLocation: WeatherLocation {
-        WeatherCityChoice.location(for: city) ?? .portland
+        city?.location ?? .portland
     }
 
     var resolvedCity: String {

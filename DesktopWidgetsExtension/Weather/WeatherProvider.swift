@@ -4,7 +4,7 @@ import WidgetKit
 
 struct WeatherEntry: TimelineEntry {
     let date: Date
-    let configuration: WeatherV7ConfigurationIntent
+    let configuration: WeatherV8ConfigurationIntent
     let snapshot: WeatherSnapshot?
     let state: WeatherEntryState
 }
@@ -31,7 +31,7 @@ struct WeatherProvider: AppIntentTimelineProvider {
     }
 
     func snapshot(
-        for configuration: WeatherV7ConfigurationIntent,
+        for configuration: WeatherV8ConfigurationIntent,
         in context: Context
     ) async -> WeatherEntry {
         if context.isPreview {
@@ -46,7 +46,7 @@ struct WeatherProvider: AppIntentTimelineProvider {
     }
 
     func timeline(
-        for configuration: WeatherV7ConfigurationIntent,
+        for configuration: WeatherV8ConfigurationIntent,
         in context: Context
     ) async -> Timeline<WeatherEntry> {
         let now = Date.now
@@ -77,7 +77,7 @@ struct WeatherProvider: AppIntentTimelineProvider {
     }
 
     func entry(
-        for configuration: WeatherV7ConfigurationIntent,
+        for configuration: WeatherV8ConfigurationIntent,
         date: Date
     ) async -> WeatherEntry {
         let outcome = await WeatherLoader(service: service, cache: cache).load(
