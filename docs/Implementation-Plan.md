@@ -12,7 +12,7 @@ Investigate recent Weather-widget commits for concrete regressions and apply the
 - [x] Replace `#Preview` macro blocks in the widget sources with non-macro preview providers that preserve the same sample states.
 - [x] Re-run `./Scripts/verify-widgets.sh` and confirm the build/test gate passes or capture any remaining concrete failure.
 - [x] Confirm no durable behavior or verification guidance changed beyond the build fix, so no additional docs updates were needed.
-- [ ] Commit and push the minimal fix on the current branch.
+- [x] Commit and push the minimal fix on the current branch.
 
 ## Open questions
 - None.
