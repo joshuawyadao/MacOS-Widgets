@@ -18,9 +18,9 @@ The Time and Date and Weather widgets are ready to use and can be customized ind
 ## Open and run
 
 1. Open `DesktopWidgets.xcodeproj` in Xcode.
-2. Select **My Mac** and run the `DesktopWidgets` scheme once. The project uses **Sign to Run Locally**, so a paid Apple Developer Program membership or selected development team is not required.
+2. Select **My Mac** and run the `DesktopWidgets` scheme once. The shared Run scheme refreshes the local widget extension and macOS descriptor cache before opening the app, so Xcode cannot leave an older intent schema running beside a newer build. The project uses **Sign to Run Locally**, so a paid Apple Developer Program membership or selected development team is not required.
 3. If a Time and Date widget from build 3 or earlier is still on the desktop, remove it once. Build 4 introduced a fresh configuration identity to avoid the broken AppEnum schema cached by macOS 26.5.
-4. Remove any earlier Weather widget once before adding the current one. Build 15 replaces the awkward two-row city editor with one searchable **City** field. If the editor still shows **Location** or separate **Search City / Matching City** rows, remove that older widget and add Weather again.
+4. Remove any earlier Weather widget once before adding the current one. Build 15 replaces the awkward two-row city editor with one searchable **City** field and therefore has a new WidgetKit identity; an existing build-14 Weather instance cannot migrate and appears as a blank system placeholder. If the widget is blank or its editor still shows **Location** or separate **Search City / Matching City** rows, remove that older widget and add Weather again.
 5. Control-click the desktop, choose **Edit Widgets**, and add **Time & Date** or **Weather**.
 6. Control-click a placed widget and choose **Edit**. Time & Date offers arrangements, formats, and separate font menus. Weather offers searchable city suggestions, Week/Day/Hour views, automatic or explicit temperature units, and one-click Minimal, Simple, Rain, Comfort, Detailed, and Full detail presets.
 

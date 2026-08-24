@@ -33,6 +33,8 @@ readonly SCRIPT_DIRECTORY="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 readonly PROJECT_ROOT="$(cd "$SCRIPT_DIRECTORY/.." && pwd)"
 readonly PROJECT_PATH="$PROJECT_ROOT/DesktopWidgets.xcodeproj"
 readonly SCHEME="DesktopWidgets"
+readonly SHARED_SCHEME="$PROJECT_PATH/xcshareddata/xcschemes/DesktopWidgets.xcscheme"
+readonly RUNTIME_REFRESH_SCRIPT="$PROJECT_ROOT/Scripts/refresh-widget-runtime.sh"
 readonly SELECTED_DEVELOPER_DIR="$(resolve_developer_dir)"
 readonly VERIFY_DIRECTORY="$(mktemp -d "${TMPDIR:-/tmp}/desktop-widgets-verify.XXXXXX")"
 readonly DERIVED_DATA_PATH="$VERIFY_DIRECTORY/DerivedData"
@@ -69,6 +71,14 @@ require_contains() {
         exit 1
     fi
 }
+
+require_file "$RUNTIME_REFRESH_SCRIPT" "widget runtime refresh script"
+if [[ ! -x "$RUNTIME_REFRESH_SCRIPT" ]]; then
+    echo "FAIL: Widget runtime refresh script is not executable" >&2
+    exit 1
+fi
+DEVELOPER_DIR="$SELECTED_DEVELOPER_DIR" /bin/bash -n "$RUNTIME_REFRESH_SCRIPT"
+require_contains "$SHARED_SCHEME" "refresh-widget-runtime.sh" "Xcode Run widget runtime refresh action"
 
 echo "[1/3] Running the complete Debug test suite"
 DEVELOPER_DIR="$SELECTED_DEVELOPER_DIR" xcodebuild test -quiet \

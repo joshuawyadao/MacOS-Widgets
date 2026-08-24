@@ -5,7 +5,7 @@ The Weather widget recreates the supplied reference's quiet visual rhythm: a mon
 ## Add and customize it
 
 1. Open `DesktopWidgets.xcodeproj`, select **My Mac**, and run the `DesktopWidgets` scheme once.
-2. Remove the existing Weather widget before adding build 15. An editor titled **Location** or one with separate **Search City** and **Matching City** rows belongs to an older widget; the current editor exposes one searchable **City** row.
+2. Remove the existing Weather widget before adding build 15. Build 15 has a new WidgetKit identity, so the old instance cannot migrate and may appear as a blank macOS placeholder. An editor titled **Location** or one with separate **Search City** and **Matching City** rows also belongs to an older widget; the current editor exposes one searchable **City** row.
 3. Control-click the desktop, choose **Edit Widgets**, search for **Desktop Widgets**, and add **Weather**.
 4. Control-click the placed widget and choose **Edit Weather**.
 5. Configure these settings for that widget instance:
@@ -47,6 +47,8 @@ WidgetKit receives several future hourly entries from one forecast response and 
 ## Signing and networking
 
 The widget extension enables the macOS App Sandbox **Outgoing Connections (Client)** entitlement because it contacts Open-Meteo over HTTPS. This entitlement works with the existing teamless **Sign to Run Locally** setup.
+
+The shared Xcode Run scheme executes `Scripts/refresh-widget-runtime.sh` before launching the app. It stops only the existing Desktop Widgets extension process, registers the newly built extension, and restarts the current user's widget daemon so the executable, descriptor, and App Intents metadata cannot remain on different development versions. It does not delete widget configuration or cache data. After any intentional widget-kind change, remove the retired desktop instance once and add the current widget from the gallery.
 
 Apple WeatherKit was not selected because Apple's [WeatherKit account setup](https://developer.apple.com/help/account/services/weatherkit/) requires Apple Developer Program membership and a WeatherKit-enabled App ID. If the project later adopts paid provisioning, keep the provider-neutral forecast model, add the required WeatherKit entitlement and Apple Weather attribution, and replace the Open-Meteo service at the provider boundary.
 
