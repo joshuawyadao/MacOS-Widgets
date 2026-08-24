@@ -46,7 +46,11 @@ WidgetKit receives several future hourly entries from one forecast response and 
 
 ## Signing and networking
 
-The widget extension enables the macOS App Sandbox **Outgoing Connections (Client)** entitlement because it contacts Open-Meteo over HTTPS. This entitlement works with the existing teamless **Sign to Run Locally** setup.
+The widget extension enables the macOS App Sandbox **Outgoing Connections (Client)** entitlement because it contacts Open-Meteo over HTTPS.
+
+The searchable City parameter is a custom App Intent entity. Although the editor can display and save a city under ad-hoc **Sign to Run Locally** signing, macOS cannot register or restore that entity without a development Team ID. The timeline then receives a nil city and defensively falls back to Portland. Both the host app and extension therefore use automatic Apple Development signing through `Config/Signing.xcconfig`; the actual free Personal Team ID lives only in ignored `Local.xcconfig`.
+
+Complete the one-time setup in the root README, then run the app again. A correctly signed built extension reports the Personal Team instead of `TeamIdentifier=not set` when inspected with `codesign -dvvv`. No paid membership is required for this local workflow. The unsigned Release build used by `Scripts/verify-widgets.sh` remains intentionally independent of developer accounts.
 
 The shared Xcode Run scheme executes `Scripts/refresh-widget-runtime.sh` before launching the app. It stops only the existing Desktop Widgets extension process, registers the newly built extension, and restarts the current user's widget daemon so the executable, descriptor, and App Intents metadata cannot remain on different development versions. It does not delete widget configuration or cache data. After any intentional widget-kind change, remove the retired desktop instance once and add the current widget from the gallery.
 

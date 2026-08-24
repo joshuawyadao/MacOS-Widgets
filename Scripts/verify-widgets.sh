@@ -35,6 +35,8 @@ readonly PROJECT_PATH="$PROJECT_ROOT/DesktopWidgets.xcodeproj"
 readonly SCHEME="DesktopWidgets"
 readonly SHARED_SCHEME="$PROJECT_PATH/xcshareddata/xcschemes/DesktopWidgets.xcscheme"
 readonly RUNTIME_REFRESH_SCRIPT="$PROJECT_ROOT/Scripts/refresh-widget-runtime.sh"
+readonly PERSONAL_TEAM_SCRIPT="$PROJECT_ROOT/Scripts/configure-personal-team.sh"
+readonly SIGNING_CONFIGURATION="$PROJECT_ROOT/Config/Signing.xcconfig"
 readonly SELECTED_DEVELOPER_DIR="$(resolve_developer_dir)"
 readonly VERIFY_DIRECTORY="$(mktemp -d "${TMPDIR:-/tmp}/desktop-widgets-verify.XXXXXX")"
 readonly DERIVED_DATA_PATH="$VERIFY_DIRECTORY/DerivedData"
@@ -79,6 +81,31 @@ if [[ ! -x "$RUNTIME_REFRESH_SCRIPT" ]]; then
 fi
 DEVELOPER_DIR="$SELECTED_DEVELOPER_DIR" /bin/bash -n "$RUNTIME_REFRESH_SCRIPT"
 require_contains "$SHARED_SCHEME" "refresh-widget-runtime.sh" "Xcode Run widget runtime refresh action"
+
+require_file "$PERSONAL_TEAM_SCRIPT" "Personal Team setup script"
+if [[ ! -x "$PERSONAL_TEAM_SCRIPT" ]]; then
+    echo "FAIL: Personal Team setup script is not executable" >&2
+    exit 1
+fi
+/bin/bash -n "$PERSONAL_TEAM_SCRIPT"
+require_file "$SIGNING_CONFIGURATION" "shared signing configuration"
+require_contains "$SIGNING_CONFIGURATION" "#include? \"../Local.xcconfig\"" "optional local signing include"
+require_contains "$SIGNING_CONFIGURATION" "CODE_SIGN_STYLE = Automatic" "automatic signing policy"
+require_contains "$SIGNING_CONFIGURATION" 'DEVELOPMENT_TEAM = $(LOCAL_DEVELOPMENT_TEAM)' "local Personal Team setting"
+
+readonly SIGNING_REFERENCE_COUNT="$(grep -c 'baseConfigurationReference = F00000000000000000000019 /\* Signing.xcconfig \*/;' "$PROJECT_PATH/project.pbxproj")"
+if [[ "$SIGNING_REFERENCE_COUNT" != "4" ]]; then
+    echo "FAIL: Expected app and extension Debug/Release configurations to share Signing.xcconfig" >&2
+    exit 1
+fi
+if grep -Eq 'DEVELOPMENT_TEAM[[:space:]]*=[[:space:]]*[A-Z0-9]{10}' "$PROJECT_PATH/project.pbxproj" "$SIGNING_CONFIGURATION"; then
+    echo "FAIL: A machine-specific Apple Team ID is present in tracked signing configuration" >&2
+    exit 1
+fi
+if ! git -C "$PROJECT_ROOT" check-ignore --quiet Local.xcconfig; then
+    echo "FAIL: Local.xcconfig must remain ignored by Git" >&2
+    exit 1
+fi
 
 echo "[1/3] Running the complete Debug test suite"
 DEVELOPER_DIR="$SELECTED_DEVELOPER_DIR" xcodebuild test -quiet \

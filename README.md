@@ -15,10 +15,23 @@ One macOS app and WidgetKit extension containing four independently organized wi
 
 The Time and Date and Weather widgets are ready to use and can be customized independently from the desktop. Battery and Calendar remain isolated modules ready for later implementation.
 
+## One-time free signing setup
+
+Weather's searchable City control uses an App Intent entity. macOS only restores that entity for a widget extension with a registered development identity; **Sign to Run Locally** produces an ad-hoc signature without one and makes every saved city fall back to Portland.
+
+The required Xcode Personal Team is free and does not enroll you in the $99/year Apple Developer Program:
+
+1. Open **Xcode → Settings → Accounts**, press **+**, and sign in with your Apple Account. The account should expose a team ending in **(Personal Team)**.
+2. Select the account, choose **Manage Certificates**, press **+**, and create an **Apple Development** certificate if one is not already listed.
+3. From this repository, run `./Scripts/configure-personal-team.sh`. It detects the Team ID from that certificate. If needed, pass the 10-character ID shown by Xcode: `./Scripts/configure-personal-team.sh ABC123DE45`.
+4. The helper writes only `Local.xcconfig`, which is ignored by Git. Do not add this file or a literal Team ID to a commit.
+
+Free Personal Team provisioning is intended for personal development and can require periodic rebuilding. App Store, notarized Developer ID, or dependable direct-download distribution still requires the paid program.
+
 ## Open and run
 
 1. Open `DesktopWidgets.xcodeproj` in Xcode.
-2. Select **My Mac** and run the `DesktopWidgets` scheme once. The shared Run scheme refreshes the local widget extension and macOS descriptor cache before opening the app, so Xcode cannot leave an older intent schema running beside a newer build. The project uses **Sign to Run Locally**, so a paid Apple Developer Program membership or selected development team is not required.
+2. Select **My Mac** and run the `DesktopWidgets` scheme once. The app and widget extension use the same free Personal Team from ignored local configuration. The shared Run scheme refreshes the local widget extension and macOS descriptor cache before opening the app, so Xcode cannot leave an older intent schema running beside a newer build.
 3. If a Time and Date widget from build 3 or earlier is still on the desktop, remove it once. Build 4 introduced a fresh configuration identity to avoid the broken AppEnum schema cached by macOS 26.5.
 4. Remove any earlier Weather widget once before adding the current one. Build 15 replaces the awkward two-row city editor with one searchable **City** field and therefore has a new WidgetKit identity; an existing build-14 Weather instance cannot migrate and appears as a blank system placeholder. If the widget is blank or its editor still shows **Location** or separate **Search City / Matching City** rows, remove that older widget and add Weather again.
 5. Control-click the desktop, choose **Edit Widgets**, and add **Time & Date** or **Weather**.
@@ -44,4 +57,4 @@ This removes the need to manually retest deterministic configuration, layout sel
 
 You can still run the tests alone from Xcode with **Product → Test**. Set `KEEP_WIDGET_VERIFY_ARTIFACTS=1` when running the script if you want to inspect its temporary build products after it finishes.
 
-The free teamless signing setup intentionally omits Apple's provisioning-profile-only Data Protection entitlement. macOS can therefore replace the widget with an opaque privacy placeholder while the Mac is locked.
+Repository verification builds unsigned artifacts deliberately, so CI and contributors without an Apple Account can still run the complete automated suite. Live searchable-city persistence requires the local Personal Team setup above.
