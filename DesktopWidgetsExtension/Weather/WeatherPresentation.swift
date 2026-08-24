@@ -16,59 +16,71 @@ struct WeatherWidgetLayoutMetrics: Equatable, Sendable {
     let expandedSectionSpacing: CGFloat
     let expandedIconSize: CGFloat
     let expandedTemperatureSize: CGFloat
+    let dayTemperatureMinimumWidth: CGFloat
+    let temperatureMinimumScaleFactor: CGFloat
+    let spreadsForecastVertically: Bool
 
     init(family: WidgetFamily) {
         switch family {
         case .systemSmall:
             self.init(
-                contentSpacing: 6,
+                contentSpacing: 5,
                 forecastColumnSpacing: 6,
                 forecastVerticalSpacing: 4,
                 headerFontSize: 13,
-                dayHorizontalSpacing: 12,
-                dayIconSize: 40,
-                dayTemperatureSize: 32,
+                dayHorizontalSpacing: 6,
+                dayIconSize: 38,
+                dayTemperatureSize: 28,
                 forecastTitleSize: 13,
                 forecastIconSize: 22,
                 forecastTemperatureSize: 15,
                 metricFontSize: 9,
                 expandedSectionSpacing: 8,
                 expandedIconSize: 44,
-                expandedTemperatureSize: 38
+                expandedTemperatureSize: 38,
+                dayTemperatureMinimumWidth: 66,
+                temperatureMinimumScaleFactor: 0.5,
+                spreadsForecastVertically: false
             )
         case .systemLarge:
             self.init(
-                contentSpacing: 12,
-                forecastColumnSpacing: 8,
-                forecastVerticalSpacing: 8,
-                headerFontSize: 18,
+                contentSpacing: 10,
+                forecastColumnSpacing: 7,
+                forecastVerticalSpacing: 10,
+                headerFontSize: 15,
                 dayHorizontalSpacing: 28,
                 dayIconSize: 70,
                 dayTemperatureSize: 56,
-                forecastTitleSize: 17,
+                forecastTitleSize: 14,
                 forecastIconSize: 30,
-                forecastTemperatureSize: 20,
+                forecastTemperatureSize: 16,
                 metricFontSize: 11,
-                expandedSectionSpacing: 14,
-                expandedIconSize: 60,
-                expandedTemperatureSize: 50
+                expandedSectionSpacing: 10,
+                expandedIconSize: 68,
+                expandedTemperatureSize: 54,
+                dayTemperatureMinimumWidth: 132,
+                temperatureMinimumScaleFactor: 0.65,
+                spreadsForecastVertically: true
             )
         default:
             self.init(
                 contentSpacing: 10,
-                forecastColumnSpacing: 4,
-                forecastVerticalSpacing: 6,
-                headerFontSize: 16,
-                dayHorizontalSpacing: 24,
-                dayIconSize: 50,
-                dayTemperatureSize: 40,
-                forecastTitleSize: 15,
-                forecastIconSize: 27,
-                forecastTemperatureSize: 18,
+                forecastColumnSpacing: 7,
+                forecastVerticalSpacing: 7,
+                headerFontSize: 15,
+                dayHorizontalSpacing: 20,
+                dayIconSize: 48,
+                dayTemperatureSize: 38,
+                forecastTitleSize: 14,
+                forecastIconSize: 24,
+                forecastTemperatureSize: 16,
                 metricFontSize: 9,
                 expandedSectionSpacing: 10,
                 expandedIconSize: 52,
-                expandedTemperatureSize: 44
+                expandedTemperatureSize: 44,
+                dayTemperatureMinimumWidth: 96,
+                temperatureMinimumScaleFactor: 0.6,
+                spreadsForecastVertically: false
             )
         }
     }
@@ -87,7 +99,10 @@ struct WeatherWidgetLayoutMetrics: Equatable, Sendable {
         metricFontSize: CGFloat,
         expandedSectionSpacing: CGFloat,
         expandedIconSize: CGFloat,
-        expandedTemperatureSize: CGFloat
+        expandedTemperatureSize: CGFloat,
+        dayTemperatureMinimumWidth: CGFloat,
+        temperatureMinimumScaleFactor: CGFloat,
+        spreadsForecastVertically: Bool
     ) {
         self.contentSpacing = contentSpacing
         self.forecastColumnSpacing = forecastColumnSpacing
@@ -103,6 +118,9 @@ struct WeatherWidgetLayoutMetrics: Equatable, Sendable {
         self.expandedSectionSpacing = expandedSectionSpacing
         self.expandedIconSize = expandedIconSize
         self.expandedTemperatureSize = expandedTemperatureSize
+        self.dayTemperatureMinimumWidth = dayTemperatureMinimumWidth
+        self.temperatureMinimumScaleFactor = temperatureMinimumScaleFactor
+        self.spreadsForecastVertically = spreadsForecastVertically
     }
 }
 

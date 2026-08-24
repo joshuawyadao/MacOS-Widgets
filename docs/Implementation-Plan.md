@@ -1,19 +1,19 @@
 # Plan
 
-Replace teamless ad-hoc development signing with automatic signing that reads a Personal Team identifier from an ignored local configuration file, allowing macOS to register the Weather city AppEntity without publishing account-specific values.
+Rebalance the Weather widget’s Small, Medium, and Large layouts so compact temperatures remain complete, seven-column forecasts breathe horizontally, and expanded forecasts use their vertical space deliberately.
 
 ## Scope
-- In: App and widget-extension Debug/Release signing configuration, a local Personal Team setup helper, signing verification, and developer setup documentation.
-- Out: Paid Developer Program enrollment, App Store/Developer ID distribution, changing the Weather configuration model, or storing an Apple Account or Team ID in Git.
+- In: Family-specific Weather layout metrics, small day-column sizing, medium forecast typography and gaps, large forecast vertical distribution, regression contracts, and Weather appearance documentation.
+- Out: Weather data behavior, configuration options, signing setup, widget background treatment, or a broader visual redesign.
 
 ## Action items
-[x] Add a committed signing configuration that optionally imports ignored machine-local values and enables automatic Apple Development signing.
-[x] Attach the signing configuration to the host app and widget extension without embedding a Team ID in the project.
-[x] Add a helper that validates a Personal Team ID, writes only the ignored `Local.xcconfig`, and explains the Xcode account prerequisite.
-[x] Extend repository verification to reject accidental committed Team IDs and confirm the app and extension share the automatic-signing configuration.
-[x] Update the main and Weather documentation with the free Personal Team setup, local-file behavior, and runtime signature check.
-[x] Run script syntax checks, the repository verification gate, and a signing build if a local Apple Development identity is available. No signing build was possible before Xcode account setup because the keychain contains no Apple Development identity.
-[x] Commit and push the verified repository setup on the current Weather feature branch.
+[x] Add family-specific layout contracts for minimum temperature width, scaling, and expanded vertical distribution in `WeatherPresentation.swift`.
+[x] Refactor the day row and temperature label in `WeatherWidget.swift` so Small preserves the complete temperature and high/low values.
+[x] Reduce Medium forecast density while retaining all seven days and readable weather symbols.
+[x] Spread Large forecast columns through the available lower section instead of leaving one unused vertical band.
+[x] Extend `WeatherConfigurationTests.swift` with explicit anti-clipping, spacing, and expanded-layout assertions.
+[x] Update `docs/Weather-Widget.md` to describe the revised family-specific layout behavior and acceptance checks.
+[x] Run the complete widget verification gate, review the diff for unrelated changes, and save the current Weather feature branch.
 
 ## Open questions
 - None.

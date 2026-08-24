@@ -230,19 +230,14 @@ struct WeatherWidgetView: View {
                         .lineLimit(1)
                 }
             }
-
-            Spacer(minLength: 0)
+            .frame(maxWidth: .infinity, alignment: .leading)
 
             VStack(alignment: .trailing, spacing: family == .systemSmall ? 4 : 7) {
                 if let temperature = details.first(where: { $0.detail == .temperature }) {
                     temperatureLabel(temperature, size: layout.dayTemperatureSize)
 
                     if let forecast {
-                        Text(
-                            "H \(WeatherValueFormatter.temperature(forecast.highTemperature, unit: snapshot.unit, includeUnit: false))  L \(WeatherValueFormatter.temperature(forecast.lowTemperature, unit: snapshot.unit, includeUnit: false))"
-                        )
-                        .font(.caption.weight(.semibold))
-                        .monospacedDigit()
+                        highLowLabel(forecast, snapshot: snapshot)
                     }
                 }
 
@@ -250,6 +245,8 @@ struct WeatherWidgetView: View {
                     metricLabel(value)
                 }
             }
+            .frame(minWidth: layout.dayTemperatureMinimumWidth, alignment: .trailing)
+            .layoutPriority(1)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .accessibilityElement(children: .ignore)
@@ -275,11 +272,19 @@ struct WeatherWidgetView: View {
                 .lineLimit(1)
                 .minimumScaleFactor(0.7)
 
+            if layout.spreadsForecastVertically {
+                Spacer(minLength: layout.forecastVerticalSpacing)
+            }
+
             Image(systemName: condition.symbolName)
                 .symbolRenderingMode(.multicolor)
                 .font(.system(size: layout.forecastIconSize))
                 .frame(height: layout.forecastIconSize + 4)
                 .widgetAccentable()
+
+            if layout.spreadsForecastVertically {
+                Spacer(minLength: layout.forecastVerticalSpacing)
+            }
 
             ForEach(values) { value in
                 if value.detail == .temperature {
@@ -289,8 +294,36 @@ struct WeatherWidgetView: View {
                 }
             }
         }
+        .frame(maxHeight: layout.spreadsForecastVertically ? .infinity : nil)
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(accessibilityLabel)
+    }
+
+    @ViewBuilder
+    private func highLowLabel(_ forecast: DailyWeather, snapshot: WeatherSnapshot) -> some View {
+        let high = WeatherValueFormatter.temperature(
+            forecast.highTemperature,
+            unit: snapshot.unit,
+            includeUnit: false
+        )
+        let low = WeatherValueFormatter.temperature(
+            forecast.lowTemperature,
+            unit: snapshot.unit,
+            includeUnit: false
+        )
+
+        if family == .systemSmall {
+            VStack(alignment: .trailing, spacing: 0) {
+                Text("H \(high)")
+                Text("L \(low)")
+            }
+            .font(.caption.weight(.semibold))
+            .monospacedDigit()
+        } else {
+            Text("H \(high)  L \(low)")
+                .font(.caption.weight(.semibold))
+                .monospacedDigit()
+        }
     }
 
     private func metricLabel(_ value: WeatherMetricValue) -> some View {
@@ -315,7 +348,9 @@ struct WeatherWidgetView: View {
             .font(.system(size: size, weight: .bold, design: .rounded))
             .monospacedDigit()
             .lineLimit(1)
-            .minimumScaleFactor(0.7)
+            .minimumScaleFactor(layout.temperatureMinimumScaleFactor)
+            .allowsTightening(true)
+            .layoutPriority(1)
             .fixedSize(horizontal: false, vertical: true)
     }
 
