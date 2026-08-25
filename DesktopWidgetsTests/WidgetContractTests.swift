@@ -11,7 +11,18 @@ final class WidgetContractTests: XCTestCase {
             WidgetIdentifier.weather.rawValue,
             "com.joshuawyadao.desktop-widgets.weather.entity-search-v8"
         )
-        XCTAssertNotEqual(WidgetIdentifier.timeAndDate.rawValue, WidgetIdentifier.weather.rawValue)
+        XCTAssertEqual(
+            WidgetIdentifier.battery.rawValue,
+            "com.joshuawyadao.desktop-widgets.battery"
+        )
+        XCTAssertEqual(
+            Set([
+                WidgetIdentifier.timeAndDate.rawValue,
+                WidgetIdentifier.weather.rawValue,
+                WidgetIdentifier.battery.rawValue,
+            ]).count,
+            3
+        )
     }
 
     func testMinuteTimelineStartsOnTheCurrentMinuteAndAdvancesExactlyOncePerMinute() {

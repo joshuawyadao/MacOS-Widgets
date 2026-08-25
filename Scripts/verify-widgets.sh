@@ -184,5 +184,6 @@ require_contains "$APP_INTENTS_METADATA" "detailPreset" "Weather preset editor p
 strings "$EXTENSION_BINARY" > "$EXTENSION_STRINGS"
 require_contains "$EXTENSION_STRINGS" "com.joshuawyadao.desktop-widgets.time-and-date.configurable-v2-string" "Time & Date widget identity"
 require_contains "$EXTENSION_STRINGS" "com.joshuawyadao.desktop-widgets.weather.entity-search-v8" "Weather widget identity"
+require_contains "$EXTENSION_STRINGS" "com.joshuawyadao.desktop-widgets.battery" "Battery widget identity"
 
-echo "PASS: Both widgets passed behavior tests, Release compilation, embedding, identity, and editor-metadata checks."
+echo "PASS: All three widgets passed behavior tests, Release compilation, embedding, identity, and editor-metadata checks."

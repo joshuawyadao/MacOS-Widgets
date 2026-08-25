@@ -41,6 +41,14 @@
 		A00000000000000000000020 /* WeatherProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = F00000000000000000000017 /* WeatherProvider.swift */; };
 		A00000000000000000000021 /* DesktopWidgetsURLRouter.swift in Sources */ = {isa = PBXBuildFile; fileRef = F00000000000000000000018 /* DesktopWidgetsURLRouter.swift */; };
 		A00000000000000000000022 /* DesktopWidgetsURLRouter.swift in Sources */ = {isa = PBXBuildFile; fileRef = F00000000000000000000018 /* DesktopWidgetsURLRouter.swift */; };
+		A00000000000000000000023 /* BatteryModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = F00000000000000000000020 /* BatteryModels.swift */; };
+		A00000000000000000000024 /* SystemBatteryReader.swift in Sources */ = {isa = PBXBuildFile; fileRef = F00000000000000000000021 /* SystemBatteryReader.swift */; };
+		A00000000000000000000025 /* BatteryPresentation.swift in Sources */ = {isa = PBXBuildFile; fileRef = F00000000000000000000022 /* BatteryPresentation.swift */; };
+		A00000000000000000000026 /* BatteryWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = F00000000000000000000023 /* BatteryWidget.swift */; };
+		A00000000000000000000027 /* BatteryModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = F00000000000000000000020 /* BatteryModels.swift */; };
+		A00000000000000000000028 /* BatteryPresentation.swift in Sources */ = {isa = PBXBuildFile; fileRef = F00000000000000000000022 /* BatteryPresentation.swift */; };
+		A00000000000000000000029 /* BatteryWidgetTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F00000000000000000000024 /* BatteryWidgetTests.swift */; };
+		A0000000000000000000002A /* IOKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F00000000000000000000025 /* IOKit.framework */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -93,6 +101,12 @@
 		F00000000000000000000017 /* WeatherProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WeatherProvider.swift; sourceTree = "<group>"; };
 		F00000000000000000000018 /* DesktopWidgetsURLRouter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DesktopWidgetsURLRouter.swift; sourceTree = "<group>"; };
 		F00000000000000000000019 /* Signing.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Signing.xcconfig; sourceTree = "<group>"; };
+		F00000000000000000000020 /* BatteryModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BatteryModels.swift; sourceTree = "<group>"; };
+		F00000000000000000000021 /* SystemBatteryReader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SystemBatteryReader.swift; sourceTree = "<group>"; };
+		F00000000000000000000022 /* BatteryPresentation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BatteryPresentation.swift; sourceTree = "<group>"; };
+		F00000000000000000000023 /* BatteryWidget.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BatteryWidget.swift; sourceTree = "<group>"; };
+		F00000000000000000000024 /* BatteryWidgetTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BatteryWidgetTests.swift; sourceTree = "<group>"; };
+		F00000000000000000000025 /* IOKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = IOKit.framework; path = System/Library/Frameworks/IOKit.framework; sourceTree = SDKROOT; };
 		P00000000000000000000001 /* DesktopWidgets.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = DesktopWidgets.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		P00000000000000000000002 /* DesktopWidgetsExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = DesktopWidgetsExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		P00000000000000000000003 /* DesktopWidgetsTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = DesktopWidgetsTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -110,6 +124,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				A0000000000000000000002A /* IOKit.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -131,6 +146,7 @@
 				G00000000000000000000005 /* DesktopWidgetsExtension */,
 				G00000000000000000000011 /* DesktopWidgetsTests */,
 				G0000000000000000000000B /* Shared */,
+				G00000000000000000000013 /* Frameworks */,
 				G0000000000000000000000F /* Products */,
 			);
 			sourceTree = "<group>";
@@ -203,6 +219,10 @@
 		G00000000000000000000008 /* Battery */ = {
 			isa = PBXGroup;
 			children = (
+				F00000000000000000000020 /* BatteryModels.swift */,
+				F00000000000000000000021 /* SystemBatteryReader.swift */,
+				F00000000000000000000022 /* BatteryPresentation.swift */,
+				F00000000000000000000023 /* BatteryWidget.swift */,
 			);
 			path = Battery;
 			sourceTree = "<group>";
@@ -272,6 +292,7 @@
 			children = (
 				F0000000000000000000000E /* TimeAndDateConfigurationTests.swift */,
 				F00000000000000000000013 /* WeatherConfigurationTests.swift */,
+				F00000000000000000000024 /* BatteryWidgetTests.swift */,
 				F00000000000000000000014 /* WidgetContractTests.swift */,
 			);
 			path = DesktopWidgetsTests;
@@ -283,6 +304,14 @@
 				F00000000000000000000019 /* Signing.xcconfig */,
 			);
 			path = Config;
+			sourceTree = "<group>";
+		};
+		G00000000000000000000013 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				F00000000000000000000025 /* IOKit.framework */,
+			);
+			name = Frameworks;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -427,6 +456,10 @@
 			buildActionMask = 2147483647;
 			files = (
 				A00000000000000000000006 /* DesktopWidgetBundle.swift in Sources */,
+				A00000000000000000000023 /* BatteryModels.swift in Sources */,
+				A00000000000000000000024 /* SystemBatteryReader.swift in Sources */,
+				A00000000000000000000025 /* BatteryPresentation.swift in Sources */,
+				A00000000000000000000026 /* BatteryWidget.swift in Sources */,
 				A0000000000000000000000C /* TimeAndDateConfiguration.swift in Sources */,
 				A0000000000000000000001D /* TimeAndDatePresentation.swift in Sources */,
 				A00000000000000000000007 /* TimeAndDateWidget.swift in Sources */,
@@ -446,6 +479,9 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				A00000000000000000000027 /* BatteryModels.swift in Sources */,
+				A00000000000000000000028 /* BatteryPresentation.swift in Sources */,
+				A00000000000000000000029 /* BatteryWidgetTests.swift in Sources */,
 				A0000000000000000000000E /* TimeAndDateConfiguration.swift in Sources */,
 				A0000000000000000000001E /* TimeAndDatePresentation.swift in Sources */,
 				A0000000000000000000000F /* TimeAndDateConfigurationTests.swift in Sources */,
@@ -513,7 +549,7 @@
 			baseConfigurationReference = F00000000000000000000019 /* Signing.xcconfig */;
 			buildSettings = {
 				CODE_SIGN_ENTITLEMENTS = DesktopWidgetsApp/DesktopWidgetsApp.entitlements;
-				CURRENT_PROJECT_VERSION = 15;
+				CURRENT_PROJECT_VERSION = 16;
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
@@ -535,7 +571,7 @@
 			baseConfigurationReference = F00000000000000000000019 /* Signing.xcconfig */;
 			buildSettings = {
 				CODE_SIGN_ENTITLEMENTS = DesktopWidgetsApp/DesktopWidgetsApp.entitlements;
-				CURRENT_PROJECT_VERSION = 15;
+				CURRENT_PROJECT_VERSION = 16;
 				ENABLE_HARDENED_RUNTIME = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = "Desktop Widgets";
@@ -557,7 +593,7 @@
 			buildSettings = {
 				APPLICATION_EXTENSION_API_ONLY = YES;
 				CODE_SIGN_ENTITLEMENTS = DesktopWidgetsExtension/DesktopWidgetsExtension.entitlements;
-				CURRENT_PROJECT_VERSION = 15;
+				CURRENT_PROJECT_VERSION = 16;
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = NO;
@@ -581,7 +617,7 @@
 			buildSettings = {
 				APPLICATION_EXTENSION_API_ONLY = YES;
 				CODE_SIGN_ENTITLEMENTS = DesktopWidgetsExtension/DesktopWidgetsExtension.entitlements;
-				CURRENT_PROJECT_VERSION = 15;
+				CURRENT_PROJECT_VERSION = 16;
 				ENABLE_HARDENED_RUNTIME = YES;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = DesktopWidgetsExtension/Info.plist;
@@ -602,7 +638,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CODE_SIGN_STYLE = Manual;
-				CURRENT_PROJECT_VERSION = 15;
+				CURRENT_PROJECT_VERSION = 16;
 				DEVELOPMENT_TEAM = "";
 				GENERATE_INFOPLIST_FILE = YES;
 				MARKETING_VERSION = 0.1.0;
@@ -616,7 +652,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CODE_SIGN_STYLE = Manual;
-				CURRENT_PROJECT_VERSION = 15;
+				CURRENT_PROJECT_VERSION = 16;
 				DEVELOPMENT_TEAM = "";
 				GENERATE_INFOPLIST_FILE = YES;
 				MARKETING_VERSION = 0.1.0;

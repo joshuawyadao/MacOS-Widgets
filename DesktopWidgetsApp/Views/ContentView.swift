@@ -2,7 +2,6 @@ import SwiftUI
 
 struct ContentView: View {
     private let upcomingWidgets = [
-        WidgetStatus(name: "Battery", symbol: "battery.75percent", status: "Coming next", isAvailable: false),
         WidgetStatus(name: "Calendar", symbol: "calendar", status: "Coming next", isAvailable: false),
     ]
 
@@ -13,6 +12,7 @@ struct ContentView: View {
                 readyWidgets
                 setupGuide
                 customizationGuide
+                batteryGuide
                 weatherDetailLimitsTip
                 appearanceTip
                 weatherDataTip
@@ -36,7 +36,7 @@ struct ContentView: View {
 
     private var readyWidgets: some View {
         VStack(alignment: .leading, spacing: 12) {
-            SectionTitle(title: "Ready widgets", subtitle: "Add either widget from the macOS widget gallery.")
+            SectionTitle(title: "Ready widgets", subtitle: "Add any of these widgets from the macOS widget gallery.")
 
             HStack(alignment: .top, spacing: 12) {
                 ReadyWidgetCard(
@@ -49,6 +49,11 @@ struct ContentView: View {
                     title: "Weather",
                     detail: "Choose a city, forecast view, units, and details."
                 )
+                ReadyWidgetCard(
+                    symbol: "battery.75percent",
+                    title: "Battery",
+                    detail: "See charge level and macOS's current runtime estimate."
+                )
             }
         }
     }
@@ -60,13 +65,13 @@ struct ContentView: View {
             SetupStep(
                 number: 1,
                 title: "Add it to the desktop",
-                detail: "Control-click the desktop, choose Edit Widgets, search for Desktop Widgets, then drag Time & Date or Weather onto the desktop."
+                detail: "Control-click the desktop, choose Edit Widgets, search for Desktop Widgets, then drag Time & Date, Weather, or Battery onto the desktop."
             )
 
             SetupStep(
                 number: 2,
                 title: "Make it yours",
-                detail: "Control-click the placed widget, choose Edit, pick its options, then click outside the editor to finish. Each copy keeps its own choices."
+                detail: "Time & Date and Weather can be edited after placement. Battery needs no setup and follows this Mac automatically."
             )
         }
     }
@@ -126,6 +131,25 @@ struct ContentView: View {
                     symbol: "square.stack.3d.up",
                     title: "Details preset",
                     detail: "Apply a useful group such as Simple, Rain, Comfort, Detailed, or Full with one click."
+                )
+            }
+        }
+    }
+
+    private var batteryGuide: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            SectionTitle(title: "Battery at a glance", subtitle: "No setup, account, or accessory access is required.")
+
+            HStack(spacing: 12) {
+                CustomizationItem(
+                    symbol: "battery.75percent",
+                    title: "Live charge",
+                    detail: "The percentage and battery fill follow this Mac's internal battery."
+                )
+                CustomizationItem(
+                    symbol: "timer",
+                    title: "Time estimate",
+                    detail: "Shows remaining runtime or time to full when macOS has a current estimate."
                 )
             }
         }

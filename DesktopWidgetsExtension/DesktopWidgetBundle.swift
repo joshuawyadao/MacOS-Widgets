@@ -6,5 +6,6 @@ struct DesktopWidgetBundle: WidgetBundle {
     var body: some Widget {
         TimeAndDateWidget()
         WeatherWidget()
+        BatteryWidget()
     }
 }
