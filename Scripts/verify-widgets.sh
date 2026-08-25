@@ -4,13 +4,21 @@ set -euo pipefail
 
 resolve_developer_dir() {
     if [[ -n "${XCODE_DEVELOPER_DIR:-}" ]]; then
-        echo "$XCODE_DEVELOPER_DIR"
-        return
+        if [[ -x "$XCODE_DEVELOPER_DIR/usr/bin/xcodebuild" ]]; then
+            echo "$XCODE_DEVELOPER_DIR"
+            return
+        fi
+        echo "FAIL: XCODE_DEVELOPER_DIR does not point to a full Xcode installation." >&2
+        return 1
     fi
 
     if [[ -n "${DEVELOPER_DIR:-}" ]]; then
-        echo "$DEVELOPER_DIR"
-        return
+        if [[ -x "$DEVELOPER_DIR/usr/bin/xcodebuild" ]]; then
+            echo "$DEVELOPER_DIR"
+            return
+        fi
+        echo "FAIL: DEVELOPER_DIR does not point to a full Xcode installation." >&2
+        return 1
     fi
 
     local system_selected
@@ -37,7 +45,8 @@ readonly SHARED_SCHEME="$PROJECT_PATH/xcshareddata/xcschemes/DesktopWidgets.xcsc
 readonly RUNTIME_REFRESH_SCRIPT="$PROJECT_ROOT/Scripts/refresh-widget-runtime.sh"
 readonly PERSONAL_TEAM_SCRIPT="$PROJECT_ROOT/Scripts/configure-personal-team.sh"
 readonly SIGNING_CONFIGURATION="$PROJECT_ROOT/Config/Signing.xcconfig"
-readonly SELECTED_DEVELOPER_DIR="$(resolve_developer_dir)"
+SELECTED_DEVELOPER_DIR="$(resolve_developer_dir)"
+readonly SELECTED_DEVELOPER_DIR
 readonly VERIFY_DIRECTORY="$(mktemp -d "${TMPDIR:-/tmp}/desktop-widgets-verify.XXXXXX")"
 readonly DERIVED_DATA_PATH="$VERIFY_DIRECTORY/DerivedData"
 
