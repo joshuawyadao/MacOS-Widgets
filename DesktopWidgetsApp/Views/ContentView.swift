@@ -52,7 +52,7 @@ struct ContentView: View {
                 ReadyWidgetCard(
                     symbol: "battery.75percent",
                     title: "Battery",
-                    detail: "See charge level and macOS's current runtime estimate."
+                    detail: "See charge and runtime, then choose which extra details each copy shows."
                 )
             }
         }
@@ -71,7 +71,7 @@ struct ContentView: View {
             SetupStep(
                 number: 2,
                 title: "Make it yours",
-                detail: "Time & Date and Weather can be edited after placement. Battery needs no setup and follows this Mac automatically."
+                detail: "Control-click a placed widget and choose Edit to set its options. Battery follows this Mac automatically and lets each copy choose its extra details."
             )
         }
     }
@@ -138,7 +138,7 @@ struct ContentView: View {
 
     private var batteryGuide: some View {
         VStack(alignment: .leading, spacing: 12) {
-            SectionTitle(title: "Battery at a glance", subtitle: "No setup, account, or accessory access is required.")
+            SectionTitle(title: "Battery at a glance", subtitle: "No account or accessory access is required.")
 
             HStack(spacing: 12) {
                 CustomizationItem(
@@ -148,8 +148,8 @@ struct ContentView: View {
                 )
                 CustomizationItem(
                     symbol: "timer",
-                    title: "Time estimate",
-                    detail: "Shows remaining runtime or time to full when macOS has a current estimate."
+                    title: "Choose details",
+                    detail: "Toggle Power, Status, Estimate, and Updated. Each size shows only what fits."
                 )
             }
         }

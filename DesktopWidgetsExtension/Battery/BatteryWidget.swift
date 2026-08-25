@@ -1,32 +1,45 @@
+import AppIntents
 import SwiftUI
 import WidgetKit
 
 struct BatteryEntry: TimelineEntry {
     let date: Date
+    let configuration: BatteryConfigurationIntent
     let snapshot: BatterySnapshot?
 }
 
-struct BatteryProvider: TimelineProvider {
+struct BatteryProvider: AppIntentTimelineProvider {
     private let reader = SystemBatteryReader()
 
     func placeholder(in context: Context) -> BatteryEntry {
-        BatteryEntry(date: .now, snapshot: .sample)
+        BatteryEntry(date: .now, configuration: .referencePreview(), snapshot: .sample)
     }
 
-    func getSnapshot(in context: Context, completion: @escaping (BatteryEntry) -> Void) {
-        completion(BatteryEntry(
+    func snapshot(
+        for configuration: BatteryConfigurationIntent,
+        in context: Context
+    ) async -> BatteryEntry {
+        BatteryEntry(
             date: .now,
+            configuration: configuration,
             snapshot: context.isPreview ? .sample : reader.snapshot()
-        ))
+        )
     }
 
-    func getTimeline(in context: Context, completion: @escaping (Timeline<BatteryEntry>) -> Void) {
+    func timeline(
+        for configuration: BatteryConfigurationIntent,
+        in context: Context
+    ) async -> Timeline<BatteryEntry> {
         let now = Date.now
-        let entry = BatteryEntry(date: now, snapshot: reader.snapshot())
-        completion(Timeline(
+        let entry = BatteryEntry(
+            date: now,
+            configuration: configuration,
+            snapshot: reader.snapshot()
+        )
+        return Timeline(
             entries: [entry],
             policy: .after(BatteryTimelinePolicy.refreshDate(after: now))
-        ))
+        )
     }
 }
 
@@ -49,6 +62,10 @@ struct BatteryWidgetView: View {
 
     private var metrics: BatteryWidgetLayoutMetrics {
         BatteryWidgetLayoutMetrics(family: family)
+    }
+
+    private var detailSelection: BatteryDetailSelection {
+        BatteryDetailSelection(configuration: entry.configuration, family: family)
     }
 
     var body: some View {
@@ -92,16 +109,18 @@ struct BatteryWidgetView: View {
 
             gauge
 
-            Divider()
-                .overlay(Color.primary.opacity(0.35))
-                .frame(height: 92)
+            if !detailItems.isEmpty {
+                Divider()
+                    .overlay(Color.primary.opacity(0.35))
+                    .frame(height: 76)
 
-            VStack(alignment: .leading, spacing: 7) {
-                ForEach(detailItems) { item in
-                    detailRow(item)
+                VStack(alignment: .leading, spacing: 12) {
+                    ForEach(detailItems) { item in
+                        detailRow(item)
+                    }
                 }
+                .frame(maxWidth: .infinity, alignment: .leading)
             }
-            .frame(maxWidth: .infinity, alignment: .leading)
         }
     }
 
@@ -116,18 +135,20 @@ struct BatteryWidgetView: View {
             }
             .frame(maxWidth: .infinity)
 
-            Divider()
-                .overlay(Color.primary.opacity(0.35))
+            if !detailItems.isEmpty {
+                Divider()
+                    .overlay(Color.primary.opacity(0.35))
 
-            LazyVGrid(
-                columns: [
-                    GridItem(.flexible(), spacing: 10),
-                    GridItem(.flexible(), spacing: 10),
-                ],
-                spacing: 10
-            ) {
-                ForEach(detailItems) { item in
-                    detailCard(item)
+                LazyVGrid(
+                    columns: [
+                        GridItem(.flexible(), spacing: 10),
+                        GridItem(.flexible(), spacing: 10),
+                    ],
+                    spacing: 10
+                ) {
+                    ForEach(detailItems) { item in
+                        detailCard(item)
+                    }
                 }
             }
         }
@@ -159,12 +180,18 @@ struct BatteryWidgetView: View {
     }
 
     private var detailItems: [BatteryDetailItem] {
-        [
-            BatteryDetailItem(title: "Power", value: presentation.powerSourceText, symbol: "bolt.fill"),
-            BatteryDetailItem(title: "Status", value: presentation.stateDetailText, symbol: "battery.75percent"),
-            BatteryDetailItem(title: "Estimate", value: presentation.estimateDetailText, symbol: "timer"),
-            BatteryDetailItem(title: "Updated", value: presentation.updatedText, symbol: "clock"),
-        ]
+        detailSelection.visibleDetails.map { detail in
+            switch detail {
+            case .power:
+                BatteryDetailItem(title: "Power", value: presentation.powerSourceText, symbol: "bolt.fill")
+            case .status:
+                BatteryDetailItem(title: "Status", value: presentation.stateDetailText, symbol: "battery.75percent")
+            case .estimate:
+                BatteryDetailItem(title: "Estimate", value: presentation.estimateDetailText, symbol: "timer")
+            case .updated:
+                BatteryDetailItem(title: "Updated", value: presentation.updatedText, symbol: "clock")
+            }
+        }
     }
 
     private func detailRow(_ item: BatteryDetailItem) -> some View {
@@ -256,9 +283,12 @@ private struct BatteryGauge: View {
 }
 
 struct BatteryWidget: Widget {
+    static let kind = WidgetIdentifier.battery.rawValue
+
     var body: some WidgetConfiguration {
-        StaticConfiguration(
-            kind: WidgetIdentifier.battery.rawValue,
+        AppIntentConfiguration(
+            kind: Self.kind,
+            intent: BatteryConfigurationIntent.self,
             provider: BatteryProvider()
         ) { entry in
             BatteryWidgetView(entry: entry)
@@ -274,11 +304,16 @@ struct BatteryWidget: Widget {
 struct BatteryWidget_Previews: PreviewProvider {
     static var previews: some View {
         Group {
-            BatteryWidgetView(entry: BatteryEntry(date: .now, snapshot: .sample))
+            BatteryWidgetView(entry: BatteryEntry(
+                date: .now,
+                configuration: .referencePreview(),
+                snapshot: .sample
+            ))
                 .previewContext(WidgetPreviewContext(family: .systemSmall))
 
             BatteryWidgetView(entry: BatteryEntry(
                 date: .now,
+                configuration: .referencePreview(),
                 snapshot: BatterySnapshot(
                     percentage: 42,
                     state: .charging,
@@ -289,6 +324,7 @@ struct BatteryWidget_Previews: PreviewProvider {
 
             BatteryWidgetView(entry: BatteryEntry(
                 date: .now,
+                configuration: .referencePreview(),
                 snapshot: BatterySnapshot(
                     percentage: 100,
                     state: .charged,

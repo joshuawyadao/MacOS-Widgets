@@ -3,6 +3,62 @@ import WidgetKit
 import XCTest
 
 final class BatteryWidgetTests: XCTestCase {
+    func testConfigurationDefaultsToAllFourDetails() {
+        let configuration = BatteryConfigurationIntent()
+
+        XCTAssertEqual(configuration.resolvedDetails, Set(BatteryDetail.allCases))
+    }
+
+    func testConfigurationTogglesResolveIndependently() {
+        let configuration = BatteryConfigurationIntent()
+        configuration.showPower = false
+        configuration.showStatus = true
+        configuration.showEstimate = false
+        configuration.showUpdated = true
+
+        XCTAssertEqual(configuration.resolvedDetails, [.status, .updated])
+    }
+
+    func testDetailSelectionEnforcesEveryFamilyBudget() {
+        let configuration = BatteryConfigurationIntent()
+
+        let small = BatteryDetailSelection(configuration: configuration, family: .systemSmall)
+        XCTAssertEqual(small.visibleDetails, [])
+        XCTAssertEqual(small.limit, 0)
+        XCTAssertEqual(small.hiddenCount, 4)
+
+        let medium = BatteryDetailSelection(configuration: configuration, family: .systemMedium)
+        XCTAssertEqual(medium.visibleDetails, [.status, .updated])
+        XCTAssertEqual(medium.limit, 2)
+        XCTAssertEqual(medium.hiddenCount, 2)
+
+        let large = BatteryDetailSelection(configuration: configuration, family: .systemLarge)
+        XCTAssertEqual(large.visibleDetails, [.power, .status, .estimate, .updated])
+        XCTAssertEqual(large.limit, 4)
+        XCTAssertEqual(large.hiddenCount, 0)
+    }
+
+    func testMediumUsesTheNextEnabledDetailsAndAllowsAnEmptySelection() {
+        let configuration = BatteryConfigurationIntent()
+        configuration.showStatus = false
+        configuration.showUpdated = false
+
+        XCTAssertEqual(
+            BatteryDetailSelection(configuration: configuration, family: .systemMedium).visibleDetails,
+            [.power, .estimate]
+        )
+
+        configuration.showPower = false
+        configuration.showEstimate = false
+
+        for family in [WidgetFamily.systemSmall, .systemMedium, .systemLarge] {
+            XCTAssertEqual(
+                BatteryDetailSelection(configuration: configuration, family: family).visibleDetails,
+                []
+            )
+        }
+    }
+
     func testParserNormalizesCapacityAndUsesDischargeEstimate() throws {
         let snapshot = try XCTUnwrap(BatteryPowerSourceParser.snapshot(from: description(
             current: 4_250,

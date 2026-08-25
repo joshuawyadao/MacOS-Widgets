@@ -163,6 +163,13 @@ fi
 require_contains "$APP_INTENTS_METADATA" "TimeAndDateStringConfigurationIntent" "Time & Date configuration metadata"
 require_contains "$APP_INTENTS_METADATA" "WeatherV8ConfigurationIntent" "Weather configuration metadata"
 require_contains "$APP_INTENTS_METADATA" "WeatherV8CityEntity" "Weather searchable city entity"
+require_contains "$APP_INTENTS_METADATA" "BatteryConfigurationIntent" "Battery configuration metadata"
+for parameter in showPower showStatus showEstimate showUpdated; do
+    if ! jq -e --arg parameter "$parameter" '.actions.BatteryConfigurationIntent.parameters[] | select(.name == $parameter and .valueType.primitive.wrapper.typeIdentifier == 1 and .typeSpecificMetadata[1].int.wrapper == 1)' "$APP_INTENTS_METADATA" >/dev/null; then
+        echo "FAIL: Battery $parameter toggle is missing from App Intents metadata" >&2
+        exit 1
+    fi
+done
 if grep -Fq 'citySearch' "$APP_INTENTS_METADATA"; then
     echo "FAIL: Weather metadata still exposes the retired Search City field" >&2
     exit 1
@@ -184,6 +191,6 @@ require_contains "$APP_INTENTS_METADATA" "detailPreset" "Weather preset editor p
 strings "$EXTENSION_BINARY" > "$EXTENSION_STRINGS"
 require_contains "$EXTENSION_STRINGS" "com.joshuawyadao.desktop-widgets.time-and-date.configurable-v2-string" "Time & Date widget identity"
 require_contains "$EXTENSION_STRINGS" "com.joshuawyadao.desktop-widgets.weather.entity-search-v8" "Weather widget identity"
-require_contains "$EXTENSION_STRINGS" "com.joshuawyadao.desktop-widgets.battery" "Battery widget identity"
+require_contains "$EXTENSION_STRINGS" "com.joshuawyadao.desktop-widgets.battery.configurable-v2" "Battery widget identity"
 
 echo "PASS: All three widgets passed behavior tests, Release compilation, embedding, identity, and editor-metadata checks."

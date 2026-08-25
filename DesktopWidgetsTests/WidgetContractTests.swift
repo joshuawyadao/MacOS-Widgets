@@ -13,7 +13,7 @@ final class WidgetContractTests: XCTestCase {
         )
         XCTAssertEqual(
             WidgetIdentifier.battery.rawValue,
-            "com.joshuawyadao.desktop-widgets.battery"
+            "com.joshuawyadao.desktop-widgets.battery.configurable-v2"
         )
         XCTAssertEqual(
             Set([

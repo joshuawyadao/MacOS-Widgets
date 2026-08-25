@@ -5,10 +5,19 @@ The Battery widget follows the supplied reference's compact hierarchy: a bold pe
 ## Add it
 
 1. Open `DesktopWidgets.xcodeproj`, select **My Mac**, and run the `DesktopWidgets` scheme once.
-2. Control-click the desktop, choose **Edit Widgets**, and search for **Desktop Widgets**.
-3. Add **Battery** in Small, Medium, or Large.
+2. Remove any Battery widget installed from build 16 or earlier. Build 17 adds per-widget detail controls under a fresh WidgetKit identity, so the older static instance cannot migrate.
+3. Control-click the desktop, choose **Edit Widgets**, and search for **Desktop Widgets**.
+4. Add **Battery** in Small, Medium, or Large.
+5. Control-click the placed widget, choose **Edit Battery**, and toggle any of these extra details:
 
-Battery has no Edit Widget options. Every instance follows the same internal battery. Small preserves the compact reference composition with clipping-safe text and icon metrics, Medium adds a labeled detail column, and Large adds a four-card detail grid.
+| Detail | Value |
+| --- | --- |
+| Power Source | Battery or AC Power |
+| Charging Status | Discharging, Charging, Fully Charged, or Not Charging |
+| Time Estimate | Remaining use or time to full when macOS supplies it |
+| Last Updated | Time of the latest WidgetKit battery reading |
+
+Every instance follows the same internal battery but keeps its own detail toggles. Small preserves the compact reference composition and shows no extra rows. Medium shows at most two enabled details, prioritizing Status and Updated by default. Large shows up to all four enabled details in its card grid. If a preferred detail is disabled, the next enabled detail fills the available slot; disabling every detail collapses the extra section entirely.
 
 ## Display behavior
 
@@ -17,7 +26,7 @@ Battery has no Edit Widget options. Every instance follows the same internal bat
 - While discharging, the secondary label shows macOS's time-to-empty estimate, such as `6.1 h` or `45 min`.
 - While charging, it shows the estimated time to full when available; otherwise it says **Charging**.
 - A connected battery says **AC Power** in the primary status. Medium and Large separately identify whether it is **Charging**, **Fully Charged**, or **Not Charging**.
-- Medium and Large show labeled Power, Status, Estimate, and Updated details. The estimate distinguishes remaining runtime from time to full and explicitly says when an estimate is unavailable on AC power.
+- Medium and Large show only the enabled details that fit their size budget. The estimate distinguishes remaining runtime from time to full and explicitly says when an estimate is unavailable on AC power.
 - macOS can temporarily report no usable estimate after a power-state or workload change. The widget says **Calculating** rather than deriving an unreliable duration from recent percentage changes.
 - A Mac with no internal battery says **No Battery** and displays a crossed empty outline.
 
@@ -38,9 +47,10 @@ The time value is an operating-system estimate based on current conditions. Work
 
 ## Desktop acceptance checklist
 
-`./Scripts/verify-widgets.sh` covers battery dictionary parsing, invalid and non-battery inputs, charge clamping, all power-state and detail labels, duration and update-time formatting, accessibility labels, the Small clipping budget, expanded-family selection, five-minute refresh policy, Release compilation, embedding, and widget identity. The remaining macOS-owned checks are:
+`./Scripts/verify-widgets.sh` covers configuration defaults and independent toggles, zero/two/four-detail family budgets, empty and partial selections, battery dictionary parsing, invalid and non-battery inputs, charge clamping, all power-state and detail labels, duration and update-time formatting, accessibility labels, the Small clipping budget, five-minute refresh policy, App Intent metadata, Release compilation, embedding, and widget identity. The remaining macOS-owned checks are:
 
-- [ ] Add Small, Medium, and Large Battery widgets and confirm the Small percentage/status remain unclipped, Medium's detail column is readable, and Large's four detail cards fit comfortably.
+- [ ] Add Small, Medium, and Large Battery widgets and confirm Small shows no extras, Medium shows at most two readable rows, and Large shows up to four cards.
+- [ ] Toggle different detail combinations on two Battery instances, reopen both editors, and confirm each copy preserves its own choices.
 - [ ] Compare the displayed percentage and charging state with the macOS menu bar.
 - [ ] Unplug and reconnect power, then confirm the label and fill update after WidgetKit refreshes the timeline.
 - [ ] Confirm an unplugged runtime is formatted as hours or minutes, while a fully charged connected Mac says **AC Power** and marks its runtime estimate unavailable.
