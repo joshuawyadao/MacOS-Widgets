@@ -11,8 +11,8 @@ Address the actionable GitHub Codex feedback on PR #4 with isolated fixes: preve
 [x] Give `WeatherLocation` a stable coordinate-aware cache identity and use it in `WeatherLoader`.
 [x] Run the focused Weather cache tests, full verification, commit the P2 fix, push it, and acknowledge the Codex comment.
 [x] Add a deterministic shell failure-path check for an invalid Xcode override and separate assignment from readonly declaration.
-[ ] Run shell and full verification, commit the P3 fix separately, push it, and acknowledge the Codex comment.
-[ ] Re-read review threads, CI, and mergeability; record the live Open-Meteo evidence for skipping the non-actionable P1 comment.
+[x] Run shell and full verification, commit the P3 fix separately, push it, and acknowledge the Codex comment.
+[x] Re-read review threads, CI, and mergeability; record the live Open-Meteo evidence for skipping the non-actionable P1 comment.
 
 ## Open questions
 - None.
