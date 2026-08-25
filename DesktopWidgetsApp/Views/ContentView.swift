@@ -1,10 +1,6 @@
 import SwiftUI
 
 struct ContentView: View {
-    private let upcomingWidgets = [
-        WidgetStatus(name: "Calendar", symbol: "calendar", status: "Coming next", isAvailable: false),
-    ]
-
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 24) {
@@ -13,10 +9,10 @@ struct ContentView: View {
                 setupGuide
                 customizationGuide
                 batteryGuide
+                calendarGuide
                 weatherDetailLimitsTip
                 appearanceTip
                 weatherDataTip
-                upcomingSection
             }
             .padding(28)
         }
@@ -38,7 +34,10 @@ struct ContentView: View {
         VStack(alignment: .leading, spacing: 12) {
             SectionTitle(title: "Ready widgets", subtitle: "Add any of these widgets from the macOS widget gallery.")
 
-            HStack(alignment: .top, spacing: 12) {
+            LazyVGrid(
+                columns: [GridItem(.flexible(), spacing: 12), GridItem(.flexible(), spacing: 12)],
+                spacing: 12
+            ) {
                 ReadyWidgetCard(
                     symbol: "clock",
                     title: "Time & Date",
@@ -54,6 +53,11 @@ struct ContentView: View {
                     title: "Battery",
                     detail: "See charge and runtime, then choose which extra details each copy shows."
                 )
+                ReadyWidgetCard(
+                    symbol: "calendar",
+                    title: "Calendar",
+                    detail: "Browse a full month and keep today easy to spot."
+                )
             }
         }
     }
@@ -65,13 +69,13 @@ struct ContentView: View {
             SetupStep(
                 number: 1,
                 title: "Add it to the desktop",
-                detail: "Control-click the desktop, choose Edit Widgets, search for Desktop Widgets, then drag Time & Date, Weather, or Battery onto the desktop."
+                detail: "Control-click the desktop, choose Edit Widgets, search for Desktop Widgets, then drag Time & Date, Weather, Battery, or Calendar onto the desktop."
             )
 
             SetupStep(
                 number: 2,
                 title: "Make it yours",
-                detail: "Control-click a placed widget and choose Edit to set its options. Battery follows this Mac automatically and lets each copy choose its extra details."
+                detail: "Control-click configurable widgets to edit their options. Calendar follows this Mac automatically; use its arrows to browse months and select its title to return to today."
             )
         }
     }
@@ -155,6 +159,25 @@ struct ContentView: View {
         }
     }
 
+    private var calendarGuide: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            SectionTitle(title: "Calendar at a glance", subtitle: "A full month without calendar-account access.")
+
+            HStack(spacing: 12) {
+                CustomizationItem(
+                    symbol: "calendar",
+                    title: "Today in context",
+                    detail: "See six stable weeks with today circled and adjacent-month dates softened."
+                )
+                CustomizationItem(
+                    symbol: "arrow.left.arrow.right",
+                    title: "Browse months",
+                    detail: "Use the arrows to move by month. Select the month title to jump back to the current month."
+                )
+            }
+        }
+    }
+
     private var weatherDetailLimitsTip: some View {
         HStack(alignment: .top, spacing: 12) {
             Image(systemName: "checklist.checked")
@@ -221,17 +244,6 @@ struct ContentView: View {
         .background(.quaternary.opacity(0.35), in: RoundedRectangle(cornerRadius: 14))
     }
 
-    private var upcomingSection: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            SectionTitle(title: "Coming next", subtitle: "These widgets will appear here as they become ready.")
-
-            HStack(spacing: 12) {
-                ForEach(upcomingWidgets) { widget in
-                    WidgetStatusCard(widget: widget)
-                }
-            }
-        }
-    }
 }
 
 private struct ReadyWidgetCard: View {

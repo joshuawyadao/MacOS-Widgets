@@ -16,12 +16,17 @@ final class WidgetContractTests: XCTestCase {
             "com.joshuawyadao.desktop-widgets.battery.configurable-v2"
         )
         XCTAssertEqual(
+            WidgetIdentifier.calendar.rawValue,
+            "com.joshuawyadao.desktop-widgets.calendar.interactive-v1"
+        )
+        XCTAssertEqual(
             Set([
                 WidgetIdentifier.timeAndDate.rawValue,
                 WidgetIdentifier.weather.rawValue,
                 WidgetIdentifier.battery.rawValue,
+                WidgetIdentifier.calendar.rawValue,
             ]).count,
-            3
+            4
         )
     }
 

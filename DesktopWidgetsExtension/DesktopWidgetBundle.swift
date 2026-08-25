@@ -7,5 +7,6 @@ struct DesktopWidgetBundle: WidgetBundle {
         TimeAndDateWidget()
         WeatherWidget()
         BatteryWidget()
+        CalendarWidget()
     }
 }

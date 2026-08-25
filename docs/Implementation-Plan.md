@@ -1,20 +1,20 @@
 # Plan
 
-Make Battery details configurable like Weather while enforcing family-specific display budgets that prevent crowding and clipping. Add four independent detail toggles, keep the compact hero in every family, cap Medium at two selected details, and let Large show up to all four.
+Build the final Calendar widget from the supplied month-grid reference, using a testable presentation model and native WidgetKit interactions. The widget will follow the Mac's calendar, locale, and time zone, preserve the reference's clear white-on-wallpaper styling, and keep month navigation local and subscription-free.
 
 ## Scope
-- In: Battery App Intent configuration, Power/Status/Estimate/Updated toggles, deterministic size limits and priority, reduced Medium density, fresh widget identity, metadata verification, tests, docs, commit, and push.
-- Out: Reordering details by drag-and-drop, custom fonts/colors, more battery data fields, external accessory batteries, or changes to other widgets.
+- In: Current-month grid, localized weekday order, adjacent-month dates, today highlight, previous/next month controls, Small/Medium/Large layouts, daily refresh, accessibility, host-app guidance, widget registration, automated tests, Release verification, commit, and push.
+- Out: EventKit access, event/agenda rows, calendar-account selection, event creation, reminders, custom wallpaper imagery, and synchronization outside macOS-managed widget state.
 
 ## Action items
-[x] Add a stable `BatteryConfigurationIntent` with four independently persisted Boolean detail toggles and documented defaults.
-[x] Add a presentation selection contract that shows zero extras on Small, at most two on Medium, and at most four on Large, including empty and partial selections.
-[x] Convert the Battery provider and widget to App Intent configuration under a fresh WidgetKit identity so macOS exports the editor schema safely.
-[x] Refactor Medium and Large to render only the selected, size-limited details and collapse unused separators/grid space cleanly.
-[x] Expand Battery configuration, size-budget, fallback, accessibility, identity, and editor-metadata verification coverage.
-[x] Update `docs/Battery-Widget.md`, the root README, host-app guidance, and build migration notes for the new detail controls and one-time re-add requirement.
-[x] Run the complete widget verification gate and inspect the final code/docs diff for clipping and persistence risks.
-[x] Commit and push the verified configurable Battery widget to `codex/feature/battery-widget`.
+[x] Add testable Calendar month, navigation, timeline, and responsive-layout presentation contracts under `DesktopWidgetsExtension/Calendar`.
+[x] Build the SwiftUI Calendar widget with the reference hierarchy, interactive month arrows, clear removable background, today selection, adjacent-month treatment, accessibility, and previews.
+[x] Register the Calendar source files and tests in the Xcode project, widget bundle, stable identifier contract, and Release verification script.
+[x] Add Calendar unit coverage for the August 2026 reference grid, locale-dependent week starts, leap/adjacent months, navigation bounds, midnight refresh, accessibility, and family metrics.
+[x] Update the host app and module guidance so Calendar moves from “Coming next” to the ready-widget and setup experience.
+[x] Create `docs/Calendar-Widget.md` and update the root README with appearance, interaction, privacy, refresh, and desktop acceptance guidance.
+[x] Run `./Scripts/verify-widgets.sh`, review the full diff for scope and consistency, and resolve any build or test failures.
+[x] Mark the plan complete, commit the feature and documentation, and push `codex/feature/calendar-widget` to `origin`.
 
 ## Open questions
 - None.
