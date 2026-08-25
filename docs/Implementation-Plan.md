@@ -1,20 +1,20 @@
 # Plan
 
-Build the Battery widget from the supplied reference as a native, configuration-free WidgetKit experience. It will read the Mac's local power-source state, present percentage and contextual runtime text beside a proportionally filled battery icon, and adapt the same visual hierarchy across supported widget sizes.
+Refine the Battery widget so Small never clips, while Medium and Large use their extra canvas for clear power, estimate, and update details. Keep runtime reporting faithful to macOS: show remaining use only while macOS supplies a discharge estimate, and identify a fully charged connected Mac as using AC power instead of inventing an unplugged runtime.
 
 ## Scope
-- In: Local macOS battery-state loading, charge-aware runtime/status formatting, proportional battery presentation, Small/Medium/Large layouts, accessibility, bundle/app registration, automated contracts, verification, and Battery documentation.
-- Out: Monitoring batteries in external accessories, historical battery analytics, user-selectable styling, notifications, Calendar work, or changes to Weather and Time & Date behavior.
+- In: Compact Small-family text and metrics, expanded Medium/Large layouts, power and estimate detail labels, clearer AC-power behavior, presentation contracts, Battery docs, full verification, commit, and push.
+- Out: Calculating a custom runtime while connected, battery-health or cycle analytics, external accessory batteries, configuration options, or changes to other widgets.
 
 ## Action items
-[x] Add testable Battery domain models and an IOKit-backed system power-source reader with defensive handling for desktops, missing estimates, charging, charged, and invalid capacity values.
-[x] Add a presentation contract that formats percentage/runtime text, clamps the icon fill level, exposes accessibility text, and defines responsive metrics for Small, Medium, and Large families.
-[x] Build and register the Battery timeline provider and SwiftUI widget using a clear removable background and a battery outline whose fill tracks the current charge.
-[x] Promote Battery to the host app's ready-widget guidance, leave Calendar as upcoming, and update stable identifier and bundle contracts.
-[x] Add focused unit coverage for power-source parsing, formatting/status edge cases, responsive presentation, accessibility, and refresh scheduling.
-[x] Extend the repository verification gate to assert the Battery widget identity in the built extension and update its three-widget status output.
-[x] Replace the Battery scaffold notes with durable implementation/acceptance documentation, add `docs/Battery-Widget.md`, and update the root README.
-[x] Run the complete widget verification gate, resolve failures, and re-check the documented desktop-only acceptance risks before saving the branch.
+[x] Add a failing Small-family presentation contract for bounded compact status text and a safe horizontal layout budget.
+[x] Add family-aware Battery presentation details for power source, estimate availability, and refreshed time without duplicating or fabricating system data.
+[x] Refactor `BatteryWidgetView` into compact Small and information-rich Medium/Large layouts with family-specific typography, spacing, and battery sizing.
+[x] Replace the ambiguous fully charged primary label with **AC Power**, while retaining **Fully Charged** as a larger-layout detail and discharge estimates when unplugged.
+[x] Expand Battery tests across every state and family, including unavailable estimates, compact labels, detail visibility, and accessibility.
+[x] Update `docs/Battery-Widget.md` and the root README to document family layouts and why connected Macs cannot show remaining-use hours.
+[x] Run the complete widget verification gate, inspect the diff for layout and documentation consistency, and confirm the live AC-power state follows the new contract.
+[x] Commit and push the verified refinement to `codex/feature/battery-widget`.
 
 ## Open questions
 - None.

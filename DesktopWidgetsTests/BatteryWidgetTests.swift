@@ -67,8 +67,8 @@ final class BatteryWidgetTests: XCTestCase {
             (BatterySnapshot(percentage: 55, state: .discharging, timeRemainingMinutes: nil), "Calculating"),
             (BatterySnapshot(percentage: 42, state: .charging, timeRemainingMinutes: 72), "Full in 1.2 h"),
             (BatterySnapshot(percentage: 42, state: .charging, timeRemainingMinutes: nil), "Charging"),
-            (BatterySnapshot(percentage: 100, state: .charged, timeRemainingMinutes: nil), "Charged"),
-            (BatterySnapshot(percentage: 96, state: .pluggedIn, timeRemainingMinutes: nil), "Plugged In"),
+            (BatterySnapshot(percentage: 100, state: .charged, timeRemainingMinutes: nil), "AC Power"),
+            (BatterySnapshot(percentage: 96, state: .pluggedIn, timeRemainingMinutes: nil), "AC Power"),
             (BatterySnapshot(percentage: 71, state: .unknown, timeRemainingMinutes: nil), "Calculating"),
         ]
 
@@ -84,6 +84,47 @@ final class BatteryWidgetTests: XCTestCase {
         XCTAssertFalse(unavailable.showsBattery)
     }
 
+    func testPresentationProvidesFamilyDetailContentWithoutInventingACRuntime() {
+        let discharging = BatteryWidgetPresentation(snapshot: .sample)
+        XCTAssertEqual(discharging.compactStatusText, "6.1 h")
+        XCTAssertEqual(discharging.powerSourceText, "Battery")
+        XCTAssertEqual(discharging.stateDetailText, "Discharging")
+        XCTAssertEqual(discharging.estimateDetailText, "6.1 h remaining")
+
+        let charging = BatteryWidgetPresentation(snapshot: BatterySnapshot(
+            percentage: 42,
+            state: .charging,
+            timeRemainingMinutes: 72
+        ))
+        XCTAssertEqual(charging.compactStatusText, "1.2 h full")
+        XCTAssertEqual(charging.powerSourceText, "AC Power")
+        XCTAssertEqual(charging.stateDetailText, "Charging")
+        XCTAssertEqual(charging.estimateDetailText, "1.2 h to full")
+
+        let charged = BatteryWidgetPresentation(snapshot: BatterySnapshot(
+            percentage: 100,
+            state: .charged,
+            timeRemainingMinutes: nil
+        ))
+        XCTAssertEqual(charged.statusText, "AC Power")
+        XCTAssertEqual(charged.compactStatusText, "AC Power")
+        XCTAssertEqual(charged.powerSourceText, "AC Power")
+        XCTAssertEqual(charged.stateDetailText, "Fully Charged")
+        XCTAssertEqual(charged.estimateDetailText, "Unavailable on AC")
+        XCTAssertEqual(charged.accessibilityLabel, "Battery 100 percent, fully charged, using AC power")
+    }
+
+    func testPresentationFormatsTheTimelineUpdateTimeForExpandedLayouts() {
+        let presentation = BatteryWidgetPresentation(
+            snapshot: .sample,
+            updatedAt: Date(timeIntervalSince1970: 0),
+            locale: Locale(identifier: "en_US"),
+            timeZone: TimeZone(secondsFromGMT: 0)!
+        )
+
+        XCTAssertTrue(presentation.updatedText.contains("12:00"))
+    }
+
     func testEverySupportedFamilyUsesProgressivelyLargerMetrics() {
         let small = BatteryWidgetLayoutMetrics(family: .systemSmall)
         let medium = BatteryWidgetLayoutMetrics(family: .systemMedium)
@@ -94,6 +135,20 @@ final class BatteryWidgetTests: XCTestCase {
         XCTAssertLessThan(small.iconHeight, medium.iconHeight)
         XCTAssertLessThan(medium.iconHeight, large.iconHeight)
         XCTAssertGreaterThan(small.iconWidth, 0)
+        XCTAssertFalse(small.showsExpandedDetails)
+        XCTAssertTrue(medium.showsExpandedDetails)
+        XCTAssertTrue(large.showsExpandedDetails)
+        XCTAssertFalse(medium.usesDetailGrid)
+        XCTAssertTrue(large.usesDetailGrid)
+    }
+
+    func testSmallFamilyReservesEnoughWidthForStatusText() {
+        let metrics = BatteryWidgetLayoutMetrics(family: .systemSmall)
+
+        XCTAssertLessThanOrEqual(metrics.iconWidth, 40)
+        XCTAssertLessThanOrEqual(metrics.iconWidth + metrics.contentSpacing, 48)
+        XCTAssertLessThanOrEqual(metrics.percentageFontSize, 26)
+        XCTAssertLessThanOrEqual(metrics.statusFontSize, 14)
     }
 
     func testTimelineRequestsAnotherBatteryReadingAfterFiveMinutes() {

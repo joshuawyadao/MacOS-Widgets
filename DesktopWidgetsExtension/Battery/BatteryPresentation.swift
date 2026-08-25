@@ -4,14 +4,29 @@ import WidgetKit
 struct BatteryWidgetPresentation: Equatable {
     let percentageText: String
     let statusText: String
+    let compactStatusText: String
+    let powerSourceText: String
+    let stateDetailText: String
+    let estimateDetailText: String
+    let updatedText: String
     let fillFraction: Double
     let accessibilityLabel: String
     let showsBattery: Bool
 
-    init(snapshot: BatterySnapshot?) {
+    init(
+        snapshot: BatterySnapshot?,
+        updatedAt: Date? = nil,
+        locale: Locale = .autoupdatingCurrent,
+        timeZone: TimeZone = .autoupdatingCurrent
+    ) {
         guard let snapshot else {
             percentageText = "—"
             statusText = "No Battery"
+            compactStatusText = "No Battery"
+            powerSourceText = "Unavailable"
+            stateDetailText = "No Battery"
+            estimateDetailText = "Unavailable"
+            updatedText = Self.updatedText(updatedAt, locale: locale, timeZone: timeZone)
             fillFraction = 0
             accessibilityLabel = "No internal battery detected"
             showsBattery = false
@@ -20,6 +35,11 @@ struct BatteryWidgetPresentation: Equatable {
 
         percentageText = "\(snapshot.percentage)%"
         statusText = Self.statusText(for: snapshot)
+        compactStatusText = Self.compactStatusText(for: snapshot)
+        powerSourceText = Self.powerSourceText(for: snapshot)
+        stateDetailText = Self.stateDetailText(for: snapshot)
+        estimateDetailText = Self.estimateDetailText(for: snapshot)
+        updatedText = Self.updatedText(updatedAt, locale: locale, timeZone: timeZone)
         fillFraction = min(max(Double(snapshot.percentage) / 100, 0), 1)
         accessibilityLabel = Self.accessibilityLabel(for: snapshot)
         showsBattery = true
@@ -32,12 +52,77 @@ struct BatteryWidgetPresentation: Equatable {
         case .charging:
             return snapshot.timeRemainingMinutes.map { "Full in \(durationText($0))" } ?? "Charging"
         case .charged:
-            return "Charged"
+            return "AC Power"
         case .pluggedIn:
-            return "Plugged In"
+            return "AC Power"
         case .unknown:
             return "Calculating"
         }
+    }
+
+    private static func compactStatusText(for snapshot: BatterySnapshot) -> String {
+        switch snapshot.state {
+        case .discharging:
+            return snapshot.timeRemainingMinutes.map(durationText) ?? "Calculating"
+        case .charging:
+            return snapshot.timeRemainingMinutes.map { "\(durationText($0)) full" } ?? "Charging"
+        case .charged, .pluggedIn:
+            return "AC Power"
+        case .unknown:
+            return "Calculating"
+        }
+    }
+
+    private static func powerSourceText(for snapshot: BatterySnapshot) -> String {
+        switch snapshot.state {
+        case .discharging:
+            return "Battery"
+        case .charging, .charged, .pluggedIn:
+            return "AC Power"
+        case .unknown:
+            return "Unknown"
+        }
+    }
+
+    private static func stateDetailText(for snapshot: BatterySnapshot) -> String {
+        switch snapshot.state {
+        case .discharging:
+            return "Discharging"
+        case .charging:
+            return "Charging"
+        case .charged:
+            return "Fully Charged"
+        case .pluggedIn:
+            return "Not Charging"
+        case .unknown:
+            return "Unknown"
+        }
+    }
+
+    private static func estimateDetailText(for snapshot: BatterySnapshot) -> String {
+        switch snapshot.state {
+        case .discharging:
+            return snapshot.timeRemainingMinutes.map { "\(durationText($0)) remaining" } ?? "Calculating"
+        case .charging:
+            return snapshot.timeRemainingMinutes.map { "\(durationText($0)) to full" } ?? "Calculating"
+        case .charged, .pluggedIn:
+            return "Unavailable on AC"
+        case .unknown:
+            return "Unavailable"
+        }
+    }
+
+    private static func updatedText(
+        _ date: Date?,
+        locale: Locale,
+        timeZone: TimeZone
+    ) -> String {
+        guard let date else { return "Just now" }
+        let formatter = DateFormatter()
+        formatter.locale = locale
+        formatter.timeZone = timeZone
+        formatter.setLocalizedDateFormatFromTemplate("j:mm")
+        return formatter.string(from: date)
     }
 
     private static func accessibilityLabel(for snapshot: BatterySnapshot) -> String {
@@ -54,9 +139,9 @@ struct BatteryWidgetPresentation: Equatable {
             }
             return "\(percentage), charging, full in \(spokenDuration(minutes))"
         case .charged:
-            return "\(percentage), charged"
+            return "\(percentage), fully charged, using AC power"
         case .pluggedIn:
-            return "\(percentage), plugged in"
+            return "\(percentage), connected to AC power, not charging"
         case .unknown:
             return "\(percentage), power state unknown"
         }
@@ -89,27 +174,35 @@ struct BatteryWidgetLayoutMetrics: Equatable {
     let iconWidth: Double
     let iconHeight: Double
     let contentSpacing: Double
+    let showsExpandedDetails: Bool
+    let usesDetailGrid: Bool
 
     init(family: WidgetFamily) {
         switch family {
         case .systemSmall:
-            percentageFontSize = 28
-            statusFontSize = 16
-            iconWidth = 43
-            iconHeight = 70
-            contentSpacing = 15
+            percentageFontSize = 26
+            statusFontSize = 14
+            iconWidth = 38
+            iconHeight = 62
+            contentSpacing = 10
+            showsExpandedDetails = false
+            usesDetailGrid = false
         case .systemLarge:
-            percentageFontSize = 48
-            statusFontSize = 23
-            iconWidth = 70
-            iconHeight = 112
-            contentSpacing = 34
+            percentageFontSize = 50
+            statusFontSize = 24
+            iconWidth = 72
+            iconHeight = 118
+            contentSpacing = 28
+            showsExpandedDetails = true
+            usesDetailGrid = true
         default:
             percentageFontSize = 34
-            statusFontSize = 18
-            iconWidth = 50
-            iconHeight = 82
-            contentSpacing = 22
+            statusFontSize = 17
+            iconWidth = 48
+            iconHeight = 78
+            contentSpacing = 16
+            showsExpandedDetails = true
+            usesDetailGrid = false
         }
     }
 }
