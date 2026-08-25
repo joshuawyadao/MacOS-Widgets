@@ -42,5 +42,16 @@
       "suggestion": 0
     },
     "scope": "working tree changes for widget presentation contracts (12 files)"
+  },
+  {
+    "date": "2026-08-25",
+    "mode": "PR Review",
+    "score": 95,
+    "findings": {
+      "critical": 0,
+      "warning": 1,
+      "suggestion": 0
+    },
+    "scope": "PR #4 changes vs main (29 files, highest-risk paths sampled)"
   }
 ]

@@ -23,7 +23,7 @@ The required Xcode Personal Team is free and does not enroll you in the $99/year
 
 1. Open **Xcode → Settings → Accounts**, press **+**, and sign in with your Apple Account. The account should expose a team ending in **(Personal Team)**.
 2. Select the account, choose **Manage Certificates**, press **+**, and create an **Apple Development** certificate if one is not already listed.
-3. From this repository, run `./Scripts/configure-personal-team.sh`. It detects the Team ID from that certificate. If needed, pass the 10-character ID shown by Xcode: `./Scripts/configure-personal-team.sh ABC123DE45`.
+3. From this repository, run `./Scripts/configure-personal-team.sh`. It reads Xcode's signing Team ID from the Apple Development certificate's Team field, rather than the different identifier that may appear in the certificate name. If needed, pass the 10-character Team ID shown by Xcode: `./Scripts/configure-personal-team.sh ABC123DE45`.
 4. The helper writes only `Local.xcconfig`, which is ignored by Git. Do not add this file or a literal Team ID to a commit.
 
 Free Personal Team provisioning is intended for personal development and can require periodic rebuilding. App Store, notarized Developer ID, or dependable direct-download distribution still requires the paid program.

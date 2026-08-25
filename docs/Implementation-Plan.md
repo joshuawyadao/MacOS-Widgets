@@ -1,18 +1,18 @@
 # Plan
 
-Normalize only the Large Weather widget’s vertical rhythm by separating section filling from item spacing, keeping its expanded dashboard useful without stretching the weekday, icon, and temperature apart.
+Correct the Personal Team signing helper identified during PR #4 review so automatic setup reads Xcode’s actual Team ID from the certificate subject instead of a different valid-looking identifier in its display name.
 
 ## Scope
-- In: Large forecast-column spacing behavior, a focused regression contract, Weather appearance documentation, full verification, and branch saving.
-- Out: Small and Medium layouts, forecast data, city configuration, signing, background treatment, or a broader redesign.
+- In: Certificate-subject parsing, automatic identity lookup, a deterministic verification fixture, signing setup documentation, Brooks review history, full validation, and branch saving.
+- Out: Widget behavior, layout, weather data, provisioning-policy changes, or paid Apple Developer distribution.
 
 ## Action items
-[x] Add a red regression contract proving Large must fill its forecast section without flexible gaps inside each forecast column.
-[x] Split section-height behavior from forecast-item spacing in `WeatherPresentation.swift`.
-[x] Update `WeatherWidget.swift` so Large keeps fixed, coherent spacing between weekday, condition, and temperature.
-[x] Confirm Small and Medium layout metrics remain unchanged.
-[x] Update `docs/Weather-Widget.md` to describe the revised Large vertical rhythm.
-[x] Run the focused regression and `./Scripts/verify-widgets.sh`, review the scoped diff, and save the Weather feature branch.
+[x] Add a deterministic signing fixture that distinguishes the certificate display-name identifier from its `OU` Team ID.
+[x] Refactor `Scripts/configure-personal-team.sh` to parse and validate the `OU` from the selected valid Apple Development certificate.
+[x] Preserve explicit `TEAM_ID` overrides and refusal to overwrite an existing `Local.xcconfig`.
+[x] Update `Scripts/verify-widgets.sh` so CI protects the certificate-field distinction without requiring a developer account.
+[x] Clarify the automatic Team ID detection behavior in `README.md` and record the Brooks review result.
+[x] Run shell syntax checks and `./Scripts/verify-widgets.sh`, review the scoped diff, commit, and push the PR branch.
 
 ## Open questions
 - None.

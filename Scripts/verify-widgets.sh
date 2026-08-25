@@ -93,6 +93,13 @@ require_contains "$SIGNING_CONFIGURATION" "#include? \"../Local.xcconfig\"" "opt
 require_contains "$SIGNING_CONFIGURATION" "CODE_SIGN_STYLE = Automatic" "automatic signing policy"
 require_contains "$SIGNING_CONFIGURATION" 'DEVELOPMENT_TEAM = $(LOCAL_DEVELOPMENT_TEAM)' "local Personal Team setting"
 
+readonly CERTIFICATE_SUBJECT_FIXTURE='subject=UID=ABC123DE45,CN=Apple Development: Example Developer (ABC123DE45),OU=ZYX987WV65,O=Example Developer,C=US'
+readonly FIXTURE_TEAM_ID="$("$PERSONAL_TEAM_SCRIPT" --parse-certificate-subject "$CERTIFICATE_SUBJECT_FIXTURE")"
+if [[ "$FIXTURE_TEAM_ID" != "ZYX987WV65" ]]; then
+    echo "FAIL: Personal Team setup must read the certificate OU instead of its display-name identifier" >&2
+    exit 1
+fi
+
 readonly SIGNING_REFERENCE_COUNT="$(grep -c 'baseConfigurationReference = F00000000000000000000019 /\* Signing.xcconfig \*/;' "$PROJECT_PATH/project.pbxproj")"
 if [[ "$SIGNING_REFERENCE_COUNT" != "4" ]]; then
     echo "FAIL: Expected app and extension Debug/Release configurations to share Signing.xcconfig" >&2
