@@ -58,7 +58,7 @@ struct WeatherLoader: Sendable {
 
     func load(location: WeatherLocation, unit: WeatherTemperatureUnit, locale: Locale) async -> WeatherLoadOutcome {
         let resolvedUnit = unit.resolved(for: locale)
-        let cacheKey = location.displayName
+        let cacheKey = location.cacheIdentifier
         do {
             let snapshot = try await service.forecast(location: location, unit: unit, locale: locale)
             try? cache.save(snapshot, city: cacheKey)
@@ -100,6 +100,10 @@ struct WeatherLocation: Codable, Equatable, Hashable, Sendable {
             .compactMap { $0 }
             .filter { !$0.isEmpty && $0.caseInsensitiveCompare(name) != .orderedSame }
             .joined(separator: ", ")
+    }
+
+    var cacheIdentifier: String {
+        "latitude=\(latitude.bitPattern)|longitude=\(longitude.bitPattern)"
     }
 
     static let portland = Self(

@@ -664,7 +664,7 @@ final class WeatherConfigurationTests: XCTestCase {
         )
 
         XCTAssertEqual(outcome, .fresh(snapshot))
-        XCTAssertEqual(cache.load(city: WeatherLocation.portland.displayName, unit: .fahrenheit), snapshot)
+        XCTAssertEqual(cache.load(city: WeatherLocation.portland.cacheIdentifier, unit: .fahrenheit), snapshot)
     }
 
     func testLoaderReturnsSavedForecastAsStaleWhenRefreshFails() async throws {
@@ -673,7 +673,7 @@ final class WeatherConfigurationTests: XCTestCase {
         defer { try? FileManager.default.removeItem(at: root) }
         let snapshot = WeatherSnapshot.sample(now: .now)
         let cache = WeatherSnapshotCache(directoryURL: root)
-        try cache.save(snapshot, city: WeatherLocation.portland.displayName)
+        try cache.save(snapshot, city: WeatherLocation.portland.cacheIdentifier)
         let loader = WeatherLoader(
             service: StubWeatherService(result: .failure(.requestFailed("Offline"))),
             cache: cache
@@ -688,6 +688,56 @@ final class WeatherConfigurationTests: XCTestCase {
         XCTAssertEqual(
             outcome,
             .stale(snapshot, message: "Weather is temporarily unavailable. Offline")
+        )
+    }
+
+    func testLoaderDoesNotReuseCacheAcrossSameNamedCoordinates() async throws {
+        let root = FileManager.default.temporaryDirectory
+            .appendingPathComponent(UUID().uuidString, isDirectory: true)
+        defer { try? FileManager.default.removeItem(at: root) }
+        let firstLocation = WeatherLocation(
+            name: "Springfield",
+            latitude: 39.7817,
+            longitude: -89.6501,
+            timeZoneIdentifier: "America/Chicago",
+            adminArea: "Illinois",
+            country: "United States"
+        )
+        let secondLocation = WeatherLocation(
+            name: "Springfield",
+            latitude: 39.7990,
+            longitude: -89.6436,
+            timeZoneIdentifier: "America/Chicago",
+            adminArea: "Illinois",
+            country: "United States"
+        )
+        let cache = WeatherSnapshotCache(directoryURL: root)
+        let snapshot = WeatherSnapshot.sample(now: .now)
+
+        _ = await WeatherLoader(
+            service: StubWeatherService(result: .success(snapshot)),
+            cache: cache
+        ).load(
+            location: firstLocation,
+            unit: .fahrenheit,
+            locale: Locale(identifier: "en_US")
+        )
+
+        let outcome = await WeatherLoader(
+            service: StubWeatherService(result: .failure(.requestFailed("Offline"))),
+            cache: cache
+        ).load(
+            location: secondLocation,
+            unit: .fahrenheit,
+            locale: Locale(identifier: "en_US")
+        )
+
+        XCTAssertEqual(
+            outcome,
+            .failed(
+                message: "Weather is temporarily unavailable. Offline",
+                retryable: true
+            )
         )
     }
 
