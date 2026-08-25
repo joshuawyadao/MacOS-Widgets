@@ -5,5 +5,6 @@ import WidgetKit
 struct DesktopWidgetBundle: WidgetBundle {
     var body: some Widget {
         TimeAndDateWidget()
+        WeatherWidget()
     }
 }

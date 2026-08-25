@@ -1,17 +1,18 @@
 # Plan
 
-Close the Brooks review's provider-default coverage gap so the test suite protects the Time and Date widget's exact initial appearance, not merely whether each default happens to be a valid option.
+Address the actionable GitHub Codex feedback on PR #4 with isolated fixes: prevent stale Weather data from crossing between same-named coordinates and preserve the verification script’s explicit Xcode prerequisite failure.
 
 ## Scope
-- In: Exact default assertions for all five dynamic option providers, removal of unnecessary async/throwing test-helper complexity, validation, commit, and push.
-- Out: Changes to production defaults, option identifiers, widget presentation, or the App Intent schema.
+- In: Coordinate-stable Weather cache identity, collision regression coverage, developer-directory initialization, shell failure checks, implementation-plan tracking, validation, separate commits, and review-comment reactions.
+- Out: The verified Open-Meteo current precipitation request, widget layouts, configuration UI, provider selection, or unrelated refactoring.
 
 ## Action items
-- [x] Extend the provider assertion helper with an explicit expected default.
-- [x] Record each provider's documented default at its test call site.
-- [x] Make the helper synchronous because it only evaluates resolved values.
-- [x] Run the focused macOS test scheme with fresh DerivedData.
-- [x] Inspect the diff, commit the Brooks feedback fix, and push the feature branch.
+[x] Add a regression proving two locations with identical display labels but different coordinates cannot share cached forecasts.
+[x] Give `WeatherLocation` a stable coordinate-aware cache identity and use it in `WeatherLoader`.
+[x] Run the focused Weather cache tests, full verification, commit the P2 fix, push it, and acknowledge the Codex comment.
+[x] Add a deterministic shell failure-path check for an invalid Xcode override and separate assignment from readonly declaration.
+[x] Run shell and full verification, commit the P3 fix separately, push it, and acknowledge the Codex comment.
+[x] Re-read review threads, CI, and mergeability; record the live Open-Meteo evidence for skipping the non-actionable P1 comment.
 
 ## Open questions
-- None. The production defaults are already documented and only the regression protection is changing.
+- None.

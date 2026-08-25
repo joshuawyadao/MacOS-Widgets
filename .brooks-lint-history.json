@@ -1,0 +1,57 @@
+[
+  {
+    "date": "2026-08-16",
+    "mode": "PR Review",
+    "score": 100,
+    "findings": {
+      "critical": 0,
+      "warning": 0,
+      "suggestion": 0
+    },
+    "scope": "working tree changes (11 files)"
+  },
+  {
+    "date": "2026-08-16",
+    "mode": "PR Review",
+    "score": 100,
+    "findings": {
+      "critical": 0,
+      "warning": 0,
+      "suggestion": 0
+    },
+    "scope": "working tree changes (10 files)"
+  },
+  {
+    "date": "2026-08-16",
+    "mode": "PR Review",
+    "score": 100,
+    "findings": {
+      "critical": 0,
+      "warning": 0,
+      "suggestion": 0
+    },
+    "scope": "PR #2 changes vs codex/feature/weather-widget (12 files)"
+  },
+  {
+    "date": "2026-08-16",
+    "mode": "PR Review",
+    "score": 100,
+    "findings": {
+      "critical": 0,
+      "warning": 0,
+      "suggestion": 0
+    },
+    "scope": "working tree changes for widget presentation contracts (12 files)"
+  },
+  {
+    "date": "2026-08-25",
+    "mode": "PR Review",
+    "score": 95,
+    "findings": {
+      "critical": 0,
+      "warning": 1,
+      "suggestion": 0
+    },
+    "scope": "PR #4 changes vs main (29 files, highest-risk paths sampled)"
+  }
+]

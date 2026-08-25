@@ -41,69 +41,52 @@ struct TimeAndDateWidgetView: View {
         TimeAndDateMetrics(family: family)
     }
 
-    private var dateText: String {
-        entry.configuration.resolvedDateFormat.string(from: entry.date, locale: locale, timeZone: timeZone)
-    }
-
-    private var timeText: String {
-        entry.configuration.resolvedTimeFormat.timeString(from: entry.date, locale: locale, timeZone: timeZone)
-    }
-
-    private var periodText: String? {
-        entry.configuration.resolvedTimeFormat.periodString(from: entry.date, locale: locale, timeZone: timeZone)
+    private var presentation: TimeAndDatePresentation {
+        TimeAndDatePresentation(
+            date: entry.date,
+            configuration: entry.configuration,
+            family: family,
+            locale: locale,
+            timeZone: timeZone
+        )
     }
 
     var body: some View {
         Group {
-            switch entry.configuration.resolvedLayout {
-            case .reference:
+            switch presentation.arrangement {
+            case .classicWide:
                 referenceLayout
-            case .stacked:
+            case .verticalDateFirst:
                 stackedLayout
-            case .timeFirst:
+            case .verticalTimeFirst:
                 timeFirstLayout
-            case .centered:
+            case .centeredDateFirst:
                 centeredLayout
-            case .inline:
+            case .horizontalDateFirst:
                 inlineLayout
             }
         }
         .foregroundStyle(.white)
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel(accessibilityText)
+        .accessibilityLabel(presentation.accessibilityLabel)
         .containerBackground(for: .widget) {
             Color.clear
         }
     }
 
-    private var accessibilityText: String {
-        [dateText, timeText, periodText]
-            .compactMap { $0 }
-            .joined(separator: ", ")
-    }
-
-    @ViewBuilder
     private var referenceLayout: some View {
-        if family == .systemSmall {
-            VStack(alignment: .leading, spacing: metrics.spacing) {
-                dateLabel
-                Spacer(minLength: 0)
-                compactTimeLabel
-            }
-        } else {
-            VStack(alignment: .leading, spacing: metrics.spacing) {
-                dateLabel
-                Spacer(minLength: 0)
+        VStack(alignment: .leading, spacing: metrics.spacing) {
+            dateLabel
+            Spacer(minLength: 0)
 
-                HStack(alignment: .top, spacing: 12) {
-                    timeLabel
+            HStack(alignment: .top, spacing: 12) {
+                timeLabel
 
-                    Spacer(minLength: 8)
+                Spacer(minLength: 8)
 
-                    if let periodText {
-                        periodLabel(periodText)
-                            .padding(.top, metrics.referencePeriodInset)
-                    }
+                if let periodText = presentation.periodText {
+                    periodLabel(periodText)
+                        .padding(.top, metrics.referencePeriodInset)
                 }
             }
         }
@@ -135,27 +118,18 @@ struct TimeAndDateWidgetView: View {
         .frame(maxWidth: .infinity, alignment: .center)
     }
 
-    @ViewBuilder
     private var inlineLayout: some View {
-        if family == .systemSmall {
-            VStack(alignment: .leading, spacing: metrics.spacing) {
-                dateLabel
-                Spacer(minLength: 0)
-                compactTimeLabel
-            }
-        } else {
-            HStack(alignment: .center, spacing: metrics.inlineSpacing) {
-                dateLabel
-                    .frame(maxWidth: .infinity, alignment: .leading)
+        HStack(alignment: .center, spacing: metrics.inlineSpacing) {
+            dateLabel
+                .frame(maxWidth: .infinity, alignment: .leading)
 
-                compactTimeLabel
-                    .frame(maxWidth: .infinity, alignment: .trailing)
-            }
+            compactTimeLabel
+                .frame(maxWidth: .infinity, alignment: .trailing)
         }
     }
 
     private var dateLabel: some View {
-        Text(dateText)
+        Text(presentation.dateText)
             .font(entry.configuration.resolvedDateFont.font(size: metrics.dateSize, role: .date))
             .fontWeight(entry.configuration.resolvedDateFont == .systemBold ? .black : nil)
             .tracking(metrics.dateTracking)
@@ -164,7 +138,7 @@ struct TimeAndDateWidgetView: View {
     }
 
     private var timeLabel: some View {
-        Text(timeText)
+        Text(presentation.timeText)
             .font(entry.configuration.resolvedTimeFont.font(size: metrics.timeSize, role: .time))
             .lineLimit(1)
             .minimumScaleFactor(0.55)
@@ -175,7 +149,7 @@ struct TimeAndDateWidgetView: View {
         HStack(alignment: .firstTextBaseline, spacing: metrics.periodSpacing) {
             timeLabel
 
-            if let periodText {
+            if let periodText = presentation.periodText {
                 periodLabel(periodText)
             }
         }
@@ -251,29 +225,40 @@ struct TimeAndDateWidget: Widget {
     }
 }
 
-#Preview(as: .systemSmall) {
-    TimeAndDateWidget()
-} timeline: {
-    TimeAndDateEntry(date: timeAndDatePreviewDate, configuration: .referencePreview())
-}
+#if DEBUG
+struct TimeAndDateWidget_Previews: PreviewProvider {
+    static var previews: some View {
+        Group {
+            TimeAndDateWidgetView(
+                entry: TimeAndDateEntry(date: timeAndDatePreviewDate, configuration: .referencePreview())
+            )
+            .previewContext(WidgetPreviewContext(family: .systemSmall))
+            .previewDisplayName("Small")
 
-#Preview(as: .systemMedium) {
-    TimeAndDateWidget()
-} timeline: {
-    TimeAndDateEntry(date: timeAndDatePreviewDate, configuration: .referencePreview())
-}
+            TimeAndDateWidgetView(
+                entry: TimeAndDateEntry(date: timeAndDatePreviewDate, configuration: .referencePreview())
+            )
+            .previewContext(WidgetPreviewContext(family: .systemMedium))
+            .previewDisplayName("Medium")
 
-#Preview("Alternate Configuration", as: .systemMedium) {
-    TimeAndDateWidget()
-} timeline: {
-    TimeAndDateEntry(date: timeAndDatePreviewDate, configuration: timeAndDateAlternatePreviewConfiguration)
-}
+            TimeAndDateWidgetView(
+                entry: TimeAndDateEntry(
+                    date: timeAndDatePreviewDate,
+                    configuration: timeAndDateAlternatePreviewConfiguration
+                )
+            )
+            .previewContext(WidgetPreviewContext(family: .systemMedium))
+            .previewDisplayName("Alternate Configuration")
 
-#Preview(as: .systemLarge) {
-    TimeAndDateWidget()
-} timeline: {
-    TimeAndDateEntry(date: timeAndDatePreviewDate, configuration: .referencePreview())
+            TimeAndDateWidgetView(
+                entry: TimeAndDateEntry(date: timeAndDatePreviewDate, configuration: .referencePreview())
+            )
+            .previewContext(WidgetPreviewContext(family: .systemLarge))
+            .previewDisplayName("Large")
+        }
+    }
 }
+#endif
 
 private var timeAndDateAlternatePreviewConfiguration: TimeAndDateStringConfigurationIntent {
     let configuration = TimeAndDateStringConfigurationIntent()
