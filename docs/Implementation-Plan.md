@@ -1,20 +1,18 @@
 # Plan
 
-Close the test-suite gaps found by the coverage audit while keeping the fast logic-heavy suite intact. Add deterministic weather transport and timeline tests, complete the Battery parser state matrix, add representative SwiftUI render smoke tests, and surface coverage in local and CI verification.
+Strengthen the widget render smoke tests so a renderer that returns an encoded but visually blank image fails. Inspect decoded bitmap pixels for visible, non-uniform content while preserving the existing representative family and state coverage.
 
 ## Scope
-- In: Open-Meteo transport/error tests, WeatherProvider timeline-policy seams and tests, Battery parser edge cases, representative widget render smoke tests, coverage-enabled verification, CI reporting, and affected test documentation.
-- Out: Live-network tests, pixel-perfect golden snapshots, blanket coverage thresholds, macOS-owned widget editor/persistence automation, or production behavior changes beyond a deterministic timeline test seam.
+- In: The render assertion helper, targeted render-test validation, the full repository verification gate, and the Codex review acknowledgement workflow.
+- Out: Pixel-perfect golden snapshots, production widget behavior changes, new visual states, or documentation changes beyond this implementation plan because the existing docs already describe these as render smoke tests.
 
 ## Action items
-[x] Add deterministic URLProtocol-backed forecast and city-search tests for success, short-query, HTTP, decoding, empty-data, and transport failures.
-[x] Extract a date-injectable WeatherProvider timeline seam and verify loaded, stale, retryable, and permanent-failure scheduling.
-[x] Complete the Battery parser matrix for charged, plugged-in, unknown, and missing charging metadata states.
-[x] Add representative render smoke tests for every widget family and the no-battery, stale/failure weather, long-location, and 12/24-hour layout states.
-[x] Enable Xcode coverage collection and print target summaries in local verification and CI without imposing a brittle repository-wide percentage gate.
-[x] Update the README and widget docs so automated coverage and remaining macOS-owned acceptance checks stay accurate.
-[x] Run targeted tests, the complete coverage-enabled suite, the repository verification gate, and inspect the final coverage/diff.
-[x] Commit and push the verified coverage additions on the current branch.
+[x] Inspect the Codex P2 review thread and the existing `WidgetRenderingSmokeTests` helper.
+[x] Replace the TIFF byte-count assertion with decoded bitmap checks for visible, non-uniform pixels.
+[x] Preserve scenario-specific failure messages so a blank rendering identifies the affected widget case.
+[x] Run the targeted widget rendering smoke tests and the complete `Scripts/verify-widgets.sh` gate.
+[x] Inspect the final diff and confirm no unrelated files or behavior changed.
+[x] Commit and push the focused fix, then add a thumbs-up reaction to the addressed Codex comment.
 
 ## Open questions
 - None.

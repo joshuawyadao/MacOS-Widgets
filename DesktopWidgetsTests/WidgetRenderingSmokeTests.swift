@@ -145,7 +145,52 @@ final class WidgetRenderingSmokeTests: XCTestCase {
 
         let image: NSImage = try XCTUnwrap(renderer.nsImage, "Failed to render \(name)", file: file, line: line)
         let data: Data = try XCTUnwrap(image.tiffRepresentation, "Rendered \(name) had no pixels", file: file, line: line)
-        XCTAssertGreaterThan(data.count, 0, "Rendered \(name) was empty", file: file, line: line)
+        let bitmap: NSBitmapImageRep = try XCTUnwrap(
+            NSBitmapImageRep(data: data),
+            "Rendered \(name) could not be decoded",
+            file: file,
+            line: line
+        )
+        XCTAssertTrue(
+            containsVisibleContent(bitmap),
+            "Rendered \(name) contained no visible, non-uniform content",
+            file: file,
+            line: line
+        )
+    }
+
+    private func containsVisibleContent(_ bitmap: NSBitmapImageRep) -> Bool {
+        var firstPixel: NSColor?
+        var hasVisiblePixel = false
+        var hasPixelVariation = false
+
+        for y in 0..<bitmap.pixelsHigh {
+            for x in 0..<bitmap.pixelsWide {
+                guard let pixel = bitmap.colorAt(x: x, y: y)?.usingColorSpace(.deviceRGB) else {
+                    continue
+                }
+
+                hasVisiblePixel = hasVisiblePixel || pixel.alphaComponent > 0.01
+                if let firstPixel {
+                    hasPixelVariation = hasPixelVariation || colorsDiffer(firstPixel, pixel)
+                } else {
+                    firstPixel = pixel
+                }
+
+                if hasVisiblePixel && hasPixelVariation {
+                    return true
+                }
+            }
+        }
+
+        return false
+    }
+
+    private func colorsDiffer(_ lhs: NSColor, _ rhs: NSColor) -> Bool {
+        abs(lhs.redComponent - rhs.redComponent) > 0.01
+            || abs(lhs.greenComponent - rhs.greenComponent) > 0.01
+            || abs(lhs.blueComponent - rhs.blueComponent) > 0.01
+            || abs(lhs.alphaComponent - rhs.alphaComponent) > 0.01
     }
 
     private func renderSize(for family: WidgetFamily) -> CGSize {
