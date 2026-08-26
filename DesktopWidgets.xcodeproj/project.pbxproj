@@ -51,6 +51,12 @@
 		A0000000000000000000002A /* IOKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F00000000000000000000025 /* IOKit.framework */; };
 		A0000000000000000000002B /* BatteryConfiguration.swift in Sources */ = {isa = PBXBuildFile; fileRef = F00000000000000000000026 /* BatteryConfiguration.swift */; };
 		A0000000000000000000002C /* BatteryConfiguration.swift in Sources */ = {isa = PBXBuildFile; fileRef = F00000000000000000000026 /* BatteryConfiguration.swift */; };
+		A0000000000000000000002D /* TimeAndDateWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = F00000000000000000000005 /* TimeAndDateWidget.swift */; };
+		A0000000000000000000002E /* WeatherWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = F00000000000000000000012 /* WeatherWidget.swift */; };
+		A0000000000000000000002F /* BatteryWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = F00000000000000000000023 /* BatteryWidget.swift */; };
+		A00000000000000000000030 /* SystemBatteryReader.swift in Sources */ = {isa = PBXBuildFile; fileRef = F00000000000000000000021 /* SystemBatteryReader.swift */; };
+		A00000000000000000000031 /* IOKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F00000000000000000000025 /* IOKit.framework */; };
+		A00000000000000000000032 /* WidgetRenderingSmokeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F00000000000000000000027 /* WidgetRenderingSmokeTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -110,6 +116,7 @@
 		F00000000000000000000024 /* BatteryWidgetTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BatteryWidgetTests.swift; sourceTree = "<group>"; };
 		F00000000000000000000025 /* IOKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = IOKit.framework; path = System/Library/Frameworks/IOKit.framework; sourceTree = SDKROOT; };
 		F00000000000000000000026 /* BatteryConfiguration.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BatteryConfiguration.swift; sourceTree = "<group>"; };
+		F00000000000000000000027 /* WidgetRenderingSmokeTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WidgetRenderingSmokeTests.swift; sourceTree = "<group>"; };
 		P00000000000000000000001 /* DesktopWidgets.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = DesktopWidgets.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		P00000000000000000000002 /* DesktopWidgetsExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = DesktopWidgetsExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		P00000000000000000000003 /* DesktopWidgetsTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = DesktopWidgetsTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -135,6 +142,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				A00000000000000000000031 /* IOKit.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -298,6 +306,7 @@
 				F00000000000000000000013 /* WeatherConfigurationTests.swift */,
 				F00000000000000000000024 /* BatteryWidgetTests.swift */,
 				F00000000000000000000014 /* WidgetContractTests.swift */,
+				F00000000000000000000027 /* WidgetRenderingSmokeTests.swift */,
 			);
 			path = DesktopWidgetsTests;
 			sourceTree = "<group>";
@@ -487,16 +496,21 @@
 				A0000000000000000000002C /* BatteryConfiguration.swift in Sources */,
 				A00000000000000000000027 /* BatteryModels.swift in Sources */,
 				A00000000000000000000028 /* BatteryPresentation.swift in Sources */,
+				A00000000000000000000030 /* SystemBatteryReader.swift in Sources */,
+				A0000000000000000000002F /* BatteryWidget.swift in Sources */,
 				A00000000000000000000029 /* BatteryWidgetTests.swift in Sources */,
 				A0000000000000000000000E /* TimeAndDateConfiguration.swift in Sources */,
 				A0000000000000000000001E /* TimeAndDatePresentation.swift in Sources */,
+				A0000000000000000000002D /* TimeAndDateWidget.swift in Sources */,
 				A0000000000000000000000F /* TimeAndDateConfigurationTests.swift in Sources */,
 				A00000000000000000000014 /* WeatherConfiguration.swift in Sources */,
 				A00000000000000000000015 /* WeatherModels.swift in Sources */,
 				A00000000000000000000016 /* OpenMeteoWeatherService.swift in Sources */,
 				A00000000000000000000020 /* WeatherProvider.swift in Sources */,
+				A0000000000000000000002E /* WeatherWidget.swift in Sources */,
 				A00000000000000000000017 /* WeatherConfigurationTests.swift in Sources */,
 				A00000000000000000000018 /* WidgetContractTests.swift in Sources */,
+				A00000000000000000000032 /* WidgetRenderingSmokeTests.swift in Sources */,
 				A00000000000000000000019 /* WidgetIdentifier.swift in Sources */,
 				A0000000000000000000001A /* Calendar+WidgetTimeline.swift in Sources */,
 				A0000000000000000000001C /* WeatherPresentation.swift in Sources */,

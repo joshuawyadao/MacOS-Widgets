@@ -3,10 +3,20 @@ import SwiftUI
 import WidgetKit
 
 struct WeatherWidgetView: View {
-    @Environment(\.widgetFamily) private var family
+    @Environment(\.widgetFamily) private var environmentFamily
     @Environment(\.widgetRenderingMode) private var renderingMode
 
     let entry: WeatherEntry
+    private let familyOverride: WidgetFamily?
+
+    init(entry: WeatherEntry, family: WidgetFamily? = nil) {
+        self.entry = entry
+        self.familyOverride = family
+    }
+
+    private var family: WidgetFamily {
+        familyOverride ?? environmentFamily
+    }
 
     private var layout: WeatherWidgetLayoutMetrics {
         WeatherWidgetLayoutMetrics(family: family)

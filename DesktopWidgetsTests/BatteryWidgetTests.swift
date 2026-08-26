@@ -89,6 +89,31 @@ final class BatteryWidgetTests: XCTestCase {
         XCTAssertEqual(snapshot.timeRemainingMinutes, 72)
     }
 
+    func testParserClassifiesEveryNonChargingPowerSourceState() throws {
+        let cases: [(source: String?, percentage: Int, expected: BatteryPowerState)] = [
+            (BatteryPowerSourceKey.acPower, 99, .pluggedIn),
+            (BatteryPowerSourceKey.acPower, 100, .charged),
+            ("Unexpected Source", 75, .unknown),
+            (nil, 75, .unknown),
+        ]
+
+        for testCase in cases {
+            var values = description(
+                current: testCase.percentage,
+                maximum: 100,
+                source: testCase.source ?? ""
+            )
+            values.removeValue(forKey: BatteryPowerSourceKey.isCharging)
+            if testCase.source == nil {
+                values.removeValue(forKey: BatteryPowerSourceKey.powerSourceState)
+            }
+
+            let snapshot = try XCTUnwrap(BatteryPowerSourceParser.snapshot(from: values))
+
+            XCTAssertEqual(snapshot.state, testCase.expected, "source=\(testCase.source ?? "nil")")
+        }
+    }
+
     func testParserRejectsNonBatteryAndInvalidCapacitySources() {
         var external = description(current: 50, maximum: 100)
         external[BatteryPowerSourceKey.type] = "UPS"

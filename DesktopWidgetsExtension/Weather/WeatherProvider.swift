@@ -49,7 +49,13 @@ struct WeatherProvider: AppIntentTimelineProvider {
         for configuration: WeatherV8ConfigurationIntent,
         in context: Context
     ) async -> Timeline<WeatherEntry> {
-        let now = Date.now
+        await timeline(for: configuration, now: .now)
+    }
+
+    func timeline(
+        for configuration: WeatherV8ConfigurationIntent,
+        now: Date
+    ) async -> Timeline<WeatherEntry> {
         let loaded = await entry(for: configuration, date: now)
 
         switch loaded.state {

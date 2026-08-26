@@ -270,6 +270,78 @@ final class WeatherConfigurationTests: XCTestCase {
         XCTAssertEqual(entry.snapshot?.locationName, expectedLocation.displayName)
     }
 
+    func testProviderBuildsSevenHourlyEntriesAndRefreshesLoadedAndStaleForecasts() async throws {
+        let root = FileManager.default.temporaryDirectory
+            .appendingPathComponent(UUID().uuidString, isDirectory: true)
+        defer { try? FileManager.default.removeItem(at: root) }
+        let now = Date.now
+        let snapshot = WeatherSnapshot.sample(now: now)
+        let configuration = WeatherV8ConfigurationIntent.referencePreview()
+
+        let loadedTimeline = await WeatherProvider(
+            service: StubWeatherService(result: .success(snapshot)),
+            cache: WeatherSnapshotCache(directoryURL: root)
+        ).timeline(for: configuration, now: now)
+
+        XCTAssertEqual(loadedTimeline.entries.count, 7)
+        XCTAssertEqual(loadedTimeline.entries.first?.date, now)
+        XCTAssertTrue(loadedTimeline.entries.allSatisfy { $0.state == .loaded })
+        assertReloadDate(loadedTimeline.policy, equals: now.addingTimeInterval(60 * 60))
+
+        let staleTimeline = await WeatherProvider(
+            service: StubWeatherService(result: .failure(.requestFailed("Offline"))),
+            cache: WeatherSnapshotCache(directoryURL: root)
+        ).timeline(for: configuration, now: now)
+
+        XCTAssertEqual(staleTimeline.entries.count, 7)
+        XCTAssertTrue(staleTimeline.entries.allSatisfy {
+            $0.state == .stale("Weather is temporarily unavailable. Offline")
+        })
+        XCTAssertTrue(staleTimeline.entries.allSatisfy { $0.snapshot == snapshot })
+        assertReloadDate(staleTimeline.policy, equals: now.addingTimeInterval(60 * 60))
+    }
+
+    func testProviderRetriesTemporaryFailuresAfterThirtyMinutes() async {
+        let root = FileManager.default.temporaryDirectory
+            .appendingPathComponent(UUID().uuidString, isDirectory: true)
+        defer { try? FileManager.default.removeItem(at: root) }
+        let now = Date(timeIntervalSince1970: 1_786_288_940)
+        let timeline = await WeatherProvider(
+            service: StubWeatherService(result: .failure(.requestFailed("Offline"))),
+            cache: WeatherSnapshotCache(directoryURL: root)
+        ).timeline(for: .referencePreview(), now: now)
+
+        XCTAssertEqual(timeline.entries.count, 1)
+        XCTAssertEqual(
+            timeline.entries.first?.state,
+            .failed("Weather is temporarily unavailable. Offline", retryable: true)
+        )
+        assertReloadDate(timeline.policy, equals: now.addingTimeInterval(30 * 60))
+    }
+
+    func testProviderDoesNotRetryPermanentCityFailures() async {
+        let root = FileManager.default.temporaryDirectory
+            .appendingPathComponent(UUID().uuidString, isDirectory: true)
+        defer { try? FileManager.default.removeItem(at: root) }
+        let timeline = await WeatherProvider(
+            service: StubWeatherService(result: .failure(.cityNotFound("Unknownville"))),
+            cache: WeatherSnapshotCache(directoryURL: root)
+        ).timeline(
+            for: .referencePreview(),
+            now: Date(timeIntervalSince1970: 1_786_288_940)
+        )
+
+        XCTAssertEqual(timeline.entries.count, 1)
+        XCTAssertEqual(
+            timeline.entries.first?.state,
+            .failed(
+                "No weather location matched “Unknownville”. Try adding a state or country.",
+                retryable: false
+            )
+        )
+        XCTAssertEqual(timeline.policy, .never)
+    }
+
     func testWeatherPresentationCoversEveryFamilyModeAndDetailPreset() throws {
         let snapshot = WeatherSnapshot.sample()
         let locale = Locale(identifier: "en_US")
@@ -575,6 +647,81 @@ final class WeatherConfigurationTests: XCTestCase {
         )
     }
 
+    func testForecastServiceUsesHTTPTransportForAValidResponse() async throws {
+        let session = stubSession(statusCode: 200, data: Data(Self.fixture.utf8))
+        let snapshot = try await OpenMeteoWeatherService(session: session).forecast(
+            location: .portland,
+            unit: .automatic,
+            locale: Locale(identifier: "en_US")
+        )
+
+        XCTAssertEqual(snapshot.locationName, WeatherLocation.portland.displayName)
+        XCTAssertEqual(snapshot.unit, .fahrenheit)
+        XCTAssertEqual(snapshot.current.temperature, 63)
+        XCTAssertEqual(WeatherURLProtocolStub.requestCount, 1)
+        XCTAssertEqual(WeatherURLProtocolStub.lastRequest?.value(forHTTPHeaderField: "User-Agent"), "MacOS-Widgets/0.1")
+    }
+
+    func testForecastServiceMapsHTTPDecodeEmptyAndTransportFailures() async {
+        await assertForecastError(
+            session: stubSession(statusCode: 503, data: Data()),
+            expected: .invalidResponse
+        )
+        await assertForecastError(
+            session: stubSession(statusCode: 200, data: Data("not-json".utf8)),
+            expected: .invalidData
+        )
+        await assertForecastError(
+            session: stubSession(statusCode: 200, data: Data(Self.emptyForecastFixture.utf8)),
+            expected: .invalidData
+        )
+
+        let transportError = URLError(.notConnectedToInternet)
+        await assertForecastError(
+            session: stubSession(error: transportError),
+            expected: .requestFailed(transportError.localizedDescription)
+        )
+    }
+
+    func testLocationSearchUsesHTTPTransportAndSkipsShortQueries() async throws {
+        let session = stubSession(statusCode: 200, data: Data(Self.geocodingFixture.utf8))
+        let service = OpenMeteoLocationSearchService(session: session)
+
+        let locations = try await service.locations(
+            matching: "  Portland  ",
+            locale: Locale(identifier: "en_US")
+        )
+
+        XCTAssertEqual(locations.count, 2)
+        XCTAssertEqual(WeatherURLProtocolStub.requestCount, 1)
+        XCTAssertEqual(WeatherURLProtocolStub.lastRequest?.url?.host(), "geocoding-api.open-meteo.com")
+
+        WeatherURLProtocolStub.reset()
+        let shortQueryResults = try await service.locations(
+            matching: " p ",
+            locale: Locale(identifier: "en_US")
+        )
+        XCTAssertEqual(shortQueryResults, [])
+        XCTAssertEqual(WeatherURLProtocolStub.requestCount, 0)
+    }
+
+    func testLocationSearchMapsHTTPDecodeAndTransportFailures() async {
+        await assertLocationSearchError(
+            session: stubSession(statusCode: 500, data: Data()),
+            expected: .invalidResponse
+        )
+        await assertLocationSearchError(
+            session: stubSession(statusCode: 200, data: Data("not-json".utf8)),
+            expected: .invalidData
+        )
+
+        let transportError = URLError(.timedOut)
+        await assertLocationSearchError(
+            session: stubSession(error: transportError),
+            expected: .requestFailed(transportError.localizedDescription)
+        )
+    }
+
     func testCityResultsKeepDistinctMatchesAndCapThePopupAtTwenty() {
         let locations = (0..<25).map { index in
             WeatherLocation(
@@ -779,6 +926,72 @@ final class WeatherConfigurationTests: XCTestCase {
         )
     }
 
+    private func stubSession(statusCode: Int, data: Data) -> URLSession {
+        WeatherURLProtocolStub.install { request in
+            let response = HTTPURLResponse(
+                url: request.url!,
+                statusCode: statusCode,
+                httpVersion: "HTTP/1.1",
+                headerFields: ["Content-Type": "application/json"]
+            )!
+            return (response, data)
+        }
+        let configuration = URLSessionConfiguration.ephemeral
+        configuration.protocolClasses = [WeatherURLProtocolStub.self]
+        return URLSession(configuration: configuration)
+    }
+
+    private func stubSession(error: any Error) -> URLSession {
+        WeatherURLProtocolStub.install { _ in throw error }
+        let configuration = URLSessionConfiguration.ephemeral
+        configuration.protocolClasses = [WeatherURLProtocolStub.self]
+        return URLSession(configuration: configuration)
+    }
+
+    private func assertForecastError(
+        session: URLSession,
+        expected: WeatherServiceError
+    ) async {
+        do {
+            _ = try await OpenMeteoWeatherService(session: session).forecast(
+                location: .portland,
+                unit: .fahrenheit,
+                locale: Locale(identifier: "en_US")
+            )
+            XCTFail("Expected forecast request to fail with \(expected)")
+        } catch let error as WeatherServiceError {
+            XCTAssertEqual(error, expected)
+        } catch {
+            XCTFail("Expected WeatherServiceError, received \(error)")
+        }
+    }
+
+    private func assertLocationSearchError(
+        session: URLSession,
+        expected: WeatherServiceError
+    ) async {
+        do {
+            _ = try await OpenMeteoLocationSearchService(session: session).locations(
+                matching: "Portland",
+                locale: Locale(identifier: "en_US")
+            )
+            XCTFail("Expected location search to fail with \(expected)")
+        } catch let error as WeatherServiceError {
+            XCTAssertEqual(error, expected)
+        } catch {
+            XCTFail("Expected WeatherServiceError, received \(error)")
+        }
+    }
+
+    private func assertReloadDate(
+        _ policy: TimelineReloadPolicy,
+        equals expectedDate: Date,
+        file: StaticString = #filePath,
+        line: UInt = #line
+    ) {
+        XCTAssertEqual(policy, .after(expectedDate), file: file, line: line)
+    }
+
     private static let fixture = """
     {
       "timezone": "America/Los_Angeles",
@@ -806,6 +1019,37 @@ final class WeatherConfigurationTests: XCTestCase {
         "precipitation_probability_max": [20.0, 35.0],
         "weather_code": [0, 2],
         "wind_speed_10m_max": [10.0, 12.0]
+      }
+    }
+    """
+
+    private static let emptyForecastFixture = """
+    {
+      "timezone": "UTC",
+      "current": {
+        "time": 1786291200,
+        "temperature_2m": 63.0,
+        "relative_humidity_2m": 61.0,
+        "precipitation_probability": 5.0,
+        "weather_code": 0,
+        "wind_speed_10m": 7.0
+      },
+      "hourly": {
+        "time": [],
+        "temperature_2m": [],
+        "relative_humidity_2m": [],
+        "precipitation_probability": [],
+        "weather_code": [],
+        "wind_speed_10m": []
+      },
+      "daily": {
+        "time": [],
+        "temperature_2m_max": [],
+        "temperature_2m_min": [],
+        "relative_humidity_2m_mean": [],
+        "precipitation_probability_max": [],
+        "weather_code": [],
+        "wind_speed_10m_max": []
       }
     }
     """
@@ -871,5 +1115,82 @@ private actor RecordingWeatherService: WeatherServing {
             hourly: sample.hourly,
             daily: sample.daily
         )
+    }
+}
+
+private final class WeatherURLProtocolStub: URLProtocol, @unchecked Sendable {
+    typealias Handler = @Sendable (URLRequest) throws -> (HTTPURLResponse, Data)
+
+    private static let state = WeatherURLProtocolStubState()
+
+    static var requestCount: Int { state.requestCount }
+    static var lastRequest: URLRequest? { state.lastRequest }
+
+    static func install(_ handler: @escaping Handler) {
+        state.install(handler)
+    }
+
+    static func reset() {
+        state.reset()
+    }
+
+    override class func canInit(with request: URLRequest) -> Bool {
+        true
+    }
+
+    override class func canonicalRequest(for request: URLRequest) -> URLRequest {
+        request
+    }
+
+    override func startLoading() {
+        do {
+            let (response, data) = try Self.state.response(for: request)
+            client?.urlProtocol(self, didReceive: response, cacheStoragePolicy: .notAllowed)
+            client?.urlProtocol(self, didLoad: data)
+            client?.urlProtocolDidFinishLoading(self)
+        } catch {
+            client?.urlProtocol(self, didFailWithError: error)
+        }
+    }
+
+    override func stopLoading() {}
+}
+
+private final class WeatherURLProtocolStubState: @unchecked Sendable {
+    private let lock = NSLock()
+    private var handler: WeatherURLProtocolStub.Handler?
+    private var requests: [URLRequest] = []
+
+    var requestCount: Int {
+        lock.withLock { requests.count }
+    }
+
+    var lastRequest: URLRequest? {
+        lock.withLock { requests.last }
+    }
+
+    func install(_ handler: @escaping WeatherURLProtocolStub.Handler) {
+        lock.withLock {
+            self.handler = handler
+            requests = []
+        }
+    }
+
+    func reset() {
+        lock.withLock {
+            handler = nil
+            requests = []
+        }
+    }
+
+    func response(for request: URLRequest) throws -> (HTTPURLResponse, Data) {
+        let handler = lock.withLock { () -> WeatherURLProtocolStub.Handler? in
+            requests.append(request)
+            return self.handler
+        }
+        guard let handler else {
+            throw URLError(.resourceUnavailable)
+        }
+        return try handler(request)
     }
 }
