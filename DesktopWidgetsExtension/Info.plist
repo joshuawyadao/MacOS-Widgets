@@ -23,5 +23,7 @@
 		<key>NSExtensionPointIdentifier</key>
 		<string>com.apple.widgetkit-extension</string>
 	</dict>
+	<key>NSCalendarsFullAccessUsageDescription</key>
+	<string>Desktop Widgets reads event timing to show optional counts and dots. Event titles and notes are never displayed.</string>
 </dict>
 </plist>

@@ -1,18 +1,18 @@
 # Plan
 
-Strengthen the widget render smoke tests so a renderer that returns an encoded but visually blank image fails. Inspect decoded bitmap pixels for visible, non-uniform content while preserving the existing representative family and state coverage.
+Fix the reproduced blank-today marker by making its treatment explicit for WidgetKit rendering modes: a composited filled marker in full color and a high-contrast outlined marker in vibrant/accented appearances. Lock the mode decision down in tests, validate the supplied screenshot symptom at pixel level, and refresh the signed local widget.
 
 ## Scope
-- In: The render assertion helper, targeted render-test validation, the full repository verification gate, and the Codex review acknowledgement workflow.
-- Out: Pixel-perfect golden snapshots, production widget behavior changes, new visual states, or documentation changes beyond this implementation plan because the existing docs already describe these as render smoke tests.
+- In: Today-marker rendering-mode behavior in Week/Month, event-dot contrast within that marker, regression coverage, Calendar documentation, build number, live runtime verification, commit, and push.
+- Out: Calendar data/configuration, non-today cells, Day view, navigation, and unrelated widgets.
 
 ## Action items
-[x] Inspect the Codex P2 review thread and the existing `WidgetRenderingSmokeTests` helper.
-[x] Replace the TIFF byte-count assertion with decoded bitmap checks for visible, non-uniform pixels.
-[x] Preserve scenario-specific failure messages so a blank rendering identifies the affected widget case.
-[x] Run the targeted widget rendering smoke tests and the complete `Scripts/verify-widgets.sh` gate.
-[x] Inspect the final diff and confirm no unrelated files or behavior changed.
-[x] Commit and push the focused fix, then add a thumbs-up reaction to the addressed Codex comment.
+[x] Preserve the supplied screenshot as a deterministic pixel-level failing signal for a blank today circle.
+[x] Add a testable today-marker style contract that selects filled treatment only in full color and outlined treatment in vibrant/accented modes.
+[x] Refactor the shared Week/Month marker to composite filled content and keep numeral/dots visible in every rendering mode.
+[x] Update Calendar appearance guidance and increment the development build.
+[x] Run targeted Calendar tests, the screenshot/render regression, and `./Scripts/verify-widgets.sh`.
+[x] Build/register the signed extension, verify the live marker, review the diff, mark the plan complete, commit, and push `codex/feature/calendar-widget`.
 
 ## Open questions
 - None.

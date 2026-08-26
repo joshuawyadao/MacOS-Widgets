@@ -51,12 +51,23 @@
 		A0000000000000000000002A /* IOKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F00000000000000000000025 /* IOKit.framework */; };
 		A0000000000000000000002B /* BatteryConfiguration.swift in Sources */ = {isa = PBXBuildFile; fileRef = F00000000000000000000026 /* BatteryConfiguration.swift */; };
 		A0000000000000000000002C /* BatteryConfiguration.swift in Sources */ = {isa = PBXBuildFile; fileRef = F00000000000000000000026 /* BatteryConfiguration.swift */; };
-		A0000000000000000000002D /* TimeAndDateWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = F00000000000000000000005 /* TimeAndDateWidget.swift */; };
-		A0000000000000000000002E /* WeatherWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = F00000000000000000000012 /* WeatherWidget.swift */; };
-		A0000000000000000000002F /* BatteryWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = F00000000000000000000023 /* BatteryWidget.swift */; };
-		A00000000000000000000030 /* SystemBatteryReader.swift in Sources */ = {isa = PBXBuildFile; fileRef = F00000000000000000000021 /* SystemBatteryReader.swift */; };
-		A00000000000000000000031 /* IOKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F00000000000000000000025 /* IOKit.framework */; };
-		A00000000000000000000032 /* WidgetRenderingSmokeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F00000000000000000000027 /* WidgetRenderingSmokeTests.swift */; };
+		A0000000000000000000002D /* CalendarPresentation.swift in Sources */ = {isa = PBXBuildFile; fileRef = F00000000000000000000027 /* CalendarPresentation.swift */; };
+		A0000000000000000000002E /* CalendarNavigation.swift in Sources */ = {isa = PBXBuildFile; fileRef = F00000000000000000000028 /* CalendarNavigation.swift */; };
+		A0000000000000000000002F /* CalendarWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = F00000000000000000000029 /* CalendarWidget.swift */; };
+		A00000000000000000000030 /* CalendarPresentation.swift in Sources */ = {isa = PBXBuildFile; fileRef = F00000000000000000000027 /* CalendarPresentation.swift */; };
+		A00000000000000000000031 /* CalendarNavigation.swift in Sources */ = {isa = PBXBuildFile; fileRef = F00000000000000000000028 /* CalendarNavigation.swift */; };
+		A00000000000000000000032 /* CalendarWidgetTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0000000000000000000002A /* CalendarWidgetTests.swift */; };
+		A00000000000000000000033 /* CalendarConfiguration.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0000000000000000000002B /* CalendarConfiguration.swift */; };
+		A00000000000000000000034 /* CalendarEvents.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0000000000000000000002C /* CalendarEvents.swift */; };
+		A00000000000000000000035 /* CalendarConfiguration.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0000000000000000000002B /* CalendarConfiguration.swift */; };
+		A00000000000000000000036 /* CalendarEvents.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0000000000000000000002C /* CalendarEvents.swift */; };
+		A00000000000000000000037 /* CalendarPermissionController.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0000000000000000000002D /* CalendarPermissionController.swift */; };
+		A00000000000000000000038 /* TimeAndDateWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = F00000000000000000000005 /* TimeAndDateWidget.swift */; };
+		A00000000000000000000039 /* WeatherWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = F00000000000000000000012 /* WeatherWidget.swift */; };
+		A0000000000000000000003A /* BatteryWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = F00000000000000000000023 /* BatteryWidget.swift */; };
+		A0000000000000000000003B /* SystemBatteryReader.swift in Sources */ = {isa = PBXBuildFile; fileRef = F00000000000000000000021 /* SystemBatteryReader.swift */; };
+		A0000000000000000000003C /* IOKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F00000000000000000000025 /* IOKit.framework */; };
+		A0000000000000000000003D /* WidgetRenderingSmokeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0000000000000000000002E /* WidgetRenderingSmokeTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -116,7 +127,14 @@
 		F00000000000000000000024 /* BatteryWidgetTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BatteryWidgetTests.swift; sourceTree = "<group>"; };
 		F00000000000000000000025 /* IOKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = IOKit.framework; path = System/Library/Frameworks/IOKit.framework; sourceTree = SDKROOT; };
 		F00000000000000000000026 /* BatteryConfiguration.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BatteryConfiguration.swift; sourceTree = "<group>"; };
-		F00000000000000000000027 /* WidgetRenderingSmokeTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WidgetRenderingSmokeTests.swift; sourceTree = "<group>"; };
+		F00000000000000000000027 /* CalendarPresentation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CalendarPresentation.swift; sourceTree = "<group>"; };
+		F00000000000000000000028 /* CalendarNavigation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CalendarNavigation.swift; sourceTree = "<group>"; };
+		F00000000000000000000029 /* CalendarWidget.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CalendarWidget.swift; sourceTree = "<group>"; };
+		F0000000000000000000002A /* CalendarWidgetTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CalendarWidgetTests.swift; sourceTree = "<group>"; };
+		F0000000000000000000002B /* CalendarConfiguration.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CalendarConfiguration.swift; sourceTree = "<group>"; };
+		F0000000000000000000002C /* CalendarEvents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CalendarEvents.swift; sourceTree = "<group>"; };
+		F0000000000000000000002D /* CalendarPermissionController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CalendarPermissionController.swift; sourceTree = "<group>"; };
+		F0000000000000000000002E /* WidgetRenderingSmokeTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WidgetRenderingSmokeTests.swift; sourceTree = "<group>"; };
 		P00000000000000000000001 /* DesktopWidgets.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = DesktopWidgets.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		P00000000000000000000002 /* DesktopWidgetsExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = DesktopWidgetsExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		P00000000000000000000003 /* DesktopWidgetsTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = DesktopWidgetsTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -142,7 +160,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				A00000000000000000000031 /* IOKit.framework in Frameworks */,
+				A0000000000000000000003C /* IOKit.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -242,6 +260,11 @@
 		G00000000000000000000009 /* Calendar */ = {
 			isa = PBXGroup;
 			children = (
+				F0000000000000000000002B /* CalendarConfiguration.swift */,
+				F0000000000000000000002C /* CalendarEvents.swift */,
+				F00000000000000000000027 /* CalendarPresentation.swift */,
+				F00000000000000000000028 /* CalendarNavigation.swift */,
+				F00000000000000000000029 /* CalendarWidget.swift */,
 			);
 			path = Calendar;
 			sourceTree = "<group>";
@@ -295,6 +318,7 @@
 			isa = PBXGroup;
 			children = (
 				F0000000000000000000000B /* WidgetStatus.swift */,
+				F0000000000000000000002D /* CalendarPermissionController.swift */,
 			);
 			path = Models;
 			sourceTree = "<group>";
@@ -305,8 +329,9 @@
 				F0000000000000000000000E /* TimeAndDateConfigurationTests.swift */,
 				F00000000000000000000013 /* WeatherConfigurationTests.swift */,
 				F00000000000000000000024 /* BatteryWidgetTests.swift */,
+				F0000000000000000000002A /* CalendarWidgetTests.swift */,
 				F00000000000000000000014 /* WidgetContractTests.swift */,
-				F00000000000000000000027 /* WidgetRenderingSmokeTests.swift */,
+				F0000000000000000000002E /* WidgetRenderingSmokeTests.swift */,
 			);
 			path = DesktopWidgetsTests;
 			sourceTree = "<group>";
@@ -461,6 +486,7 @@
 				A00000000000000000000004 /* WidgetTheme.swift in Sources */,
 				A0000000000000000000000B /* WidgetStatus.swift in Sources */,
 				A00000000000000000000021 /* DesktopWidgetsURLRouter.swift in Sources */,
+				A00000000000000000000037 /* CalendarPermissionController.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -474,6 +500,11 @@
 				A00000000000000000000024 /* SystemBatteryReader.swift in Sources */,
 				A00000000000000000000025 /* BatteryPresentation.swift in Sources */,
 				A00000000000000000000026 /* BatteryWidget.swift in Sources */,
+				A00000000000000000000033 /* CalendarConfiguration.swift in Sources */,
+				A00000000000000000000034 /* CalendarEvents.swift in Sources */,
+				A0000000000000000000002D /* CalendarPresentation.swift in Sources */,
+				A0000000000000000000002E /* CalendarNavigation.swift in Sources */,
+				A0000000000000000000002F /* CalendarWidget.swift in Sources */,
 				A0000000000000000000000C /* TimeAndDateConfiguration.swift in Sources */,
 				A0000000000000000000001D /* TimeAndDatePresentation.swift in Sources */,
 				A00000000000000000000007 /* TimeAndDateWidget.swift in Sources */,
@@ -496,21 +527,26 @@
 				A0000000000000000000002C /* BatteryConfiguration.swift in Sources */,
 				A00000000000000000000027 /* BatteryModels.swift in Sources */,
 				A00000000000000000000028 /* BatteryPresentation.swift in Sources */,
-				A00000000000000000000030 /* SystemBatteryReader.swift in Sources */,
-				A0000000000000000000002F /* BatteryWidget.swift in Sources */,
+				A0000000000000000000003B /* SystemBatteryReader.swift in Sources */,
+				A0000000000000000000003A /* BatteryWidget.swift in Sources */,
 				A00000000000000000000029 /* BatteryWidgetTests.swift in Sources */,
+				A00000000000000000000035 /* CalendarConfiguration.swift in Sources */,
+				A00000000000000000000036 /* CalendarEvents.swift in Sources */,
+				A00000000000000000000030 /* CalendarPresentation.swift in Sources */,
+				A00000000000000000000031 /* CalendarNavigation.swift in Sources */,
+				A00000000000000000000032 /* CalendarWidgetTests.swift in Sources */,
 				A0000000000000000000000E /* TimeAndDateConfiguration.swift in Sources */,
 				A0000000000000000000001E /* TimeAndDatePresentation.swift in Sources */,
-				A0000000000000000000002D /* TimeAndDateWidget.swift in Sources */,
+				A00000000000000000000038 /* TimeAndDateWidget.swift in Sources */,
 				A0000000000000000000000F /* TimeAndDateConfigurationTests.swift in Sources */,
 				A00000000000000000000014 /* WeatherConfiguration.swift in Sources */,
 				A00000000000000000000015 /* WeatherModels.swift in Sources */,
 				A00000000000000000000016 /* OpenMeteoWeatherService.swift in Sources */,
 				A00000000000000000000020 /* WeatherProvider.swift in Sources */,
-				A0000000000000000000002E /* WeatherWidget.swift in Sources */,
+				A00000000000000000000039 /* WeatherWidget.swift in Sources */,
 				A00000000000000000000017 /* WeatherConfigurationTests.swift in Sources */,
 				A00000000000000000000018 /* WidgetContractTests.swift in Sources */,
-				A00000000000000000000032 /* WidgetRenderingSmokeTests.swift in Sources */,
+				A0000000000000000000003D /* WidgetRenderingSmokeTests.swift in Sources */,
 				A00000000000000000000019 /* WidgetIdentifier.swift in Sources */,
 				A0000000000000000000001A /* Calendar+WidgetTimeline.swift in Sources */,
 				A0000000000000000000001C /* WeatherPresentation.swift in Sources */,
@@ -569,12 +605,13 @@
 			baseConfigurationReference = F00000000000000000000019 /* Signing.xcconfig */;
 			buildSettings = {
 				CODE_SIGN_ENTITLEMENTS = DesktopWidgetsApp/DesktopWidgetsApp.entitlements;
-				CURRENT_PROJECT_VERSION = 17;
+				CURRENT_PROJECT_VERSION = 21;
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = "Desktop Widgets";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
+				INFOPLIST_KEY_NSCalendarsFullAccessUsageDescription = "Desktop Widgets reads event timing to show optional counts and dots. Event titles and notes are never displayed.";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
@@ -591,11 +628,12 @@
 			baseConfigurationReference = F00000000000000000000019 /* Signing.xcconfig */;
 			buildSettings = {
 				CODE_SIGN_ENTITLEMENTS = DesktopWidgetsApp/DesktopWidgetsApp.entitlements;
-				CURRENT_PROJECT_VERSION = 17;
+				CURRENT_PROJECT_VERSION = 21;
 				ENABLE_HARDENED_RUNTIME = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = "Desktop Widgets";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
+				INFOPLIST_KEY_NSCalendarsFullAccessUsageDescription = "Desktop Widgets reads event timing to show optional counts and dots. Event titles and notes are never displayed.";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
@@ -613,7 +651,7 @@
 			buildSettings = {
 				APPLICATION_EXTENSION_API_ONLY = YES;
 				CODE_SIGN_ENTITLEMENTS = DesktopWidgetsExtension/DesktopWidgetsExtension.entitlements;
-				CURRENT_PROJECT_VERSION = 17;
+				CURRENT_PROJECT_VERSION = 21;
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = NO;
@@ -637,7 +675,7 @@
 			buildSettings = {
 				APPLICATION_EXTENSION_API_ONLY = YES;
 				CODE_SIGN_ENTITLEMENTS = DesktopWidgetsExtension/DesktopWidgetsExtension.entitlements;
-				CURRENT_PROJECT_VERSION = 17;
+				CURRENT_PROJECT_VERSION = 21;
 				ENABLE_HARDENED_RUNTIME = YES;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = DesktopWidgetsExtension/Info.plist;

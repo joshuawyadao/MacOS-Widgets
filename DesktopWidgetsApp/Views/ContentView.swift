@@ -1,9 +1,8 @@
 import SwiftUI
 
 struct ContentView: View {
-    private let upcomingWidgets = [
-        WidgetStatus(name: "Calendar", symbol: "calendar", status: "Coming next", isAvailable: false),
-    ]
+    @Environment(\.scenePhase) private var scenePhase
+    @StateObject private var calendarPermission = CalendarPermissionController()
 
     var body: some View {
         ScrollView {
@@ -13,14 +12,21 @@ struct ContentView: View {
                 setupGuide
                 customizationGuide
                 batteryGuide
+                calendarGuide
                 weatherDetailLimitsTip
                 appearanceTip
                 weatherDataTip
-                upcomingSection
             }
             .padding(28)
         }
         .frame(minWidth: 680, minHeight: 560)
+        .onAppear {
+            calendarPermission.refresh()
+        }
+        .onChange(of: scenePhase) { _, newPhase in
+            guard newPhase == .active else { return }
+            calendarPermission.refreshAndReloadWidget()
+        }
     }
 
     private var header: some View {
@@ -38,7 +44,10 @@ struct ContentView: View {
         VStack(alignment: .leading, spacing: 12) {
             SectionTitle(title: "Ready widgets", subtitle: "Add any of these widgets from the macOS widget gallery.")
 
-            HStack(alignment: .top, spacing: 12) {
+            LazyVGrid(
+                columns: [GridItem(.flexible(), spacing: 12), GridItem(.flexible(), spacing: 12)],
+                spacing: 12
+            ) {
                 ReadyWidgetCard(
                     symbol: "clock",
                     title: "Time & Date",
@@ -54,6 +63,11 @@ struct ContentView: View {
                     title: "Battery",
                     detail: "See charge and runtime, then choose which extra details each copy shows."
                 )
+                ReadyWidgetCard(
+                    symbol: "calendar",
+                    title: "Calendar",
+                    detail: "Browse a full month and keep today easy to spot."
+                )
             }
         }
     }
@@ -65,13 +79,13 @@ struct ContentView: View {
             SetupStep(
                 number: 1,
                 title: "Add it to the desktop",
-                detail: "Control-click the desktop, choose Edit Widgets, search for Desktop Widgets, then drag Time & Date, Weather, or Battery onto the desktop."
+                detail: "Control-click the desktop, choose Edit Widgets, search for Desktop Widgets, then drag Time & Date, Weather, Battery, or Calendar onto the desktop."
             )
 
             SetupStep(
                 number: 2,
                 title: "Make it yours",
-                detail: "Control-click a placed widget and choose Edit to set its options. Battery follows this Mac automatically and lets each copy choose its extra details."
+                detail: "Control-click configurable widgets to edit their options. Calendar can use Automatic, Day, Week, or Month, with optional event indicators after you enable access below."
             )
         }
     }
@@ -155,6 +169,27 @@ struct ContentView: View {
         }
     }
 
+    private var calendarGuide: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            SectionTitle(title: "Calendar at a glance", subtitle: "Day, Week, and Month views with optional event indicators.")
+
+            HStack(spacing: 12) {
+                CustomizationItem(
+                    symbol: "calendar",
+                    title: "Fits every size",
+                    detail: "Automatic shows Day on Small, Week on Medium, and Month on Large. Each copy can override the view."
+                )
+                CustomizationItem(
+                    symbol: "arrow.left.arrow.right",
+                    title: "Optional event dots",
+                    detail: "Turn on private counts and dots for busy days. Event titles and notes never appear in the widget."
+                )
+            }
+
+            CalendarPermissionCard(controller: calendarPermission)
+        }
+    }
+
     private var weatherDetailLimitsTip: some View {
         HStack(alignment: .top, spacing: 12) {
             Image(systemName: "checklist.checked")
@@ -221,17 +256,6 @@ struct ContentView: View {
         .background(.quaternary.opacity(0.35), in: RoundedRectangle(cornerRadius: 14))
     }
 
-    private var upcomingSection: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            SectionTitle(title: "Coming next", subtitle: "These widgets will appear here as they become ready.")
-
-            HStack(spacing: 12) {
-                ForEach(upcomingWidgets) { widget in
-                    WidgetStatusCard(widget: widget)
-                }
-            }
-        }
-    }
 }
 
 private struct ReadyWidgetCard: View {
@@ -346,6 +370,81 @@ private struct CustomizationItem: View {
         .padding(14)
         .frame(maxWidth: .infinity, minHeight: 82, alignment: .topLeading)
         .background(.quaternary.opacity(0.28), in: RoundedRectangle(cornerRadius: 14))
+    }
+}
+
+private struct CalendarPermissionCard: View {
+    @ObservedObject var controller: CalendarPermissionController
+
+    var body: some View {
+        HStack(alignment: .center, spacing: 14) {
+            Image(systemName: statusSymbol)
+                .font(.title2)
+                .foregroundStyle(statusColor)
+                .frame(width: 36)
+
+            VStack(alignment: .leading, spacing: 3) {
+                Text(statusTitle)
+                    .font(.headline)
+                Text(statusDetail)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+
+            Spacer(minLength: 8)
+
+            Button(buttonTitle) {
+                if controller.state == .denied {
+                    controller.openPrivacySettings()
+                } else {
+                    controller.requestAccess()
+                }
+            }
+            .disabled(controller.state == .fullAccess || controller.isRequesting)
+        }
+        .padding(14)
+        .background(.quaternary.opacity(0.28), in: RoundedRectangle(cornerRadius: 14))
+    }
+
+    private var statusSymbol: String {
+        switch controller.state {
+        case .notDetermined: "calendar.badge.plus"
+        case .fullAccess: "checkmark.circle.fill"
+        case .denied: "calendar.badge.exclamationmark"
+        }
+    }
+
+    private var statusColor: Color {
+        controller.state == .fullAccess ? .green : WidgetTheme.accent
+    }
+
+    private var statusTitle: String {
+        switch controller.state {
+        case .notDetermined: "Event indicators are off"
+        case .fullAccess: "Calendar access enabled"
+        case .denied: "Calendar access is off"
+        }
+    }
+
+    private var statusDetail: String {
+        switch controller.state {
+        case .notDetermined:
+            "Enable access only if you want event counts and dots. The widget never displays event titles or notes."
+        case .fullAccess:
+            "Calendar widgets with Show Event Indicators enabled can read event timing and display counts."
+        case .denied:
+            "Open Privacy & Security → Calendars to allow optional event indicators."
+        }
+    }
+
+    private var buttonTitle: String {
+        if controller.isRequesting { return "Requesting…" }
+        return switch controller.state {
+        case .notDetermined: "Enable Access"
+        case .fullAccess: "Enabled"
+        case .denied: "Open Settings"
+        }
     }
 }
 
