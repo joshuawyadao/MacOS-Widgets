@@ -112,6 +112,28 @@ final class CalendarWidgetTests: XCTestCase {
         XCTAssertEqual(week.days.filter(\.isToday).count, 1)
     }
 
+    func testWeekAndMonthDayNumeralsRespectTheLocale() throws {
+        let calendar = gregorianCalendar(firstWeekday: 1)
+        let date = try XCTUnwrap(calendar.date(from: DateComponents(year: 2026, month: 8, day: 9)))
+        let locale = Locale(identifier: "ar_SA")
+
+        let week = CalendarWeekPresentation(
+            date: date,
+            today: date,
+            calendar: calendar,
+            locale: locale
+        )
+        let month = CalendarMonthPresentation(
+            displayDate: date,
+            today: date,
+            calendar: calendar,
+            locale: locale
+        )
+
+        XCTAssertEqual(week.days.first(where: \.isToday)?.dayText, "٩")
+        XCTAssertEqual(month.days.first(where: \.isToday)?.dayText, "٩")
+    }
+
     func testTodayMarkerKeepsDateTextWhenEventDotsAreVisible() throws {
         let calendar = gregorianCalendar(firstWeekday: 1)
         let date = try XCTUnwrap(calendar.date(from: DateComponents(year: 2026, month: 8, day: 9)))

@@ -106,6 +106,12 @@ struct CalendarWeekPresentation: Equatable, Sendable {
             headerText = "\(startText) – \(endText)".uppercased(with: locale)
         }
 
+        let dayFormatter = DateFormatter()
+        dayFormatter.calendar = calendar
+        dayFormatter.locale = locale
+        dayFormatter.timeZone = calendar.timeZone
+        dayFormatter.dateFormat = "d"
+
         days = (0..<7).map { position in
             let day = calendar.date(byAdding: .day, value: position, to: interval.start) ?? interval.start
             let weekdayFormatter = DateFormatter()
@@ -126,7 +132,7 @@ struct CalendarWeekPresentation: Equatable, Sendable {
                 id: position,
                 date: day,
                 weekdayText: weekdayFormatter.string(from: day).uppercased(with: locale),
-                dayText: String(calendar.component(.day, from: day)),
+                dayText: dayFormatter.string(from: day),
                 isInDisplayedMonth: true,
                 isToday: isToday,
                 accessibilityLabel: "\(weekdayFormatter.string(from: day)), \(label)"
@@ -224,7 +230,12 @@ struct CalendarMonthPresentation: Equatable, Sendable {
                     calendar: calendar,
                     locale: locale
                 ).uppercased(with: locale),
-                dayText: String(components.day ?? 0),
+                dayText: Self.formatted(
+                    date,
+                    pattern: "d",
+                    calendar: calendar,
+                    locale: locale
+                ),
                 isInDisplayedMonth: isInDisplayedMonth,
                 isToday: isToday,
                 accessibilityLabel: label
