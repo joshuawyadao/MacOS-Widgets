@@ -32,6 +32,7 @@ struct TimeAndDateProvider: AppIntentTimelineProvider {
 
 struct TimeAndDateWidgetView: View {
     @Environment(\.widgetFamily) private var environmentFamily
+    @Environment(\.widgetRenderingMode) private var renderingMode
     @Environment(\.locale) private var locale
     @Environment(\.timeZone) private var timeZone
 
@@ -76,12 +77,9 @@ struct TimeAndDateWidgetView: View {
                 inlineLayout
             }
         }
-        .foregroundStyle(.white)
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(presentation.accessibilityLabel)
-        .containerBackground(for: .widget) {
-            Color.clear
-        }
+        .widgetSurface(renderingMode: renderingMode)
     }
 
     private var referenceLayout: some View {
@@ -185,8 +183,8 @@ private struct TimeAndDateMetrics {
     let referencePeriodInset: CGFloat
 
     init(family: WidgetFamily) {
-        switch family {
-        case .systemSmall:
+        switch WidgetInformationDensity(family: family) {
+        case .compact:
             dateSize = 18
             timeSize = 50
             periodSize = 18
@@ -195,7 +193,7 @@ private struct TimeAndDateMetrics {
             periodSpacing = 6
             inlineSpacing = 8
             referencePeriodInset = 8
-        case .systemLarge:
+        case .expanded:
             dateSize = 32
             timeSize = 100
             periodSize = 42
@@ -204,7 +202,7 @@ private struct TimeAndDateMetrics {
             periodSpacing = 12
             inlineSpacing = 28
             referencePeriodInset = 18
-        default:
+        case .standard:
             dateSize = 26
             timeSize = 76
             periodSize = 34

@@ -92,12 +92,22 @@ struct CalendarProvider: AppIntentTimelineProvider {
 }
 
 struct CalendarWidgetView: View {
-    @Environment(\.widgetFamily) private var family
+    @Environment(\.widgetFamily) private var environmentFamily
     @Environment(\.widgetRenderingMode) private var renderingMode
     @Environment(\.locale) private var locale
     @Environment(\.timeZone) private var timeZone
 
     let entry: CalendarEntry
+    private let familyOverride: WidgetFamily?
+
+    init(entry: CalendarEntry, family: WidgetFamily? = nil) {
+        self.entry = entry
+        self.familyOverride = family
+    }
+
+    private var family: WidgetFamily {
+        familyOverride ?? environmentFamily
+    }
 
     private var calendar: Calendar {
         var calendar = Calendar.autoupdatingCurrent
@@ -156,16 +166,8 @@ struct CalendarWidgetView: View {
             case .month: monthView
             }
         }
-        .foregroundStyle(renderingMode == .fullColor ? Color.white : Color.primary)
         .fontDesign(.rounded)
-        .shadow(
-            color: renderingMode == .fullColor ? .black.opacity(0.30) : .clear,
-            radius: 1,
-            y: 1
-        )
-        .containerBackground(for: .widget) {
-            Color.clear
-        }
+        .widgetSurface(renderingMode: renderingMode)
     }
 
     private var dayView: some View {
@@ -489,11 +491,12 @@ struct CalendarWidgetView: View {
         if entry.configuration.showEvents {
             switch entry.events.accessState {
             case .requiresPermission, .denied:
-                Image(systemName: "calendar.badge.exclamationmark")
-                    .font(.caption.weight(.bold))
-                    .accessibilityLabel(entry.events.accessState == .requiresPermission
+                WidgetStatusBadge(
+                    systemImage: "calendar.badge.exclamationmark",
+                    accessibilityText: entry.events.accessState == .requiresPermission
                         ? "Enable Calendar access in the Desktop Widgets app"
-                        : "Calendar access is turned off")
+                        : "Calendar access is turned off"
+                )
             default:
                 EmptyView()
             }

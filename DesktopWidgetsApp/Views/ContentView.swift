@@ -10,9 +10,7 @@ struct ContentView: View {
                 header
                 readyWidgets
                 setupGuide
-                customizationGuide
-                batteryGuide
-                calendarGuide
+                widgetGuides
                 weatherDetailLimitsTip
                 appearanceTip
                 weatherDataTip
@@ -90,101 +88,51 @@ struct ContentView: View {
         }
     }
 
-    private var customizationGuide: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            SectionTitle(title: "Time & Date options", subtitle: "Each copy can have its own layout, formats, and fonts.")
+    private var widgetGuides: some View {
+        VStack(alignment: .leading, spacing: 22) {
+            WidgetGuideSection(
+                title: "Time & Date",
+                subtitle: "Local time with independent layout, format, and font choices for every copy.",
+                items: [
+                    WidgetGuideItem(symbol: "rectangle.3.group", title: "View", detail: "Classic, compact, centered, time first, or side by side."),
+                    WidgetGuideItem(symbol: "calendar", title: "Details", detail: "Choose a word-based, month-first, day-first, or ISO date."),
+                    WidgetGuideItem(symbol: "clock", title: "Format", detail: "Use a 12-hour or 24-hour clock; AM/PM adapts automatically."),
+                    WidgetGuideItem(symbol: "textformat", title: "Appearance", detail: "Pick separate clean, classic, or handwritten fonts for date and time."),
+                ]
+            )
 
-            LazyVGrid(
-                columns: [GridItem(.flexible(), spacing: 12), GridItem(.flexible(), spacing: 12)],
-                spacing: 12
-            ) {
-                CustomizationItem(
-                    symbol: "rectangle.3.group",
-                    title: "Arrangement",
-                    detail: "Classic, compact, centered, time first, or side by side."
-                )
-                CustomizationItem(
-                    symbol: "calendar",
-                    title: "Date",
-                    detail: "Choose a word-based, month-first, day-first, or ISO style."
-                )
-                CustomizationItem(
-                    symbol: "clock",
-                    title: "Clock",
-                    detail: "Switch between a familiar 12-hour clock and a 24-hour clock."
-                )
-                CustomizationItem(
-                    symbol: "textformat",
-                    title: "Fonts",
-                    detail: "Pick separate clean, classic, or handwritten fonts for date and time."
-                )
-            }
+            WidgetGuideSection(
+                title: "Weather",
+                subtitle: "A cached city forecast with size-aware views, details, and provider attribution.",
+                items: [
+                    WidgetGuideItem(symbol: "building.2", title: "Source", detail: "Search for a city and choose the exact region and country."),
+                    WidgetGuideItem(symbol: "calendar.day.timeline.leading", title: "View", detail: "Switch between the week, today, and the next six hours."),
+                    WidgetGuideItem(symbol: "square.stack.3d.up", title: "Details", detail: "Apply Minimal, Simple, Rain, Comfort, Detailed, or Full."),
+                    WidgetGuideItem(symbol: "thermometer.medium", title: "Format", detail: "Follow this Mac or choose Fahrenheit or Celsius."),
+                ]
+            )
 
-            SectionTitle(title: "Weather options", subtitle: "Each copy can track a different city and forecast.")
+            WidgetGuideSection(
+                title: "Battery",
+                subtitle: "Local charge and power information with no account, network, or accessory access.",
+                items: [
+                    WidgetGuideItem(symbol: "battery.75percent", title: "Source", detail: "Reads this Mac's internal battery through the local system API."),
+                    WidgetGuideItem(symbol: "rectangle.3.group", title: "View", detail: "Small emphasizes charge; Medium and Large progressively add details."),
+                    WidgetGuideItem(symbol: "timer", title: "Details", detail: "Toggle Power, Status, Estimate, and Updated for each copy."),
+                    WidgetGuideItem(symbol: "bolt.fill", title: "Status", detail: "Distinguishes charging, discharging, AC power, calculating, and no battery."),
+                ]
+            )
 
-            LazyVGrid(
-                columns: [GridItem(.flexible(), spacing: 12), GridItem(.flexible(), spacing: 12)],
-                spacing: 12
-            ) {
-                CustomizationItem(
-                    symbol: "building.2",
-                    title: "City",
-                    detail: "Open City, type at least two letters, then choose from up to 20 clearly labeled matching places."
-                )
-                CustomizationItem(
-                    symbol: "calendar.day.timeline.leading",
-                    title: "Forecast view",
-                    detail: "Switch between the week, today, and the next six hours. Large widgets add an expanded current-weather dashboard."
-                )
-                CustomizationItem(
-                    symbol: "thermometer.medium",
-                    title: "Units",
-                    detail: "Match this Mac automatically or choose Fahrenheit or Celsius."
-                )
-                CustomizationItem(
-                    symbol: "square.stack.3d.up",
-                    title: "Details preset",
-                    detail: "Apply a useful group such as Simple, Rain, Comfort, Detailed, or Full with one click."
-                )
-            }
-        }
-    }
-
-    private var batteryGuide: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            SectionTitle(title: "Battery at a glance", subtitle: "No account or accessory access is required.")
-
-            HStack(spacing: 12) {
-                CustomizationItem(
-                    symbol: "battery.75percent",
-                    title: "Live charge",
-                    detail: "The percentage and battery fill follow this Mac's internal battery."
-                )
-                CustomizationItem(
-                    symbol: "timer",
-                    title: "Choose details",
-                    detail: "Toggle Power, Status, Estimate, and Updated. Each size shows only what fits."
-                )
-            }
-        }
-    }
-
-    private var calendarGuide: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            SectionTitle(title: "Calendar at a glance", subtitle: "Day, Week, and Month views with optional event indicators.")
-
-            HStack(spacing: 12) {
-                CustomizationItem(
-                    symbol: "calendar",
-                    title: "Fits every size",
-                    detail: "Automatic shows Day on Small, Week on Medium, and Month on Large. Each copy can override the view."
-                )
-                CustomizationItem(
-                    symbol: "arrow.left.arrow.right",
-                    title: "Optional event dots",
-                    detail: "Turn on private counts and dots for busy days. Event titles and notes never appear in the widget."
-                )
-            }
+            WidgetGuideSection(
+                title: "Calendar",
+                subtitle: "Locale-aware Day, Week, and Month views with optional private event indicators.",
+                items: [
+                    WidgetGuideItem(symbol: "calendar", title: "Source", detail: "Uses this Mac's calendar, locale, time zone, and first-weekday preference."),
+                    WidgetGuideItem(symbol: "rectangle.3.group", title: "View", detail: "Automatic chooses Day, Week, or Month by size; each copy can override it."),
+                    WidgetGuideItem(symbol: "circle.grid.2x2.fill", title: "Details", detail: "Optional counts and dots show busy days without revealing event text."),
+                    WidgetGuideItem(symbol: "arrow.left.arrow.right", title: "Interaction", detail: "Month view can move backward, forward, or return to the current month."),
+                ]
+            )
 
             CalendarPermissionCard(controller: calendarPermission)
         }
@@ -340,6 +288,39 @@ private struct SetupStep: View {
         }
         .padding(16)
         .background(.quaternary.opacity(0.28), in: RoundedRectangle(cornerRadius: 14))
+    }
+}
+
+private struct WidgetGuideItem: Identifiable {
+    let symbol: String
+    let title: String
+    let detail: String
+
+    var id: String { title }
+}
+
+private struct WidgetGuideSection: View {
+    let title: String
+    let subtitle: String
+    let items: [WidgetGuideItem]
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            SectionTitle(title: "\(title) options", subtitle: subtitle)
+
+            LazyVGrid(
+                columns: [GridItem(.flexible(), spacing: 12), GridItem(.flexible(), spacing: 12)],
+                spacing: 12
+            ) {
+                ForEach(items) { item in
+                    CustomizationItem(
+                        symbol: item.symbol,
+                        title: item.title,
+                        detail: item.detail
+                    )
+                }
+            }
+        }
     }
 }
 

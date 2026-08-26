@@ -27,6 +27,7 @@ Each font choice includes a square `Aa` specimen rendered with that macOS font. 
 
 ## Appearance notes
 
+- Time & Date uses the same shared widget surface as Weather, Battery, and Calendar: white content with a consistent contrast shadow in Full Color, and system-primary content in accented or vibrant modes. Its configurable fonts remain unique to the date and clock hero.
 - The wallpaper texture belongs to the desktop; the widget declares a clear, removable container background rather than copying it.
 - WidgetKit controls the final desktop presentation. On current macOS versions, clear or accented appearances can replace the removed app background with system glass or tint, so a native widget cannot guarantee literal wallpaper-pixel transparency in every appearance mode.
 - Noteworthy is the default time font and the closest built-in approximation to the reference. An exact match would require the original font file and permission to redistribute it.

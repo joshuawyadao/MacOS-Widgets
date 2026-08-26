@@ -41,16 +41,7 @@ struct WeatherWidgetView: View {
                 failureView
             }
         }
-        .foregroundStyle(renderingMode == .fullColor ? Color.white : Color.primary)
-        .shadow(
-            color: renderingMode == .fullColor ? .black.opacity(0.55) : .clear,
-            radius: 1.5,
-            x: 0,
-            y: 1
-        )
-        .containerBackground(for: .widget) {
-            Color.clear
-        }
+        .widgetSurface(renderingMode: renderingMode)
     }
 
     private func loadedView(_ snapshot: WeatherSnapshot) -> some View {
@@ -179,7 +170,7 @@ struct WeatherWidgetView: View {
                 .frame(maxHeight: .infinity, alignment: .center)
 
             Divider()
-                .overlay(Color.white.opacity(0.3))
+                .overlay(Color.primary.opacity(0.3))
 
             forecastContent()
                 .frame(maxHeight: .infinity, alignment: .center)
@@ -416,13 +407,11 @@ struct WeatherWidgetView: View {
     }
 
     private func staleLabel(_ snapshot: WeatherSnapshot) -> some View {
-        Label(
-            "Last updated \(snapshot.fetchedAt.formatted(date: .omitted, time: .shortened))",
-            systemImage: "arrow.clockwise"
+        WidgetStatusLine(
+            text: "Last updated \(snapshot.fetchedAt.formatted(date: .omitted, time: .shortened))",
+            systemImage: "arrow.clockwise",
+            accessibilityText: "Showing saved weather from \(snapshot.fetchedAt.formatted())"
         )
-        .font(.system(size: 9, weight: .medium))
-        .opacity(0.8)
-        .accessibilityLabel("Showing saved weather from \(snapshot.fetchedAt.formatted())")
     }
 
     private var visibleDetails: [WeatherDetail] {
@@ -438,16 +427,10 @@ struct WeatherWidgetView: View {
     }
 
     private var detailLimitNotice: some View {
-        Label(
-            presentation.detailLimitNotice ?? "Weather detail limit applied",
-            systemImage: "info.circle.fill"
-        )
-        .font(.system(size: 9, weight: .semibold))
-        .lineLimit(1)
-        .minimumScaleFactor(0.75)
-        .opacity(0.9)
-        .accessibilityLabel(
-            "\(hiddenDetailCount) weather details hidden because this widget size limit is \(detailLimit)"
+        WidgetStatusLine(
+            text: presentation.detailLimitNotice ?? "Weather detail limit applied",
+            systemImage: "info.circle.fill",
+            accessibilityText: "\(hiddenDetailCount) weather details hidden because this widget size limit is \(detailLimit)"
         )
     }
 

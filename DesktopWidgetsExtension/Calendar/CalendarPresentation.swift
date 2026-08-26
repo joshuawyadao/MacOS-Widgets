@@ -280,8 +280,8 @@ struct CalendarWidgetLayoutMetrics: Equatable, Sendable {
     let usesCompactWeekdays: Bool
 
     init(family: WidgetFamily) {
-        switch family {
-        case .systemSmall:
+        switch WidgetInformationDensity(family: family) {
+        case .compact:
             headerFontSize = 11
             weekdayFontSize = 7.5
             dayFontSize = 9
@@ -291,7 +291,7 @@ struct CalendarWidgetLayoutMetrics: Equatable, Sendable {
             rowSpacing = 1
             usesCompactMonth = true
             usesCompactWeekdays = true
-        case .systemLarge:
+        case .expanded:
             headerFontSize = 20
             weekdayFontSize = 12
             dayFontSize = 16
@@ -301,7 +301,7 @@ struct CalendarWidgetLayoutMetrics: Equatable, Sendable {
             rowSpacing = 7
             usesCompactMonth = false
             usesCompactWeekdays = false
-        default:
+        case .standard:
             headerFontSize = 14
             weekdayFontSize = 9
             dayFontSize = 11

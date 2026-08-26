@@ -45,6 +45,8 @@ Weather uses Open-Meteo's keyless API for this personal, noncommercial build, di
 
 See [Time and Date widget](docs/Time-And-Date-Widget.md), [Weather widget](docs/Weather-Widget.md), [Battery widget](docs/Battery-Widget.md), and [Calendar widget](docs/Calendar-Widget.md) for customization, data-source, privacy, and display notes.
 
+All four widgets follow the shared family-density, rendering-mode, state, accessibility, and configuration guidance in [Widget Design System](docs/Widget-Design-System.md). Their data sources and domain-specific controls remain intentionally distinct.
+
 ## Verify all widgets before committing
 
 Run the repository's verification gate before committing or pushing:

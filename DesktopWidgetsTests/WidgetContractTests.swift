@@ -2,6 +2,31 @@ import Foundation
 import XCTest
 
 final class WidgetContractTests: XCTestCase {
+    func testEverySupportedFamilyMapsToOneSharedInformationDensity() {
+        XCTAssertEqual(WidgetInformationDensity(family: .systemSmall), .compact)
+        XCTAssertEqual(WidgetInformationDensity(family: .systemMedium), .standard)
+        XCTAssertEqual(WidgetInformationDensity(family: .systemLarge), .expanded)
+    }
+
+    func testSharedChromeMetricsGrowWithAvailableWidgetSpace() {
+        let compact = WidgetChromeMetrics(family: .systemSmall)
+        let standard = WidgetChromeMetrics(family: .systemMedium)
+        let expanded = WidgetChromeMetrics(family: .systemLarge)
+
+        XCTAssertLessThan(compact.statusFontSize, standard.statusFontSize)
+        XCTAssertLessThan(standard.statusFontSize, expanded.statusFontSize)
+        XCTAssertLessThan(compact.statusIconSize, expanded.statusIconSize)
+        XCTAssertLessThan(compact.sectionSpacing, expanded.sectionSpacing)
+    }
+
+    func testSharedSurfaceUsesWallpaperContrastOnlyInFullColor() {
+        XCTAssertEqual(WidgetSurfaceTreatment(renderingMode: .fullColor), .wallpaperContrast)
+        XCTAssertTrue(WidgetSurfaceTreatment(renderingMode: .fullColor).usesContrastShadow)
+        XCTAssertEqual(WidgetSurfaceTreatment(renderingMode: .vibrant), .systemTint)
+        XCTAssertEqual(WidgetSurfaceTreatment(renderingMode: .accented), .systemTint)
+        XCTAssertFalse(WidgetSurfaceTreatment(renderingMode: .accented).usesContrastShadow)
+    }
+
     func testReadyWidgetIdentifiersRemainDistinctAndStable() {
         XCTAssertEqual(
             WidgetIdentifier.timeAndDate.rawValue,

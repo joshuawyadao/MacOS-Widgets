@@ -89,18 +89,9 @@ struct BatteryWidgetView: View {
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .foregroundStyle(renderingMode == .fullColor ? Color.white : Color.primary)
-        .shadow(
-            color: renderingMode == .fullColor ? .black.opacity(0.5) : .clear,
-            radius: 1.5,
-            x: 0,
-            y: 1
-        )
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(presentation.accessibilityLabel)
-        .containerBackground(for: .widget) {
-            Color.clear
-        }
+        .widgetSurface(renderingMode: renderingMode)
     }
 
     private var compactLayout: some View {
@@ -213,7 +204,7 @@ struct BatteryWidgetView: View {
             VStack(alignment: .leading, spacing: 0) {
                 Text(item.title.uppercased())
                     .font(.system(size: 8, weight: .bold, design: .rounded))
-                    .opacity(0.72)
+                    .opacity(WidgetTheme.secondaryOpacity)
 
                 Text(item.value)
                     .font(.system(size: 11, weight: .semibold, design: .rounded))
@@ -227,7 +218,7 @@ struct BatteryWidgetView: View {
         VStack(alignment: .leading, spacing: 5) {
             Label(item.title.uppercased(), systemImage: item.symbol)
                 .font(.system(size: 10, weight: .bold, design: .rounded))
-                .opacity(0.72)
+                .opacity(WidgetTheme.secondaryOpacity)
 
             Text(item.value)
                 .font(.system(size: 15, weight: .bold, design: .rounded))
@@ -237,7 +228,10 @@ struct BatteryWidgetView: View {
         .frame(maxWidth: .infinity, minHeight: 48, alignment: .leading)
         .padding(.horizontal, 12)
         .padding(.vertical, 9)
-        .background(Color.primary.opacity(0.10), in: RoundedRectangle(cornerRadius: 12))
+        .background(
+            Color.primary.opacity(WidgetTheme.detailCardOpacity),
+            in: RoundedRectangle(cornerRadius: WidgetTheme.detailCardCornerRadius)
+        )
     }
 }
 

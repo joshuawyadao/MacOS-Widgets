@@ -128,6 +128,39 @@ final class WidgetRenderingSmokeTests: XCTestCase {
         )
     }
 
+    func testCalendarRendersAutomaticViewsAndPermissionStateAcrossFamilies() throws {
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.timeZone = TimeZone(secondsFromGMT: 0)!
+        let referenceDate = CalendarProvider.referenceDate
+        let configuration = CalendarConfigurationIntent.referencePreview(showEvents: true)
+        let availableEntry = CalendarEntry(
+            date: referenceDate,
+            configuration: configuration,
+            monthOffset: 0,
+            events: .sample(referenceDate: referenceDate, calendar: calendar)
+        )
+
+        for family in [WidgetFamily.systemSmall, .systemMedium, .systemLarge] {
+            try assertRenders(
+                CalendarWidgetView(entry: availableEntry, family: family),
+                family: family,
+                name: "Calendar \(family) automatic"
+            )
+        }
+
+        let permissionEntry = CalendarEntry(
+            date: referenceDate,
+            configuration: configuration,
+            monthOffset: 0,
+            events: CalendarEventSnapshot(accessState: .requiresPermission, countsByDay: [:])
+        )
+        try assertRenders(
+            CalendarWidgetView(entry: permissionEntry, family: .systemSmall),
+            family: .systemSmall,
+            name: "Calendar Small permission required"
+        )
+    }
+
     private func assertRenders<Content: View>(
         _ content: Content,
         family: WidgetFamily,

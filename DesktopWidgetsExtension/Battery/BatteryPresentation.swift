@@ -178,8 +178,8 @@ struct BatteryWidgetLayoutMetrics: Equatable {
     let usesDetailGrid: Bool
 
     init(family: WidgetFamily) {
-        switch family {
-        case .systemSmall:
+        switch WidgetInformationDensity(family: family) {
+        case .compact:
             percentageFontSize = 26
             statusFontSize = 14
             iconWidth = 38
@@ -187,7 +187,7 @@ struct BatteryWidgetLayoutMetrics: Equatable {
             contentSpacing = 10
             showsExpandedDetails = false
             usesDetailGrid = false
-        case .systemLarge:
+        case .expanded:
             percentageFontSize = 50
             statusFontSize = 24
             iconWidth = 72
@@ -195,7 +195,7 @@ struct BatteryWidgetLayoutMetrics: Equatable {
             contentSpacing = 28
             showsExpandedDetails = true
             usesDetailGrid = true
-        default:
+        case .standard:
             percentageFontSize = 34
             statusFontSize = 17
             iconWidth = 48

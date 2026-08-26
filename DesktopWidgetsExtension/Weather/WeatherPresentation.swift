@@ -24,10 +24,11 @@ struct WeatherWidgetLayoutMetrics: Equatable, Sendable {
     let usesFlexibleForecastItemSpacing: Bool
 
     init(family: WidgetFamily) {
-        switch family {
-        case .systemSmall:
+        let chrome = WidgetChromeMetrics(family: family)
+        switch WidgetInformationDensity(family: family) {
+        case .compact:
             self.init(
-                contentSpacing: 5,
+                contentSpacing: chrome.sectionSpacing,
                 forecastColumnSpacing: 6,
                 forecastVerticalSpacing: 4,
                 headerFontSize: 13,
@@ -48,9 +49,9 @@ struct WeatherWidgetLayoutMetrics: Equatable, Sendable {
                 fillsForecastSection: false,
                 usesFlexibleForecastItemSpacing: false
             )
-        case .systemLarge:
+        case .expanded:
             self.init(
-                contentSpacing: 10,
+                contentSpacing: chrome.sectionSpacing,
                 forecastColumnSpacing: 8,
                 forecastVerticalSpacing: 8,
                 headerFontSize: 15,
@@ -71,9 +72,9 @@ struct WeatherWidgetLayoutMetrics: Equatable, Sendable {
                 fillsForecastSection: true,
                 usesFlexibleForecastItemSpacing: false
             )
-        default:
+        case .standard:
             self.init(
-                contentSpacing: 10,
+                contentSpacing: chrome.sectionSpacing,
                 forecastColumnSpacing: 9,
                 forecastVerticalSpacing: 7,
                 headerFontSize: 15,

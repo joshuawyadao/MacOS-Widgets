@@ -40,6 +40,7 @@ The time value is an operating-system estimate based on current conditions. Work
 
 ## Appearance and accessibility
 
+- Battery uses the shared compact/standard/expanded family density and widget surface. Its gauge and selected power-detail cards remain specific to battery status.
 - Full-color mode uses white rounded text and a white battery outline/fill, with a small shadow for contrast over textured wallpaper.
 - Tinted and accented widget modes use the system's primary rendering color.
 - The battery graphic is decorative. VoiceOver receives one combined label containing charge percentage, power state, and a spoken duration when available.
