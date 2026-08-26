@@ -31,11 +31,21 @@ struct TimeAndDateProvider: AppIntentTimelineProvider {
 }
 
 struct TimeAndDateWidgetView: View {
-    @Environment(\.widgetFamily) private var family
+    @Environment(\.widgetFamily) private var environmentFamily
     @Environment(\.locale) private var locale
     @Environment(\.timeZone) private var timeZone
 
     let entry: TimeAndDateEntry
+    private let familyOverride: WidgetFamily?
+
+    init(entry: TimeAndDateEntry, family: WidgetFamily? = nil) {
+        self.entry = entry
+        self.familyOverride = family
+    }
+
+    private var family: WidgetFamily {
+        familyOverride ?? environmentFamily
+    }
 
     private var metrics: TimeAndDateMetrics {
         TimeAndDateMetrics(family: family)

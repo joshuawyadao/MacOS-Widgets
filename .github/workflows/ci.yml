@@ -29,7 +29,16 @@ jobs:
           -configuration Debug
           -destination 'platform=macOS'
           -derivedDataPath "$RUNNER_TEMP/DesktopWidgetsTests"
+          -resultBundlePath "$RUNNER_TEMP/DesktopWidgetsTests.xcresult"
+          -enableCodeCoverage YES
           CODE_SIGNING_ALLOWED=NO
+
+      - name: Report test coverage
+        run: >-
+          xcrun xccov view
+          --report
+          --only-targets
+          "$RUNNER_TEMP/DesktopWidgetsTests.xcresult"
 
       - name: Build release app
         run: >-

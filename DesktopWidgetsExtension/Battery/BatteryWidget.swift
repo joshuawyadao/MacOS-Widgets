@@ -44,12 +44,22 @@ struct BatteryProvider: AppIntentTimelineProvider {
 }
 
 struct BatteryWidgetView: View {
-    @Environment(\.widgetFamily) private var family
+    @Environment(\.widgetFamily) private var environmentFamily
     @Environment(\.widgetRenderingMode) private var renderingMode
     @Environment(\.locale) private var locale
     @Environment(\.timeZone) private var timeZone
 
     let entry: BatteryEntry
+    private let familyOverride: WidgetFamily?
+
+    init(entry: BatteryEntry, family: WidgetFamily? = nil) {
+        self.entry = entry
+        self.familyOverride = family
+    }
+
+    private var family: WidgetFamily {
+        familyOverride ?? environmentFamily
+    }
 
     private var presentation: BatteryWidgetPresentation {
         BatteryWidgetPresentation(

@@ -62,6 +62,12 @@
 		A00000000000000000000035 /* CalendarConfiguration.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0000000000000000000002B /* CalendarConfiguration.swift */; };
 		A00000000000000000000036 /* CalendarEvents.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0000000000000000000002C /* CalendarEvents.swift */; };
 		A00000000000000000000037 /* CalendarPermissionController.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0000000000000000000002D /* CalendarPermissionController.swift */; };
+		A00000000000000000000038 /* TimeAndDateWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = F00000000000000000000005 /* TimeAndDateWidget.swift */; };
+		A00000000000000000000039 /* WeatherWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = F00000000000000000000012 /* WeatherWidget.swift */; };
+		A0000000000000000000003A /* BatteryWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = F00000000000000000000023 /* BatteryWidget.swift */; };
+		A0000000000000000000003B /* SystemBatteryReader.swift in Sources */ = {isa = PBXBuildFile; fileRef = F00000000000000000000021 /* SystemBatteryReader.swift */; };
+		A0000000000000000000003C /* IOKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F00000000000000000000025 /* IOKit.framework */; };
+		A0000000000000000000003D /* WidgetRenderingSmokeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0000000000000000000002E /* WidgetRenderingSmokeTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -128,6 +134,7 @@
 		F0000000000000000000002B /* CalendarConfiguration.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CalendarConfiguration.swift; sourceTree = "<group>"; };
 		F0000000000000000000002C /* CalendarEvents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CalendarEvents.swift; sourceTree = "<group>"; };
 		F0000000000000000000002D /* CalendarPermissionController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CalendarPermissionController.swift; sourceTree = "<group>"; };
+		F0000000000000000000002E /* WidgetRenderingSmokeTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WidgetRenderingSmokeTests.swift; sourceTree = "<group>"; };
 		P00000000000000000000001 /* DesktopWidgets.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = DesktopWidgets.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		P00000000000000000000002 /* DesktopWidgetsExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = DesktopWidgetsExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		P00000000000000000000003 /* DesktopWidgetsTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = DesktopWidgetsTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -153,6 +160,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				A0000000000000000000003C /* IOKit.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -323,6 +331,7 @@
 				F00000000000000000000024 /* BatteryWidgetTests.swift */,
 				F0000000000000000000002A /* CalendarWidgetTests.swift */,
 				F00000000000000000000014 /* WidgetContractTests.swift */,
+				F0000000000000000000002E /* WidgetRenderingSmokeTests.swift */,
 			);
 			path = DesktopWidgetsTests;
 			sourceTree = "<group>";
@@ -518,6 +527,8 @@
 				A0000000000000000000002C /* BatteryConfiguration.swift in Sources */,
 				A00000000000000000000027 /* BatteryModels.swift in Sources */,
 				A00000000000000000000028 /* BatteryPresentation.swift in Sources */,
+				A0000000000000000000003B /* SystemBatteryReader.swift in Sources */,
+				A0000000000000000000003A /* BatteryWidget.swift in Sources */,
 				A00000000000000000000029 /* BatteryWidgetTests.swift in Sources */,
 				A00000000000000000000035 /* CalendarConfiguration.swift in Sources */,
 				A00000000000000000000036 /* CalendarEvents.swift in Sources */,
@@ -526,13 +537,16 @@
 				A00000000000000000000032 /* CalendarWidgetTests.swift in Sources */,
 				A0000000000000000000000E /* TimeAndDateConfiguration.swift in Sources */,
 				A0000000000000000000001E /* TimeAndDatePresentation.swift in Sources */,
+				A00000000000000000000038 /* TimeAndDateWidget.swift in Sources */,
 				A0000000000000000000000F /* TimeAndDateConfigurationTests.swift in Sources */,
 				A00000000000000000000014 /* WeatherConfiguration.swift in Sources */,
 				A00000000000000000000015 /* WeatherModels.swift in Sources */,
 				A00000000000000000000016 /* OpenMeteoWeatherService.swift in Sources */,
 				A00000000000000000000020 /* WeatherProvider.swift in Sources */,
+				A00000000000000000000039 /* WeatherWidget.swift in Sources */,
 				A00000000000000000000017 /* WeatherConfigurationTests.swift in Sources */,
 				A00000000000000000000018 /* WidgetContractTests.swift in Sources */,
+				A0000000000000000000003D /* WidgetRenderingSmokeTests.swift in Sources */,
 				A00000000000000000000019 /* WidgetIdentifier.swift in Sources */,
 				A0000000000000000000001A /* Calendar+WidgetTimeline.swift in Sources */,
 				A0000000000000000000001C /* WeatherPresentation.swift in Sources */,

@@ -49,6 +49,7 @@ SELECTED_DEVELOPER_DIR="$(resolve_developer_dir)"
 readonly SELECTED_DEVELOPER_DIR
 readonly VERIFY_DIRECTORY="$(mktemp -d "${TMPDIR:-/tmp}/desktop-widgets-verify.XXXXXX")"
 readonly DERIVED_DATA_PATH="$VERIFY_DIRECTORY/DerivedData"
+readonly TEST_RESULT_BUNDLE="$VERIFY_DIRECTORY/DesktopWidgetsTests.xcresult"
 
 cleanup() {
     if [[ "${KEEP_WIDGET_VERIFY_ARTIFACTS:-0}" == "1" ]]; then
@@ -130,7 +131,15 @@ DEVELOPER_DIR="$SELECTED_DEVELOPER_DIR" xcodebuild test -quiet \
     -configuration Debug \
     -destination "platform=macOS" \
     -derivedDataPath "$DERIVED_DATA_PATH" \
+    -resultBundlePath "$TEST_RESULT_BUNDLE" \
+    -enableCodeCoverage YES \
     CODE_SIGNING_ALLOWED=NO
+
+echo "Test coverage by target"
+DEVELOPER_DIR="$SELECTED_DEVELOPER_DIR" xcrun xccov view \
+    --report \
+    --only-targets \
+    "$TEST_RESULT_BUNDLE"
 
 echo "[2/3] Building a fresh unsigned Release app and widget extension"
 DEVELOPER_DIR="$SELECTED_DEVELOPER_DIR" xcodebuild build -quiet \

@@ -47,7 +47,7 @@ The time value is an operating-system estimate based on current conditions. Work
 
 ## Desktop acceptance checklist
 
-`./Scripts/verify-widgets.sh` covers configuration defaults and independent toggles, zero/two/four-detail family budgets, empty and partial selections, battery dictionary parsing, invalid and non-battery inputs, charge clamping, all power-state and detail labels, duration and update-time formatting, accessibility labels, the Small clipping budget, five-minute refresh policy, App Intent metadata, Release compilation, embedding, and widget identity. The remaining macOS-owned checks are:
+`./Scripts/verify-widgets.sh` covers configuration defaults and independent toggles, zero/two/four-detail family budgets, empty and partial selections, battery dictionary parsing across charging, discharging, charged, plugged-in, unknown, and missing-metadata states, invalid and non-battery inputs, charge clamping, all power-state and detail labels, duration and update-time formatting, accessibility labels, the Small clipping budget, five-minute refresh policy, available/no-battery render smoke tests at real family sizes, App Intent metadata, Release compilation, embedding, and widget identity. The remaining macOS-owned checks are:
 
 - [ ] Add Small, Medium, and Large Battery widgets and confirm Small shows no extras, Medium shows at most two readable rows, and Large shows up to four cards.
 - [ ] Toggle different detail combinations on two Battery instances, reopen both editors, and confirm each copy preserves its own choices.
