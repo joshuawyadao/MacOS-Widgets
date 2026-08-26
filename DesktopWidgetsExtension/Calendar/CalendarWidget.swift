@@ -237,22 +237,22 @@ struct CalendarWidgetView: View {
 
     private func weekDay(_ day: CalendarDayPresentation) -> some View {
         let eventCount = entry.events.count(on: day.date, calendar: calendar)
+        let marker = CalendarDayMarkerPresentation(
+            day: day,
+            eventCount: eventCount,
+            showsEventIndicators: entry.events.accessState == .available
+        )
         return VStack(spacing: family == .systemLarge ? 8 : 4) {
             Text(day.weekdayText)
                 .font(.system(size: family == .systemLarge ? 14 : 9, weight: .bold, design: .rounded))
                 .lineLimit(1)
 
-            Text(day.dayText)
-                .font(.system(size: family == .systemLarge ? 30 : 17, weight: .bold, design: .rounded))
-                .foregroundStyle(day.isToday ? .black : .white)
-                .frame(width: family == .systemLarge ? 43 : 27, height: family == .systemLarge ? 43 : 27)
-                .background {
-                    if day.isToday { Circle().fill(.white) }
-                }
-
-            if entry.events.accessState == .available {
-                eventDots(count: eventCount, dark: false, size: family == .systemLarge ? 4 : 3)
-            }
+            calendarDayMarker(
+                marker,
+                diameter: family == .systemLarge ? 43 : 27,
+                fontSize: family == .systemLarge ? 30 : 17,
+                dotSize: family == .systemLarge ? 4 : 3
+            )
 
             if family == .systemLarge, entry.events.accessState == .available {
                 Text(eventCount == 1 ? "1 event" : "\(eventCount) events")
@@ -347,23 +347,51 @@ struct CalendarWidgetView: View {
 
     private func monthDay(_ day: CalendarDayPresentation) -> some View {
         let eventCount = entry.events.count(on: day.date, calendar: calendar)
-        return VStack(spacing: 0) {
-            Text(day.dayText)
-                .font(.system(size: monthMetrics.dayFontSize, weight: .bold, design: .rounded))
-            if entry.events.accessState == .available {
-                eventDots(count: eventCount, dark: day.isToday, size: family == .systemLarge ? 3 : 2)
-            }
-        }
-        .foregroundStyle(day.isToday ? .black : .white)
+        let marker = CalendarDayMarkerPresentation(
+            day: day,
+            eventCount: eventCount,
+            showsEventIndicators: entry.events.accessState == .available
+        )
+        return calendarDayMarker(
+            marker,
+            diameter: monthMetrics.dayCircleSize,
+            fontSize: monthMetrics.dayFontSize,
+            dotSize: family == .systemLarge ? 3 : 2
+        )
         .frame(maxWidth: .infinity)
-        .frame(height: monthMetrics.dayCircleSize)
-        .background {
-            if day.isToday { Circle().fill(.white) }
-        }
         .opacity(day.isInDisplayedMonth || day.isToday ? 1 : 0.38)
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(dayAccessibilityLabel(day, eventCount: eventCount))
         .accessibilityAddTraits(day.isToday ? .isSelected : [])
+    }
+
+    private func calendarDayMarker(
+        _ marker: CalendarDayMarkerPresentation,
+        diameter: CGFloat,
+        fontSize: CGFloat,
+        dotSize: CGFloat
+    ) -> some View {
+        ZStack {
+            if marker.isToday {
+                Circle().fill(.white)
+            }
+
+            Text(marker.dayText)
+                .font(.system(size: fontSize, weight: .bold, design: .rounded))
+                .foregroundStyle(marker.isToday ? Color.black : Color.white)
+                .offset(y: marker.eventDotCount > 0 ? -(dotSize * 0.55) : 0)
+                .zIndex(1)
+        }
+        .frame(width: diameter, height: diameter)
+        .overlay(alignment: .bottom) {
+            eventDots(
+                count: marker.eventDotCount,
+                dark: marker.isToday,
+                size: dotSize
+            )
+            .padding(.bottom, max(1, dotSize * 0.35))
+            .zIndex(2)
+        }
     }
 
     @ViewBuilder

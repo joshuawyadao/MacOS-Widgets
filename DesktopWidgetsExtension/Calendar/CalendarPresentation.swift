@@ -11,6 +11,22 @@ struct CalendarDayPresentation: Equatable, Identifiable, Sendable {
     let accessibilityLabel: String
 }
 
+struct CalendarDayMarkerPresentation: Equatable, Sendable {
+    let dayText: String
+    let isToday: Bool
+    let eventDotCount: Int
+
+    init(
+        day: CalendarDayPresentation,
+        eventCount: Int,
+        showsEventIndicators: Bool
+    ) {
+        dayText = day.dayText
+        isToday = day.isToday
+        eventDotCount = showsEventIndicators ? min(max(eventCount, 0), 3) : 0
+    }
+}
+
 struct CalendarDayFocusPresentation: Equatable, Sendable {
     let weekdayText: String
     let dayText: String

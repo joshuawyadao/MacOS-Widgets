@@ -112,6 +112,35 @@ final class CalendarWidgetTests: XCTestCase {
         XCTAssertEqual(week.days.filter(\.isToday).count, 1)
     }
 
+    func testTodayMarkerKeepsDateTextWhenEventDotsAreVisible() throws {
+        let calendar = gregorianCalendar(firstWeekday: 1)
+        let date = try XCTUnwrap(calendar.date(from: DateComponents(year: 2026, month: 8, day: 9)))
+        let week = CalendarWeekPresentation(
+            date: date,
+            today: date,
+            calendar: calendar,
+            locale: Locale(identifier: "en_US")
+        )
+        let today = try XCTUnwrap(week.days.first(where: \.isToday))
+
+        let busyMarker = CalendarDayMarkerPresentation(
+            day: today,
+            eventCount: 5,
+            showsEventIndicators: true
+        )
+        XCTAssertEqual(busyMarker.dayText, "9")
+        XCTAssertTrue(busyMarker.isToday)
+        XCTAssertEqual(busyMarker.eventDotCount, 3)
+
+        let hiddenMarker = CalendarDayMarkerPresentation(
+            day: today,
+            eventCount: 2,
+            showsEventIndicators: false
+        )
+        XCTAssertEqual(hiddenMarker.dayText, "9")
+        XCTAssertEqual(hiddenMarker.eventDotCount, 0)
+    }
+
     func testLeapFebruaryIncludesAdjacentMonthDaysInSixStableRows() throws {
         let calendar = gregorianCalendar(firstWeekday: 1)
         let date = try XCTUnwrap(calendar.date(from: DateComponents(year: 2024, month: 2, day: 29)))
