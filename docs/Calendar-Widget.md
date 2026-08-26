@@ -45,8 +45,8 @@ Without event indicators, the next timeline refresh is requested for the next lo
 
 ## Appearance and accessibility
 
-- Full-color mode uses bold rounded white text, subtle shadows, and a white today treatment matching the reference.
-- Event dots occupy a separate marker layer and never replace the date numeral, including inside today's white selection circle; VoiceOver announces the event count for the date.
+- Full-color mode uses bold rounded white text, subtle shadows, and a composited white today circle with a dark numeral. Vibrant and accented modes use an outlined today circle so system color remapping cannot erase the numeral.
+- Event dots occupy a separate marker layer and never replace the date numeral, including inside today's selection marker; VoiceOver announces the event count for the date.
 - Adjacent-month dates remain readable at reduced opacity in Month view.
 - macOS may add Liquid Glass, tint, or blur even though the widget requests a clear removable background.
 - VoiceOver receives localized dates, today state, event counts, permission state, and labels for Month navigation actions.
@@ -60,7 +60,7 @@ Without event indicators, the next timeline refresh is requested for the next lo
 - [ ] Edit each copy, select every explicit view, and confirm the choice persists after reopening Edit Widget.
 - [ ] Confirm indicators are absent by default and the permission signifier appears when enabled without access.
 - [ ] Grant access in the app, add events on today and another visible day, and confirm counts/dots update without revealing event text.
-- [ ] Confirm today's numeral remains clearly visible alongside its event dots in both Week and Month views.
+- [ ] Confirm today's numeral remains clearly visible alongside its event dots in both Week and Month views across Full Color, Vibrant, and Accented appearances.
 - [ ] Deny or revoke access and confirm the app offers Settings while the widget remains usable.
 - [ ] In Month view, use both arrows and the title, then confirm navigation refreshes all Calendar copies consistently.
 - [ ] Compare Clear Light, Clear Dark, and Tinted appearances over the intended wallpaper.

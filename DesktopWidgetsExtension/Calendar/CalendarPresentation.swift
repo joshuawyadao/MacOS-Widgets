@@ -27,6 +27,15 @@ struct CalendarDayMarkerPresentation: Equatable, Sendable {
     }
 }
 
+enum CalendarTodayMarkerStyle: Equatable, Sendable {
+    case filled
+    case outlined
+
+    init(renderingMode: WidgetRenderingMode) {
+        self = renderingMode == .fullColor ? .filled : .outlined
+    }
+}
+
 struct CalendarDayFocusPresentation: Equatable, Sendable {
     let weekdayText: String
     let dayText: String

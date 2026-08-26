@@ -139,6 +139,10 @@ final class CalendarWidgetTests: XCTestCase {
         )
         XCTAssertEqual(hiddenMarker.dayText, "9")
         XCTAssertEqual(hiddenMarker.eventDotCount, 0)
+
+        XCTAssertEqual(CalendarTodayMarkerStyle(renderingMode: .fullColor), .filled)
+        XCTAssertEqual(CalendarTodayMarkerStyle(renderingMode: .vibrant), .outlined)
+        XCTAssertEqual(CalendarTodayMarkerStyle(renderingMode: .accented), .outlined)
     }
 
     func testLeapFebruaryIncludesAdjacentMonthDaysInSixStableRows() throws {

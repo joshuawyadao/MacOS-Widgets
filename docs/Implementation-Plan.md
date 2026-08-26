@@ -1,17 +1,18 @@
 # Plan
 
-Keep the current day numeral permanently visible in Week and Month views by separating the date and event-dot layers instead of letting dots participate in the numeral's layout. Add a presentation regression contract, document the marker behavior, verify the complete widget bundle, and refresh the signed local build.
+Fix the reproduced blank-today marker by making its treatment explicit for WidgetKit rendering modes: a composited filled marker in full color and a high-contrast outlined marker in vibrant/accented appearances. Lock the mode decision down in tests, validate the supplied screenshot symptom at pixel level, and refresh the signed local widget.
 
 ## Scope
-- In: Week/Month day-marker layout, today/event-dot contrast, regression coverage, Calendar documentation, build number, validation, commit, push, and local runtime refresh.
-- Out: Event data behavior, Day view, Calendar configuration options, navigation, and unrelated widgets.
+- In: Today-marker rendering-mode behavior in Week/Month, event-dot contrast within that marker, regression coverage, Calendar documentation, build number, live runtime verification, commit, and push.
+- Out: Calendar data/configuration, non-today cells, Day view, navigation, and unrelated widgets.
 
 ## Action items
-[x] Add a day-marker presentation contract proving an event indicator never replaces the date numeral, including today and zero/multiple-event cases.
-[x] Refactor Week and Month markers so the date remains in its own centered layer and dots occupy a separate, bounded indicator position.
-[x] Update Calendar appearance guidance and the desktop acceptance checklist for visible dates with event indicators.
-[x] Increment the development build and run targeted Calendar tests plus `./Scripts/verify-widgets.sh`.
-[x] Review the scoped diff, mark the plan complete, commit and push `codex/feature/calendar-widget`, then rebuild and register the signed local extension.
+[x] Preserve the supplied screenshot as a deterministic pixel-level failing signal for a blank today circle.
+[x] Add a testable today-marker style contract that selects filled treatment only in full color and outlined treatment in vibrant/accented modes.
+[x] Refactor the shared Week/Month marker to composite filled content and keep numeral/dots visible in every rendering mode.
+[x] Update Calendar appearance guidance and increment the development build.
+[x] Run targeted Calendar tests, the screenshot/render regression, and `./Scripts/verify-widgets.sh`.
+[x] Build/register the signed extension, verify the live marker, review the diff, mark the plan complete, commit, and push `codex/feature/calendar-widget`.
 
 ## Open questions
 - None.

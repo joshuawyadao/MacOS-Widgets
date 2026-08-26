@@ -90,6 +90,7 @@ struct CalendarProvider: AppIntentTimelineProvider {
 
 struct CalendarWidgetView: View {
     @Environment(\.widgetFamily) private var family
+    @Environment(\.widgetRenderingMode) private var renderingMode
     @Environment(\.locale) private var locale
     @Environment(\.timeZone) private var timeZone
 
@@ -152,9 +153,13 @@ struct CalendarWidgetView: View {
             case .month: monthView
             }
         }
-        .foregroundStyle(.white)
+        .foregroundStyle(renderingMode == .fullColor ? Color.white : Color.primary)
         .fontDesign(.rounded)
-        .shadow(color: .black.opacity(0.30), radius: 1, y: 1)
+        .shadow(
+            color: renderingMode == .fullColor ? .black.opacity(0.30) : .clear,
+            radius: 1,
+            y: 1
+        )
         .containerBackground(for: .widget) {
             Color.clear
         }
@@ -371,26 +376,105 @@ struct CalendarWidgetView: View {
         fontSize: CGFloat,
         dotSize: CGFloat
     ) -> some View {
-        ZStack {
+        Group {
             if marker.isToday {
-                Circle().fill(.white)
+                todayMarker(
+                    marker,
+                    diameter: diameter,
+                    fontSize: fontSize,
+                    dotSize: dotSize
+                )
+            } else {
+                regularDayMarker(
+                    marker,
+                    diameter: diameter,
+                    fontSize: fontSize,
+                    dotSize: dotSize
+                )
             }
-
-            Text(marker.dayText)
-                .font(.system(size: fontSize, weight: .bold, design: .rounded))
-                .foregroundStyle(marker.isToday ? Color.black : Color.white)
-                .offset(y: marker.eventDotCount > 0 ? -(dotSize * 0.55) : 0)
-                .zIndex(1)
         }
         .frame(width: diameter, height: diameter)
-        .overlay(alignment: .bottom) {
-            eventDots(
-                count: marker.eventDotCount,
-                dark: marker.isToday,
-                size: dotSize
-            )
-            .padding(.bottom, max(1, dotSize * 0.35))
+    }
+
+    private func regularDayMarker(
+        _ marker: CalendarDayMarkerPresentation,
+        diameter: CGFloat,
+        fontSize: CGFloat,
+        dotSize: CGFloat
+    ) -> some View {
+        Text(marker.dayText)
+            .font(.system(size: fontSize, weight: .bold, design: .rounded))
+            .foregroundStyle(renderingMode == .fullColor ? Color.white : Color.primary)
+            .offset(y: marker.eventDotCount > 0 ? -(dotSize * 0.55) : 0)
+            .frame(width: diameter, height: diameter)
+            .overlay(alignment: .bottom) {
+                markerEventDots(
+                    marker,
+                    color: renderingMode == .fullColor ? .white : .primary,
+                    size: dotSize
+                )
+            }
+    }
+
+    @ViewBuilder
+    private func todayMarker(
+        _ marker: CalendarDayMarkerPresentation,
+        diameter: CGFloat,
+        fontSize: CGFloat,
+        dotSize: CGFloat
+    ) -> some View {
+        switch CalendarTodayMarkerStyle(renderingMode: renderingMode) {
+        case .filled:
+            Circle()
+                .fill(.white)
+                .overlay {
+                    Text(marker.dayText)
+                        .font(.system(size: fontSize, weight: .bold, design: .rounded))
+                        .foregroundStyle(.black)
+                        .offset(y: marker.eventDotCount > 0 ? -(dotSize * 0.55) : 0)
+                }
+                .overlay(alignment: .bottom) {
+                    markerEventDots(marker, color: .black, size: dotSize)
+                }
+                .frame(width: diameter, height: diameter)
+                .drawingGroup(opaque: false, colorMode: .nonLinear)
+        case .outlined:
+            Circle()
+                .stroke(Color.primary, lineWidth: max(1.5, diameter * 0.07))
+                .overlay {
+                    Text(marker.dayText)
+                        .font(.system(size: fontSize, weight: .bold, design: .rounded))
+                        .foregroundStyle(Color.primary)
+                        .offset(y: marker.eventDotCount > 0 ? -(dotSize * 0.55) : 0)
+                }
+                .overlay(alignment: .bottom) {
+                    markerEventDots(marker, color: .primary, size: dotSize)
+                }
+                .frame(width: diameter, height: diameter)
+        }
+    }
+
+    private func markerEventDots(
+        _ marker: CalendarDayMarkerPresentation,
+        color: Color,
+        size: CGFloat
+    ) -> some View {
+        eventDots(count: marker.eventDotCount, color: color, size: size)
+            .padding(.bottom, max(1, size * 0.35))
             .zIndex(2)
+    }
+
+    @ViewBuilder
+    private func eventDots(count: Int, color: Color, size: CGFloat) -> some View {
+        if count > 0 {
+            HStack(spacing: 1) {
+                ForEach(0..<min(count, 3), id: \.self) { _ in
+                    Circle()
+                        .fill(color)
+                        .frame(width: size, height: size)
+                }
+            }
+            .accessibilityHidden(true)
         }
     }
 
@@ -407,20 +491,6 @@ struct CalendarWidgetView: View {
             default:
                 EmptyView()
             }
-        }
-    }
-
-    @ViewBuilder
-    private func eventDots(count: Int, dark: Bool, size: CGFloat) -> some View {
-        if count > 0 {
-            HStack(spacing: 1) {
-                ForEach(0..<min(count, 3), id: \.self) { _ in
-                    Circle()
-                        .fill(dark ? Color.black : Color.white)
-                        .frame(width: size, height: size)
-                }
-            }
-            .accessibilityHidden(true)
         }
     }
 
