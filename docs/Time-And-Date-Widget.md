@@ -35,7 +35,7 @@ Each font choice includes a square `Aa` specimen rendered with that macOS font. 
 
 ## Desktop acceptance checklist
 
-`./Scripts/verify-widgets.sh` verifies every formatter and dynamic option provider, every size/arrangement combination, every size/date/clock combination, the exact formatted strings and combined accessibility label used by the SwiftUI view, every independent date/time font pair, fallback behavior, minute scheduling, the Release extension bundle, and its App Intent metadata. Only WidgetKit's system-owned editor, visual rendering, and restart persistence still require a short check:
+`./Scripts/verify-widgets.sh` verifies every formatter and dynamic option provider, every size/arrangement combination, every size/date/clock combination, the exact formatted strings and combined accessibility label used by the SwiftUI view, every independent date/time font pair, fallback behavior, minute scheduling, representative Small/Medium/Large 12/24-hour render smoke tests, the Release extension bundle, and its App Intent metadata. Only WidgetKit's system-owned editor, final visual quality, and restart persistence still require a short check:
 
 - [ ] Add small, medium, and large Time & Date widgets and visually confirm no date, time, or AM/PM text is clipped with the chosen fonts.
 - [ ] Configure one instance with the default Classic/12-hour choices and a second instance with Side by side/ISO/24-hour choices; confirm the two instances remain visually different.
