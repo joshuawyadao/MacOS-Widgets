@@ -7,24 +7,94 @@ enum CalendarNavigationStore {
     static let maximumMonthOffset = 120
 
     private static let monthOffsetKey = "calendar.displayedMonthOffset"
+    private static let displayedMonthAnchorKey = "calendar.displayedMonthAnchor"
 
-    static func monthOffset(defaults: UserDefaults = .standard) -> Int {
-        clamped(defaults.integer(forKey: monthOffsetKey))
+    static func monthOffset(
+        referenceDate: Date = .now,
+        calendar: Calendar = .autoupdatingCurrent,
+        defaults: UserDefaults = .standard
+    ) -> Int {
+        let currentAnchor = monthAnchor(for: referenceDate, calendar: calendar)
+
+        if let displayedAnchor = defaults.object(forKey: displayedMonthAnchorKey) as? Date {
+            let rawOffset = calendar.dateComponents(
+                [.month],
+                from: currentAnchor,
+                to: displayedAnchor
+            ).month ?? 0
+            let offset = clamped(rawOffset)
+            if offset != rawOffset {
+                persistDisplayedMonth(
+                    offset: offset,
+                    currentAnchor: currentAnchor,
+                    calendar: calendar,
+                    defaults: defaults
+                )
+            }
+            return offset
+        }
+
+        let legacyOffset = clamped(defaults.integer(forKey: monthOffsetKey))
+        if defaults.object(forKey: monthOffsetKey) != nil {
+            persistDisplayedMonth(
+                offset: legacyOffset,
+                currentAnchor: currentAnchor,
+                calendar: calendar,
+                defaults: defaults
+            )
+        }
+        return legacyOffset
     }
 
     @discardableResult
-    static func shiftMonth(by delta: Int, defaults: UserDefaults = .standard) -> Int {
-        let newOffset = clamped(monthOffset(defaults: defaults) + delta)
-        defaults.set(newOffset, forKey: monthOffsetKey)
+    static func shiftMonth(
+        by delta: Int,
+        referenceDate: Date = .now,
+        calendar: Calendar = .autoupdatingCurrent,
+        defaults: UserDefaults = .standard
+    ) -> Int {
+        let currentAnchor = monthAnchor(for: referenceDate, calendar: calendar)
+        let newOffset = clamped(monthOffset(
+            referenceDate: referenceDate,
+            calendar: calendar,
+            defaults: defaults
+        ) + delta)
+        persistDisplayedMonth(
+            offset: newOffset,
+            currentAnchor: currentAnchor,
+            calendar: calendar,
+            defaults: defaults
+        )
         return newOffset
     }
 
     static func reset(defaults: UserDefaults = .standard) {
         defaults.removeObject(forKey: monthOffsetKey)
+        defaults.removeObject(forKey: displayedMonthAnchorKey)
     }
 
     private static func clamped(_ offset: Int) -> Int {
         min(maximumMonthOffset, max(minimumMonthOffset, offset))
+    }
+
+    private static func monthAnchor(for date: Date, calendar: Calendar) -> Date {
+        let monthStart = calendar.dateInterval(of: .month, for: date)?.start ?? date
+        return calendar.date(byAdding: .day, value: 14, to: monthStart) ?? monthStart
+    }
+
+    private static func persistDisplayedMonth(
+        offset: Int,
+        currentAnchor: Date,
+        calendar: Calendar,
+        defaults: UserDefaults
+    ) {
+        let displayedAnchor = calendar.date(
+            byAdding: .month,
+            value: offset,
+            to: currentAnchor
+        ) ?? currentAnchor
+        defaults.set(displayedAnchor, forKey: displayedMonthAnchorKey)
+        defaults.set(offset, forKey: monthOffsetKey)
     }
 }
 

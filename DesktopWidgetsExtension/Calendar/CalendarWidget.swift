@@ -62,7 +62,10 @@ struct CalendarProvider: AppIntentTimelineProvider {
     ) -> CalendarEntry {
         var calendar = Calendar.autoupdatingCurrent
         calendar.timeZone = .autoupdatingCurrent
-        let monthOffset = CalendarNavigationStore.monthOffset()
+        let monthOffset = CalendarNavigationStore.monthOffset(
+            referenceDate: date,
+            calendar: calendar
+        )
         let resolvedView = configuration.resolvedView(for: family)
         let interval = CalendarDisplayInterval.interval(
             for: resolvedView,

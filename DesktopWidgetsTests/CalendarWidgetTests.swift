@@ -167,15 +167,29 @@ final class CalendarWidgetTests: XCTestCase {
         let suiteName = "CalendarWidgetTests.\(UUID().uuidString)"
         let defaults = try XCTUnwrap(UserDefaults(suiteName: suiteName))
         defer { defaults.removePersistentDomain(forName: suiteName) }
+        let calendar = gregorianCalendar(firstWeekday: 1)
+        let august = try XCTUnwrap(calendar.date(from: DateComponents(year: 2026, month: 8, day: 31)))
 
-        XCTAssertEqual(CalendarNavigationStore.monthOffset(defaults: defaults), 0)
-        XCTAssertEqual(CalendarNavigationStore.shiftMonth(by: 1, defaults: defaults), 1)
-        XCTAssertEqual(CalendarNavigationStore.shiftMonth(by: -2, defaults: defaults), -1)
-        XCTAssertEqual(CalendarNavigationStore.shiftMonth(by: 1_000, defaults: defaults), 120)
-        XCTAssertEqual(CalendarNavigationStore.shiftMonth(by: -1_000, defaults: defaults), -120)
+        XCTAssertEqual(CalendarNavigationStore.monthOffset(referenceDate: august, calendar: calendar, defaults: defaults), 0)
+        XCTAssertEqual(CalendarNavigationStore.shiftMonth(by: 1, referenceDate: august, calendar: calendar, defaults: defaults), 1)
+        XCTAssertEqual(CalendarNavigationStore.shiftMonth(by: -2, referenceDate: august, calendar: calendar, defaults: defaults), -1)
+        XCTAssertEqual(CalendarNavigationStore.shiftMonth(by: 1_000, referenceDate: august, calendar: calendar, defaults: defaults), 120)
+        XCTAssertEqual(CalendarNavigationStore.shiftMonth(by: -1_000, referenceDate: august, calendar: calendar, defaults: defaults), -120)
 
         CalendarNavigationStore.reset(defaults: defaults)
-        XCTAssertEqual(CalendarNavigationStore.monthOffset(defaults: defaults), 0)
+        XCTAssertEqual(CalendarNavigationStore.monthOffset(referenceDate: august, calendar: calendar, defaults: defaults), 0)
+    }
+
+    func testNavigationKeepsDisplayedMonthStableWhenCurrentMonthChanges() throws {
+        let suiteName = "CalendarWidgetTests.\(UUID().uuidString)"
+        let defaults = try XCTUnwrap(UserDefaults(suiteName: suiteName))
+        defer { defaults.removePersistentDomain(forName: suiteName) }
+        let calendar = gregorianCalendar(firstWeekday: 1)
+        let august = try XCTUnwrap(calendar.date(from: DateComponents(year: 2026, month: 8, day: 31)))
+        let september = try XCTUnwrap(calendar.date(from: DateComponents(year: 2026, month: 9, day: 1)))
+
+        XCTAssertEqual(CalendarNavigationStore.shiftMonth(by: 1, referenceDate: august, calendar: calendar, defaults: defaults), 1)
+        XCTAssertEqual(CalendarNavigationStore.monthOffset(referenceDate: september, calendar: calendar, defaults: defaults), 0)
     }
 
     func testEventCounterMarksEveryOverlappingDayWithoutCountingMidnightEnd() throws {
