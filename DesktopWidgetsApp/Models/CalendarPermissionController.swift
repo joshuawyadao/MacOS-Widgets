@@ -31,14 +31,18 @@ final class CalendarPermissionController: ObservableObject {
         }
     }
 
+    func refreshAndReloadWidget() {
+        refresh()
+        WidgetCenter.shared.reloadTimelines(ofKind: WidgetIdentifier.calendar.rawValue)
+    }
+
     func requestAccess() {
         guard !isRequesting else { return }
         isRequesting = true
         Task {
             _ = try? await eventStore.requestFullAccessToEvents()
             isRequesting = false
-            refresh()
-            WidgetCenter.shared.reloadTimelines(ofKind: WidgetIdentifier.calendar.rawValue)
+            refreshAndReloadWidget()
         }
     }
 

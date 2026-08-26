@@ -1,6 +1,7 @@
 import SwiftUI
 
 struct ContentView: View {
+    @Environment(\.scenePhase) private var scenePhase
     @StateObject private var calendarPermission = CalendarPermissionController()
 
     var body: some View {
@@ -21,6 +22,10 @@ struct ContentView: View {
         .frame(minWidth: 680, minHeight: 560)
         .onAppear {
             calendarPermission.refresh()
+        }
+        .onChange(of: scenePhase) { _, newPhase in
+            guard newPhase == .active else { return }
+            calendarPermission.refreshAndReloadWidget()
         }
     }
 
