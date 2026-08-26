@@ -1,5 +1,5 @@
 # Calendar Widget
 
-This module contains the locale-aware month presentation, persisted WidgetKit navigation actions, daily timeline policy, responsive metrics, and SwiftUI Calendar widget.
+This module contains Calendar App Intent configuration, locale-aware Day/Week/Month presentations, EventKit interval-to-count normalization, persisted Month navigation actions, adaptive timeline policy, responsive metrics, and the SwiftUI Calendar widget.
 
-The widget intentionally does not request EventKit access or display private event data. It follows the Mac's calendar, first weekday, locale, and time zone; shows six stable rows; highlights today; and lets the user browse months with native interactive-widget buttons. See `docs/Calendar-Widget.md` for behavior, privacy, verification, and desktop acceptance guidance.
+Automatic mode maps Small to Day, Medium to Week, and Large to Month, while every copy can override the view. Event indicators are opt-in and reduce EventKit objects to per-day counts before presentation; titles, notes, locations, attendees, and calendar names never enter the widget model. See `docs/Calendar-Widget.md` for permission setup, behavior, privacy, verification, and desktop acceptance guidance.

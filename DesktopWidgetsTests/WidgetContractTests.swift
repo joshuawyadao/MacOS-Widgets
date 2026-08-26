@@ -17,7 +17,7 @@ final class WidgetContractTests: XCTestCase {
         )
         XCTAssertEqual(
             WidgetIdentifier.calendar.rawValue,
-            "com.joshuawyadao.desktop-widgets.calendar.interactive-v1"
+            "com.joshuawyadao.desktop-widgets.calendar.configurable-v2"
         )
         XCTAssertEqual(
             Set([

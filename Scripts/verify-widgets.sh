@@ -167,6 +167,15 @@ require_contains "$APP_INTENTS_METADATA" "BatteryConfigurationIntent" "Battery c
 require_contains "$APP_INTENTS_METADATA" "PreviousCalendarMonthIntent" "Calendar previous-month interaction metadata"
 require_contains "$APP_INTENTS_METADATA" "NextCalendarMonthIntent" "Calendar next-month interaction metadata"
 require_contains "$APP_INTENTS_METADATA" "CurrentCalendarMonthIntent" "Calendar current-month interaction metadata"
+require_contains "$APP_INTENTS_METADATA" "CalendarConfigurationIntent" "Calendar configuration metadata"
+if ! jq -e '.actions.CalendarConfigurationIntent.parameters[] | select(.name == "viewMode" and .dynamicOptionsSupport > 0)' "$APP_INTENTS_METADATA" >/dev/null; then
+    echo "FAIL: Calendar View is not exported as a dynamic configuration option" >&2
+    exit 1
+fi
+if ! jq -e '.actions.CalendarConfigurationIntent.parameters[] | select(.name == "showEvents" and .valueType.primitive.wrapper.typeIdentifier == 1)' "$APP_INTENTS_METADATA" >/dev/null; then
+    echo "FAIL: Calendar event indicator toggle is missing from App Intents metadata" >&2
+    exit 1
+fi
 for parameter in showPower showStatus showEstimate showUpdated; do
     if ! jq -e --arg parameter "$parameter" '.actions.BatteryConfigurationIntent.parameters[] | select(.name == $parameter and .valueType.primitive.wrapper.typeIdentifier == 1 and .typeSpecificMetadata[1].int.wrapper == 1)' "$APP_INTENTS_METADATA" >/dev/null; then
         echo "FAIL: Battery $parameter toggle is missing from App Intents metadata" >&2
@@ -195,6 +204,14 @@ strings "$EXTENSION_BINARY" > "$EXTENSION_STRINGS"
 require_contains "$EXTENSION_STRINGS" "com.joshuawyadao.desktop-widgets.time-and-date.configurable-v2-string" "Time & Date widget identity"
 require_contains "$EXTENSION_STRINGS" "com.joshuawyadao.desktop-widgets.weather.entity-search-v8" "Weather widget identity"
 require_contains "$EXTENSION_STRINGS" "com.joshuawyadao.desktop-widgets.battery.configurable-v2" "Battery widget identity"
-require_contains "$EXTENSION_STRINGS" "com.joshuawyadao.desktop-widgets.calendar.interactive-v1" "Calendar widget identity"
+require_contains "$EXTENSION_STRINGS" "com.joshuawyadao.desktop-widgets.calendar.configurable-v2" "Calendar widget identity"
+readonly APP_CALENDAR_USAGE="$(/usr/libexec/PlistBuddy -c 'Print :NSCalendarsFullAccessUsageDescription' "$APP_PATH/Contents/Info.plist")"
+readonly EXTENSION_CALENDAR_USAGE="$(/usr/libexec/PlistBuddy -c 'Print :NSCalendarsFullAccessUsageDescription' "$EXTENSION_INFO")"
+if [[ -z "$APP_CALENDAR_USAGE" || -z "$EXTENSION_CALENDAR_USAGE" ]]; then
+    echo "FAIL: Calendar full-access usage descriptions must be present in app and extension" >&2
+    exit 1
+fi
+require_contains "$PROJECT_ROOT/DesktopWidgetsApp/DesktopWidgetsApp.entitlements" "com.apple.security.personal-information.calendars" "app Calendar sandbox entitlement"
+require_contains "$PROJECT_ROOT/DesktopWidgetsExtension/DesktopWidgetsExtension.entitlements" "com.apple.security.personal-information.calendars" "extension Calendar sandbox entitlement"
 
 echo "PASS: All four widgets passed behavior tests, Release compilation, embedding, identity, and editor-metadata checks."

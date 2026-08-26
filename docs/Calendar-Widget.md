@@ -1,42 +1,66 @@
 # Calendar Widget
 
-The Calendar widget recreates the supplied reference's simple month view: an uppercase month and year between navigation arrows, bold weekday labels, a stable six-row grid, softened dates from adjacent months, and a white circle around today. It declares a clear removable background so the desktop wallpaper remains visually dominant.
+The Calendar widget adapts its content to the available space while retaining the supplied reference's bold, wallpaper-forward styling. In **Automatic** mode, Small shows a focused day, Medium shows the current week, and Large shows a full six-row month grid.
 
-## Add and use it
+## Add and configure it
 
 1. Open `DesktopWidgets.xcodeproj`, select **My Mac**, and run the `DesktopWidgets` scheme once.
 2. Control-click the desktop, choose **Edit Widgets**, search for **Desktop Widgets**, and add **Calendar** in Small, Medium, or Large.
-3. Select the left or right arrow to move one month backward or forward.
-4. Select the month and year title to return directly to the current month.
+3. Control-click the placed widget and choose **Edit “Calendar”**.
+4. Leave **View** set to **Automatic**, or choose **Day**, **Week**, or **Month** for that widget copy.
+5. Turn on **Show Event Indicators** if you want event counts and dots.
 
-The widget follows the Mac's current calendar, locale, time zone, and first-weekday preference. English-language Macs therefore show familiar localized weekday labels while regions that start weeks on Monday receive a Monday-first grid. Small uses abbreviated month and weekday text; Medium and Large retain the fuller reference labels.
+Build 19 gives the configurable Calendar a fresh WidgetKit identity. If a Calendar from build 18 is still on the desktop, remove it once and add Calendar again so macOS creates the new configurable version.
 
-Month navigation is intentionally capped at ten years in either direction. WidgetKit does not provide a placed-widget instance identifier to these button actions, so the displayed month is shared by all Calendar copies. Moving one copy refreshes every Calendar widget. Other widget types are unaffected.
+## Views by size
 
-## Refresh and data behavior
+- **Small · Day:** a large weekday and date with an optional event count.
+- **Medium · Week:** seven day columns with today highlighted and optional event dots.
+- **Large · Month:** the reference-style month grid with today circled, adjacent-month dates softened, optional event dots, and interactive month navigation.
 
-The month grid is generated entirely from Foundation's local calendar APIs. It always contains 42 dates so the header and rows remain visually stable as months begin on different weekdays. Dates outside the displayed month stay visible at lower opacity, and the current day remains circled only when its month is on screen.
+An explicit Day, Week, or Month selection overrides the automatic family mapping. Layout metrics continue to adapt to the physical widget size, so every view remains available in every supported family. Large Week also has room to show event counts beneath its indicators.
 
-WidgetKit requests a new entry at the next local midnight so the today circle and month boundary can advance. Calendar arithmetic uses the local calendar rather than adding a fixed number of seconds, which keeps refreshes correct across daylight-saving transitions. macOS owns actual scheduling and may delay or combine reloads.
+The widget follows the Mac's current calendar, locale, time zone, and first-weekday preference. The month grid always contains 42 dates so its header and rows remain stable.
 
-## Privacy
+## Event indicators and permission
 
-The Calendar widget does not request Calendar/EventKit permission, read event titles or accounts, use the network, or send analytics. Its only stored value is a bounded month offset in the widget extension's local preferences so interactive navigation survives a timeline reload.
+Event indicators are off by default. To enable them:
+
+1. Open the **Desktop Widgets** app.
+2. In **Calendar event indicators**, select **Enable Access**.
+3. Approve Calendar access in the macOS prompt.
+4. Edit a Calendar widget and turn on **Show Event Indicators**.
+
+If access was denied, the app provides an **Open Settings** button. A widget configured to show indicators displays a compact permission signifier until access is available.
+
+The extension queries only the bounded interval needed by the current view. It immediately reduces matching events to a count for each date; event titles, notes, locations, attendees, URLs, calendar names, and account details are never placed in the widget timeline or displayed. Data stays on the Mac and no network or analytics service is used.
+
+## Navigation and refresh behavior
+
+Only Month view includes navigation arrows. Select the left or right arrow to move one month, or select the month and year to return to the current month. Day and Week stay anchored to today so their compact layouts remain predictable.
+
+Month navigation is capped at ten years in either direction. WidgetKit does not provide a placed-widget instance identifier to these button actions, so the displayed month is shared by all Calendar copies. Moving one Month copy refreshes every Calendar widget; its chosen view and event-indicator setting remain independent.
+
+Without event indicators, the next timeline refresh is requested for the next local midnight. With indicators enabled, the widget requests a refresh every 30 minutes so event changes can appear while still using a bounded query. Local calendar arithmetic keeps the midnight transition correct across daylight-saving changes; macOS owns actual scheduling and may delay or combine reloads.
 
 ## Appearance and accessibility
 
-- Full-color mode uses bold rounded white text, a subtle shadow, and a white today circle with a dark numeral to match the reference.
-- Adjacent-month dates remain readable at reduced opacity rather than disappearing, preserving the six-week context.
+- Full-color mode uses bold rounded white text, subtle shadows, and a white today treatment matching the reference.
+- Event dots use a compact, non-textual signifier; VoiceOver announces the event count for the date.
+- Adjacent-month dates remain readable at reduced opacity in Month view.
 - macOS may add Liquid Glass, tint, or blur even though the widget requests a clear removable background.
-- VoiceOver receives the complete localized date for every cell, announces **Today** and selected state for the current date, and labels all three header actions.
+- VoiceOver receives localized dates, today state, event counts, permission state, and labels for Month navigation actions.
 
 ## Desktop acceptance checklist
 
-`./Scripts/verify-widgets.sh` covers the exact August 2026 reference grid, Sunday- and Monday-first calendars, leap-month boundaries, six-row stability, localized headings, current-day accessibility, navigation persistence and bounds, DST-safe midnight refresh, responsive metrics, all four widget identities, Calendar App Intent actions, Debug tests, and Release embedding. The remaining macOS-owned checks are:
+`./Scripts/verify-widgets.sh` covers automatic and explicit view selection, event-count normalization, the August 2026 reference grid, Sunday- and Monday-first calendars, leap-month boundaries, DST-safe refreshes, responsive metrics, App Intent metadata, Calendar privacy configuration, Debug tests, and Release embedding. The remaining macOS-owned checks are:
 
-- [ ] Add Small, Medium, and Large Calendar widgets and confirm every row fits without clipping.
-- [ ] Compare the visible month, weekday order, and today circle with the macOS menu-bar calendar.
-- [ ] Use both arrows, then select the title and confirm it returns to the current month.
-- [ ] Add a second Calendar copy and confirm navigation refreshes both copies consistently.
+- [ ] Remove any build-18 Calendar, then add Small, Medium, and Large Calendar widgets.
+- [ ] Confirm Automatic shows Day, Week, and Month respectively without clipping.
+- [ ] Edit each copy, select every explicit view, and confirm the choice persists after reopening Edit Widget.
+- [ ] Confirm indicators are absent by default and the permission signifier appears when enabled without access.
+- [ ] Grant access in the app, add events on today and another visible day, and confirm counts/dots update without revealing event text.
+- [ ] Deny or revoke access and confirm the app offers Settings while the widget remains usable.
+- [ ] In Month view, use both arrows and the title, then confirm navigation refreshes all Calendar copies consistently.
 - [ ] Compare Clear Light, Clear Dark, and Tinted appearances over the intended wallpaper.
-- [ ] Use VoiceOver once to confirm the header controls and full dates are announced naturally.
+- [ ] Use VoiceOver to confirm dates, today state, event counts, permission state, and Month controls are announced naturally.

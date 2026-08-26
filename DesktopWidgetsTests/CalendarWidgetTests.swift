@@ -3,6 +3,42 @@ import WidgetKit
 import XCTest
 
 final class CalendarWidgetTests: XCTestCase {
+    func testAutomaticConfigurationUsesDayWeekAndMonthByFamily() {
+        let configuration = CalendarConfigurationIntent()
+
+        XCTAssertEqual(configuration.resolvedViewMode, .automatic)
+        XCTAssertFalse(configuration.showEvents)
+        XCTAssertEqual(configuration.resolvedView(for: .systemSmall), .day)
+        XCTAssertEqual(configuration.resolvedView(for: .systemMedium), .week)
+        XCTAssertEqual(configuration.resolvedView(for: .systemLarge), .month)
+    }
+
+    func testExplicitViewsOverrideEveryFamilyAndUnknownValuesFallBack() {
+        let configuration = CalendarConfigurationIntent()
+
+        for mode in [CalendarViewMode.day, .week, .month] {
+            configuration.viewMode = mode.rawValue
+            for family in [WidgetFamily.systemSmall, .systemMedium, .systemLarge] {
+                XCTAssertEqual(
+                    configuration.resolvedView(for: family),
+                    mode == .day ? .day : (mode == .week ? .week : .month)
+                )
+            }
+        }
+
+        configuration.viewMode = "unknown"
+        XCTAssertEqual(configuration.resolvedViewMode, .automatic)
+    }
+
+    func testCalendarViewOptionsExposeStableChoicesAndDefault() async throws {
+        let provider = CalendarViewModeOptionsProvider()
+        let results = try await provider.results()
+        let defaultResult = await provider.defaultResult()
+
+        XCTAssertEqual(Set(results.items), Set(CalendarViewMode.allCases.map(\.rawValue)))
+        XCTAssertEqual(defaultResult, CalendarViewMode.automatic.rawValue)
+    }
+
     func testAugust2026MatchesReferenceGridAndHighlightsTheNinth() throws {
         let calendar = gregorianCalendar(firstWeekday: 1)
         let referenceDate = try XCTUnwrap(calendar.date(from: DateComponents(
@@ -51,6 +87,31 @@ final class CalendarWidgetTests: XCTestCase {
         XCTAssertEqual(presentation.days.first(where: \.isToday)?.id, 13)
     }
 
+    func testDayAndWeekPresentationsUseFocusedFamilyContent() throws {
+        let calendar = gregorianCalendar(firstWeekday: 1)
+        let date = try XCTUnwrap(calendar.date(from: DateComponents(year: 2026, month: 8, day: 9)))
+
+        let day = CalendarDayFocusPresentation(
+            date: date,
+            calendar: calendar,
+            locale: Locale(identifier: "en_US")
+        )
+        XCTAssertEqual(day.weekdayText, "SUNDAY")
+        XCTAssertEqual(day.dayText, "9")
+        XCTAssertEqual(day.monthYearText, "AUGUST 2026")
+
+        let week = CalendarWeekPresentation(
+            date: date,
+            today: date,
+            calendar: calendar,
+            locale: Locale(identifier: "en_US")
+        )
+        XCTAssertEqual(week.days.count, 7)
+        XCTAssertEqual(week.days.map(\.dayText), ["9", "10", "11", "12", "13", "14", "15"])
+        XCTAssertEqual(week.days.map(\.weekdayText), ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"])
+        XCTAssertEqual(week.days.filter(\.isToday).count, 1)
+    }
+
     func testLeapFebruaryIncludesAdjacentMonthDaysInSixStableRows() throws {
         let calendar = gregorianCalendar(firstWeekday: 1)
         let date = try XCTUnwrap(calendar.date(from: DateComponents(year: 2024, month: 2, day: 29)))
@@ -84,6 +145,51 @@ final class CalendarWidgetTests: XCTestCase {
         XCTAssertEqual(CalendarNavigationStore.monthOffset(defaults: defaults), 0)
     }
 
+    func testEventCounterMarksEveryOverlappingDayWithoutCountingMidnightEnd() throws {
+        let calendar = gregorianCalendar(firstWeekday: 1)
+        let queryStart = try XCTUnwrap(calendar.date(from: DateComponents(year: 2026, month: 8, day: 9)))
+        let queryEnd = try XCTUnwrap(calendar.date(byAdding: .day, value: 4, to: queryStart))
+        let noon = try XCTUnwrap(calendar.date(byAdding: .hour, value: 12, to: queryStart))
+        let nextMidnight = try XCTUnwrap(calendar.date(byAdding: .day, value: 1, to: queryStart))
+        let thirdDayNoon = try XCTUnwrap(calendar.date(byAdding: .hour, value: 60, to: queryStart))
+
+        let counts = CalendarEventCounter.counts(
+            for: [
+                CalendarEventInterval(start: noon, end: nextMidnight),
+                CalendarEventInterval(start: noon, end: thirdDayNoon),
+            ],
+            within: DateInterval(start: queryStart, end: queryEnd),
+            calendar: calendar
+        )
+
+        XCTAssertEqual(counts[queryStart], 2)
+        XCTAssertEqual(counts[nextMidnight], 1)
+        let thirdDay = try XCTUnwrap(calendar.date(byAdding: .day, value: 2, to: queryStart))
+        XCTAssertEqual(counts[thirdDay], 1)
+    }
+
+    func testEventSnapshotSeparatesDisabledPermissionAndAvailableStates() throws {
+        let calendar = gregorianCalendar(firstWeekday: 1)
+        let date = try XCTUnwrap(calendar.date(from: DateComponents(year: 2026, month: 8, day: 9)))
+
+        XCTAssertEqual(CalendarEventSnapshot.disabled.accessState, .disabled)
+        XCTAssertEqual(CalendarEventSnapshot.disabled.count(on: date, calendar: calendar), 0)
+
+        let available = CalendarEventSnapshot(accessState: .available, countsByDay: [date: 3])
+        XCTAssertEqual(available.count(on: date, calendar: calendar), 3)
+        XCTAssertEqual(CalendarEventSnapshot(accessState: .requiresPermission, countsByDay: [:]).accessState, .requiresPermission)
+        XCTAssertEqual(CalendarEventSnapshot(accessState: .denied, countsByDay: [:]).accessState, .denied)
+    }
+
+    func testDisplayIntervalsMatchDayWeekAndSixWeekMonthBudgets() throws {
+        let calendar = gregorianCalendar(firstWeekday: 1)
+        let date = try XCTUnwrap(calendar.date(from: DateComponents(year: 2026, month: 8, day: 9)))
+
+        XCTAssertEqual(CalendarDisplayInterval.interval(for: .day, date: date, monthOffset: 0, calendar: calendar).duration, 86_400)
+        XCTAssertEqual(CalendarDisplayInterval.interval(for: .week, date: date, monthOffset: 0, calendar: calendar).duration, 7 * 86_400)
+        XCTAssertEqual(CalendarDisplayInterval.interval(for: .month, date: date, monthOffset: 0, calendar: calendar).duration, 42 * 86_400)
+    }
+
     func testTimelineRefreshesAtNextLocalMidnightAcrossDST() throws {
         var calendar = gregorianCalendar(firstWeekday: 1)
         calendar.timeZone = try XCTUnwrap(TimeZone(identifier: "America/Los_Angeles"))
@@ -100,6 +206,11 @@ final class CalendarWidgetTests: XCTestCase {
         XCTAssertEqual(
             calendar.dateComponents([.year, .month, .day, .hour, .minute], from: refresh),
             DateComponents(year: 2026, month: 3, day: 9, hour: 0, minute: 0)
+        )
+
+        XCTAssertEqual(
+            CalendarTimelinePolicy.nextRefresh(after: date, calendar: calendar, eventsEnabled: true),
+            date.addingTimeInterval(30 * 60)
         )
     }
 
