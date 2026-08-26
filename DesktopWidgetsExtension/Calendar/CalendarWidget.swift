@@ -221,8 +221,11 @@ struct CalendarWidgetView: View {
 
     private var dayAccessibilityLabel: String {
         let count = entry.events.count(on: entry.date, calendar: calendar)
-        guard entry.events.accessState == .available else { return dayPresentation.accessibilityLabel }
-        return "\(dayPresentation.accessibilityLabel), \(count) \(count == 1 ? "event" : "events")"
+        return CalendarDayFocusAccessibility.label(
+            dateLabel: dayPresentation.accessibilityLabel,
+            accessState: entry.events.accessState,
+            eventCount: count
+        )
     }
 
     private var weekView: some View {

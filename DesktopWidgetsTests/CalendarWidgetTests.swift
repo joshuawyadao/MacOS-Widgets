@@ -145,6 +145,43 @@ final class CalendarWidgetTests: XCTestCase {
         XCTAssertEqual(CalendarTodayMarkerStyle(renderingMode: .accented), .outlined)
     }
 
+    func testDayAccessibilityLabelDescribesEveryEventAccessState() {
+        let dateLabel = "Sunday, August 9, 2026"
+
+        XCTAssertEqual(
+            CalendarDayFocusAccessibility.label(
+                dateLabel: dateLabel,
+                accessState: .disabled,
+                eventCount: 0
+            ),
+            dateLabel
+        )
+        XCTAssertEqual(
+            CalendarDayFocusAccessibility.label(
+                dateLabel: dateLabel,
+                accessState: .available,
+                eventCount: 1
+            ),
+            "Sunday, August 9, 2026, 1 event"
+        )
+        XCTAssertEqual(
+            CalendarDayFocusAccessibility.label(
+                dateLabel: dateLabel,
+                accessState: .requiresPermission,
+                eventCount: 0
+            ),
+            "Sunday, August 9, 2026, Enable Calendar access in the Desktop Widgets app"
+        )
+        XCTAssertEqual(
+            CalendarDayFocusAccessibility.label(
+                dateLabel: dateLabel,
+                accessState: .denied,
+                eventCount: 0
+            ),
+            "Sunday, August 9, 2026, Calendar access is turned off"
+        )
+    }
+
     func testLeapFebruaryIncludesAdjacentMonthDaysInSixStableRows() throws {
         let calendar = gregorianCalendar(firstWeekday: 1)
         let date = try XCTUnwrap(calendar.date(from: DateComponents(year: 2024, month: 2, day: 29)))

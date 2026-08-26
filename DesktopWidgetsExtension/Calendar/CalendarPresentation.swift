@@ -27,6 +27,25 @@ struct CalendarDayMarkerPresentation: Equatable, Sendable {
     }
 }
 
+enum CalendarDayFocusAccessibility {
+    static func label(
+        dateLabel: String,
+        accessState: CalendarEventAccessState,
+        eventCount: Int
+    ) -> String {
+        switch accessState {
+        case .disabled:
+            return dateLabel
+        case .available:
+            return "\(dateLabel), \(eventCount) \(eventCount == 1 ? "event" : "events")"
+        case .requiresPermission:
+            return "\(dateLabel), Enable Calendar access in the Desktop Widgets app"
+        case .denied:
+            return "\(dateLabel), Calendar access is turned off"
+        }
+    }
+}
+
 enum CalendarTodayMarkerStyle: Equatable, Sendable {
     case filled
     case outlined
