@@ -160,7 +160,7 @@ struct CalendarMonthPresentation: Equatable, Sendable {
         var calendar = sourceCalendar
         calendar.locale = locale
 
-        let displayComponents = calendar.dateComponents([.era, .year, .month], from: displayDate)
+        let displayComponents = calendar.dateComponents([.era, .year, .month, .isLeapMonth], from: displayDate)
         let monthStart = calendar.date(from: displayComponents) ?? displayDate
 
         monthText = Self.formatted(
@@ -206,10 +206,11 @@ struct CalendarMonthPresentation: Equatable, Sendable {
 
         days = (0..<42).map { position in
             let date = calendar.date(byAdding: .day, value: position, to: gridStart) ?? gridStart
-            let components = calendar.dateComponents([.era, .year, .month, .day], from: date)
+            let components = calendar.dateComponents([.era, .year, .month, .day, .isLeapMonth], from: date)
             let isInDisplayedMonth = components.era == displayComponents.era
                 && components.year == displayComponents.year
                 && components.month == displayComponents.month
+                && components.isLeapMonth == displayComponents.isLeapMonth
             let isToday = calendar.isDate(date, inSameDayAs: today)
             var label = Self.formatted(
                 date,

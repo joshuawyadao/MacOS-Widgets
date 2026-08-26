@@ -222,6 +222,46 @@ final class CalendarWidgetTests: XCTestCase {
         XCTAssertEqual(presentation.days.first(where: \.isToday)?.dayText, "29")
     }
 
+    func testLeapMonthDoesNotIncludeTheRegularMonthWithTheSameNumber() throws {
+        let gregorian = gregorianCalendar(firstWeekday: 1)
+        let regularFourthMonthDate = try XCTUnwrap(gregorian.date(from: DateComponents(
+            year: 2020,
+            month: 5,
+            day: 22
+        )))
+        let leapFourthMonthDate = try XCTUnwrap(gregorian.date(from: DateComponents(
+            year: 2020,
+            month: 5,
+            day: 23
+        )))
+
+        var chinese = Calendar(identifier: .chinese)
+        chinese.locale = Locale(identifier: "en_US")
+        chinese.timeZone = TimeZone(secondsFromGMT: 0)!
+        chinese.firstWeekday = 1
+
+        XCTAssertEqual(chinese.component(.month, from: regularFourthMonthDate), 4)
+        XCTAssertEqual(chinese.component(.month, from: leapFourthMonthDate), 4)
+        XCTAssertFalse(chinese.dateComponents([.isLeapMonth], from: regularFourthMonthDate).isLeapMonth ?? true)
+        XCTAssertTrue(chinese.dateComponents([.isLeapMonth], from: leapFourthMonthDate).isLeapMonth ?? false)
+
+        let presentation = CalendarMonthPresentation(
+            displayDate: leapFourthMonthDate,
+            today: leapFourthMonthDate,
+            calendar: chinese,
+            locale: Locale(identifier: "en_US")
+        )
+        let regularMonthCell = try XCTUnwrap(presentation.days.first {
+            chinese.isDate($0.date, inSameDayAs: regularFourthMonthDate)
+        })
+        let leapMonthCell = try XCTUnwrap(presentation.days.first {
+            chinese.isDate($0.date, inSameDayAs: leapFourthMonthDate)
+        })
+
+        XCTAssertFalse(regularMonthCell.isInDisplayedMonth)
+        XCTAssertTrue(leapMonthCell.isInDisplayedMonth)
+    }
+
     func testNavigationPersistsAndClampsMonthOffset() throws {
         let suiteName = "CalendarWidgetTests.\(UUID().uuidString)"
         let defaults = try XCTUnwrap(UserDefaults(suiteName: suiteName))
