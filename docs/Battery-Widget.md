@@ -41,6 +41,7 @@ The time value is an operating-system estimate based on current conditions. Work
 ## Appearance and accessibility
 
 - Battery uses the shared compact/standard/expanded family density and widget surface. Its gauge and selected power-detail cards remain specific to battery status.
+- The companion app's global or Battery-specific typography theme styles the hero percentage. Runtime, state, update time, and detail-card labels stay system-rounded so operational data remains consistent and readable.
 - Full-color mode uses white rounded text and a white battery outline/fill, with a small shadow for contrast over textured wallpaper.
 - Tinted and accented widget modes use the system's primary rendering color.
 - The battery graphic is decorative. VoiceOver receives one combined label containing charge percentage, power state, and a spoken duration when available.
@@ -56,4 +57,5 @@ The time value is an operating-system estimate based on current conditions. Work
 - [ ] Unplug and reconnect power, then confirm the label and fill update after WidgetKit refreshes the timeline.
 - [ ] Confirm an unplugged runtime is formatted as hours or minutes, while a fully charged connected Mac says **AC Power** and marks its runtime estimate unavailable.
 - [ ] Compare Clear Light, Clear Dark, and Tinted appearances over the intended wallpaper.
+- [ ] Change the global theme and Battery override in the companion app, then confirm the percentage updates while status and runtime remain easy to read.
 - [ ] Use VoiceOver once to confirm the combined percentage, state, and duration are announced naturally.

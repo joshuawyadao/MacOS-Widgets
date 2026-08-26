@@ -39,6 +39,7 @@ WidgetKit receives several future hourly entries from one forecast response and 
 ## Appearance and accessibility
 
 - Weather uses the shared compact/standard/expanded family density and widget surface. Its city header, forecast symbols, and required provider attribution remain domain-specific.
+- The companion app's global or Weather-specific typography theme styles the city header and hero current temperature. Forecast strips, detail values, status text, and provider attribution stay system-rounded so compact data remains easy to scan.
 - The widget declares a clear, removable WidgetKit container exactly like Time & Date. With macOS's Clear icon and widget style, the system may replace that background with Liquid Glass, tint, or blur; WidgetKit does not provide an API to remove the system-owned surface.
 - White text and multicolor SF Symbols follow the reference. Every forecast column combines its day or hour, condition, and selected values into one VoiceOver label so color and symbols are not the only source of meaning.
 - Temperatures render as one compact text run so WidgetKit cannot truncate the degree value and unit independently. Small Today reserves a bounded temperature column and uses a sequence of complete-text fallback sizes instead of an ellipsis-producing scale. High/low values remain stacked, and VoiceOver announces the complete unit.
@@ -70,4 +71,5 @@ Those automated contracts are consumed by the SwiftUI view, and render smoke tes
 - [ ] Disconnect networking after one successful load and confirm the extension's sandbox allows the cached forecast to remain visible on the desktop.
 - [ ] Verify the Open-Meteo link is visible and opens the provider site.
 - [ ] Compare Clear Light, Clear Dark, and Tinted appearances and confirm the content stays readable.
+- [ ] Change the global theme and Weather override in the companion app, then confirm the location and hero temperature update without compressing forecast details.
 - [ ] Use VoiceOver once to confirm the system traverses each combined forecast label in a sensible order.

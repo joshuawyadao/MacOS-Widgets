@@ -8,10 +8,16 @@ struct WeatherWidgetView: View {
 
     let entry: WeatherEntry
     private let familyOverride: WidgetFamily?
+    private let typographyOverride: WidgetTypographyResolution?
 
-    init(entry: WeatherEntry, family: WidgetFamily? = nil) {
+    init(
+        entry: WeatherEntry,
+        family: WidgetFamily? = nil,
+        typography: WidgetTypographyResolution? = nil
+    ) {
         self.entry = entry
         self.familyOverride = family
+        self.typographyOverride = typography
     }
 
     private var family: WidgetFamily {
@@ -31,6 +37,10 @@ struct WeatherWidgetView: View {
             family: family,
             locale: .autoupdatingCurrent
         )
+    }
+
+    private var typography: WidgetTypographyResolution {
+        typographyOverride ?? WidgetTypographyStore.live.resolution(for: .weather)
     }
 
     var body: some View {
@@ -114,7 +124,13 @@ struct WeatherWidgetView: View {
 
     private var locationLabel: some View {
         Text(headerLocationName)
-            .font(.system(size: layout.headerFontSize, weight: .medium, design: .monospaced))
+            .font(
+                typography.displayFont(
+                    size: layout.headerFontSize,
+                    weight: .semibold,
+                    fallback: .system(size: layout.headerFontSize, weight: .medium, design: .monospaced)
+                )
+            )
             .lineLimit(1)
             .minimumScaleFactor(layout.usesStackedHeader ? 0.65 : 0.75)
             .frame(maxWidth: .infinity, alignment: .leading)
@@ -200,7 +216,11 @@ struct WeatherWidgetView: View {
 
             VStack(alignment: .leading, spacing: 5) {
                 if let temperature = details.first(where: { $0.detail == .temperature }) {
-                    temperatureLabel(temperature, size: layout.expandedTemperatureSize)
+                    temperatureLabel(
+                        temperature,
+                        size: layout.expandedTemperatureSize,
+                        usesDisplayTypography: true
+                    )
                 }
 
                 Text(current.condition.displayName)
@@ -263,7 +283,11 @@ struct WeatherWidgetView: View {
 
             VStack(alignment: .trailing, spacing: family == .systemSmall ? 4 : 7) {
                 if let temperature = details.first(where: { $0.detail == .temperature }) {
-                    temperatureLabel(temperature, size: layout.dayTemperatureSize)
+                    temperatureLabel(
+                        temperature,
+                        size: layout.dayTemperatureSize,
+                        usesDisplayTypography: true
+                    )
 
                     if let forecast {
                         highLowLabel(forecast, snapshot: snapshot)
@@ -375,27 +399,46 @@ struct WeatherWidgetView: View {
 
     private func temperatureLabel(
         _ value: WeatherMetricValue,
-        size: CGFloat
+        size: CGFloat,
+        usesDisplayTypography: Bool = false
     ) -> some View {
         ViewThatFits(in: .horizontal) {
-            temperatureText(value.displayText, size: size)
+            temperatureText(value.displayText, size: size, usesDisplayTypography: usesDisplayTypography)
             temperatureText(
                 value.displayText,
-                size: max(layout.minimumTemperaturePointSize, size * 0.84)
+                size: max(layout.minimumTemperaturePointSize, size * 0.84),
+                usesDisplayTypography: usesDisplayTypography
             )
             temperatureText(
                 value.displayText,
-                size: max(layout.minimumTemperaturePointSize, size * 0.68)
+                size: max(layout.minimumTemperaturePointSize, size * 0.68),
+                usesDisplayTypography: usesDisplayTypography
             )
-            temperatureText(value.displayText, size: layout.minimumTemperaturePointSize)
+            temperatureText(
+                value.displayText,
+                size: layout.minimumTemperaturePointSize,
+                usesDisplayTypography: usesDisplayTypography
+            )
         }
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(value.spokenText)
     }
 
-    private func temperatureText(_ text: String, size: CGFloat) -> some View {
+    private func temperatureText(
+        _ text: String,
+        size: CGFloat,
+        usesDisplayTypography: Bool
+    ) -> some View {
         Text(text)
-            .font(.system(size: size, weight: .bold, design: .rounded))
+            .font(
+                usesDisplayTypography
+                    ? typography.displayFont(
+                        size: size,
+                        weight: .bold,
+                        fallback: .system(size: size, weight: .bold, design: .rounded)
+                    )
+                    : .system(size: size, weight: .bold, design: .rounded)
+            )
             .monospacedDigit()
             .fixedSize(horizontal: true, vertical: true)
     }
@@ -437,7 +480,13 @@ struct WeatherWidgetView: View {
     private var failureView: some View {
         VStack(alignment: .leading, spacing: 10) {
             Text(presentation.locationName)
-                .font(.system(.headline, design: .monospaced))
+                .font(
+                    typography.displayFont(
+                        size: 15,
+                        weight: .bold,
+                        fallback: .system(.headline, design: .monospaced)
+                    )
+                )
                 .lineLimit(1)
 
             Spacer(minLength: 0)

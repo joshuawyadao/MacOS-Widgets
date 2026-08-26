@@ -99,14 +99,24 @@ struct CalendarWidgetView: View {
 
     let entry: CalendarEntry
     private let familyOverride: WidgetFamily?
+    private let typographyOverride: WidgetTypographyResolution?
 
-    init(entry: CalendarEntry, family: WidgetFamily? = nil) {
+    init(
+        entry: CalendarEntry,
+        family: WidgetFamily? = nil,
+        typography: WidgetTypographyResolution? = nil
+    ) {
         self.entry = entry
         self.familyOverride = family
+        self.typographyOverride = typography
     }
 
     private var family: WidgetFamily {
         familyOverride ?? environmentFamily
+    }
+
+    private var typography: WidgetTypographyResolution {
+        typographyOverride ?? WidgetTypographyStore.live.resolution(for: .calendar)
     }
 
     private var calendar: Calendar {
@@ -174,7 +184,13 @@ struct CalendarWidgetView: View {
         VStack(alignment: .leading, spacing: family == .systemLarge ? 10 : 4) {
             HStack(alignment: .firstTextBaseline) {
                 Text(dayPresentation.monthYearText)
-                    .font(.system(size: family == .systemLarge ? 20 : 12, weight: .heavy, design: .rounded))
+                    .font(
+                        typography.displayFont(
+                            size: family == .systemLarge ? 20 : 12,
+                            weight: .heavy,
+                            fallback: .system(size: family == .systemLarge ? 20 : 12, weight: .heavy, design: .rounded)
+                        )
+                    )
                     .lineLimit(1)
                     .minimumScaleFactor(0.7)
                 Spacer(minLength: 4)
@@ -189,7 +205,17 @@ struct CalendarWidgetView: View {
                 .minimumScaleFactor(0.7)
 
             Text(dayPresentation.dayText)
-                .font(.system(size: family == .systemLarge ? 112 : (family == .systemMedium ? 72 : 62), weight: .black, design: .rounded))
+                .font(
+                    typography.displayFont(
+                        size: family == .systemLarge ? 112 : (family == .systemMedium ? 72 : 62),
+                        weight: .black,
+                        fallback: .system(
+                            size: family == .systemLarge ? 112 : (family == .systemMedium ? 72 : 62),
+                            weight: .black,
+                            design: .rounded
+                        )
+                    )
+                )
                 .lineLimit(1)
                 .minimumScaleFactor(0.65)
 
@@ -234,7 +260,13 @@ struct CalendarWidgetView: View {
         VStack(spacing: family == .systemLarge ? 14 : 8) {
             HStack {
                 Text(weekPresentation.headerText)
-                    .font(.system(size: family == .systemLarge ? 22 : 14, weight: .heavy, design: .rounded))
+                    .font(
+                        typography.displayFont(
+                            size: family == .systemLarge ? 22 : 14,
+                            weight: .heavy,
+                            fallback: .system(size: family == .systemLarge ? 22 : 14, weight: .heavy, design: .rounded)
+                        )
+                    )
                     .lineLimit(1)
                 Spacer(minLength: 4)
                 eventAccessBadge
@@ -302,7 +334,13 @@ struct CalendarWidgetView: View {
 
             Button(intent: CurrentCalendarMonthIntent()) {
                 Text(monthTitle)
-                    .font(.system(size: monthMetrics.headerFontSize, weight: .heavy, design: .rounded))
+                    .font(
+                        typography.displayFont(
+                            size: monthMetrics.headerFontSize,
+                            weight: .heavy,
+                            fallback: .system(size: monthMetrics.headerFontSize, weight: .heavy, design: .rounded)
+                        )
+                    )
                     .tracking(monthMetrics.usesCompactMonth ? 0.2 : 0.7)
                     .lineLimit(1)
                     .minimumScaleFactor(0.72)

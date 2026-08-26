@@ -38,10 +38,16 @@ struct TimeAndDateWidgetView: View {
 
     let entry: TimeAndDateEntry
     private let familyOverride: WidgetFamily?
+    private let typographyOverride: WidgetTypographyResolution?
 
-    init(entry: TimeAndDateEntry, family: WidgetFamily? = nil) {
+    init(
+        entry: TimeAndDateEntry,
+        family: WidgetFamily? = nil,
+        typography: WidgetTypographyResolution? = nil
+    ) {
         self.entry = entry
         self.familyOverride = family
+        self.typographyOverride = typography
     }
 
     private var family: WidgetFamily {
@@ -60,6 +66,10 @@ struct TimeAndDateWidgetView: View {
             locale: locale,
             timeZone: timeZone
         )
+    }
+
+    private var typography: WidgetTypographyResolution {
+        typographyOverride ?? WidgetTypographyStore.live.resolution(for: .timeAndDate)
     }
 
     var body: some View {
@@ -138,8 +148,13 @@ struct TimeAndDateWidgetView: View {
 
     private var dateLabel: some View {
         Text(presentation.dateText)
-            .font(entry.configuration.resolvedDateFont.font(size: metrics.dateSize, role: .date))
-            .fontWeight(entry.configuration.resolvedDateFont == .systemBold ? .black : nil)
+            .font(
+                typography.displayFont(
+                    size: metrics.dateSize,
+                    weight: .black,
+                    fallback: entry.configuration.resolvedDateFont.font(size: metrics.dateSize, role: .date)
+                )
+            )
             .tracking(metrics.dateTracking)
             .lineLimit(1)
             .minimumScaleFactor(0.55)
@@ -147,7 +162,13 @@ struct TimeAndDateWidgetView: View {
 
     private var timeLabel: some View {
         Text(presentation.timeText)
-            .font(entry.configuration.resolvedTimeFont.font(size: metrics.timeSize, role: .time))
+            .font(
+                typography.displayFont(
+                    size: metrics.timeSize,
+                    weight: .bold,
+                    fallback: entry.configuration.resolvedTimeFont.font(size: metrics.timeSize, role: .time)
+                )
+            )
             .lineLimit(1)
             .minimumScaleFactor(0.55)
             .layoutPriority(1)
@@ -166,7 +187,13 @@ struct TimeAndDateWidgetView: View {
 
     private func periodLabel(_ text: String) -> some View {
         Text(text)
-            .font(entry.configuration.resolvedTimeFont.font(size: metrics.periodSize, role: .time))
+            .font(
+                typography.displayFont(
+                    size: metrics.periodSize,
+                    weight: .semibold,
+                    fallback: entry.configuration.resolvedTimeFont.font(size: metrics.periodSize, role: .time)
+                )
+            )
             .lineLimit(1)
             .minimumScaleFactor(0.7)
     }

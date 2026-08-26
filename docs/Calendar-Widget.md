@@ -46,6 +46,7 @@ Without event indicators, the next timeline refresh is requested for the next lo
 ## Appearance and accessibility
 
 - Calendar uses the shared compact/standard/expanded family density, widget surface, and action-required badge treatment. Its today marker and Month navigation remain calendar-specific.
+- The companion app's global or Calendar-specific typography theme styles the primary day number and Day, Week, or Month headers. Weekday labels, grid numerals, event counts, and permission status stay in the system style to protect dense-calendar legibility.
 - Full-color mode uses bold rounded white text, subtle shadows, and a composited white today circle with a dark numeral. Vibrant and accented modes use an outlined today circle so system color remapping cannot erase the numeral.
 - Event dots occupy a separate marker layer and never replace the date numeral, including inside today's selection marker; VoiceOver announces the event count for the date.
 - Adjacent-month dates remain readable at reduced opacity in Month view.
@@ -65,4 +66,5 @@ Without event indicators, the next timeline refresh is requested for the next lo
 - [ ] Deny or revoke access and confirm the app offers Settings while the widget remains usable.
 - [ ] In Month view, use both arrows and the title, then confirm navigation refreshes all Calendar copies consistently.
 - [ ] Compare Clear Light, Clear Dark, and Tinted appearances over the intended wallpaper.
+- [ ] Change the global theme and Calendar override in the companion app, then confirm Day, Week, and Month headers update while grid dates stay readable.
 - [ ] Use VoiceOver to confirm dates, today state, event counts, permission state, and Month controls are announced naturally.

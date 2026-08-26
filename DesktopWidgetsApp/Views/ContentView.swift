@@ -1,13 +1,16 @@
 import SwiftUI
+import WidgetKit
 
 struct ContentView: View {
     @Environment(\.scenePhase) private var scenePhase
     @StateObject private var calendarPermission = CalendarPermissionController()
+    @StateObject private var typography = WidgetTypographyController()
 
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 24) {
                 header
+                typographyGuide
                 readyWidgets
                 setupGuide
                 widgetGuides
@@ -70,6 +73,83 @@ struct ContentView: View {
         }
     }
 
+    private var typographyGuide: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            SectionTitle(
+                title: "Appearance theme",
+                subtitle: "Choose one display style for all widgets, then add only the exceptions you want. Supporting text stays system-rounded for readability."
+            )
+
+            HStack(spacing: 12) {
+                Menu {
+                    ForEach(WidgetTypographyTheme.allCases) { theme in
+                        Button {
+                            typography.setGlobalTheme(theme)
+                        } label: {
+                            if typography.globalTheme == theme {
+                                Label(
+                                    "\(theme.displayName) — \(theme.detail)",
+                                    systemImage: "checkmark"
+                                )
+                            } else {
+                                Text("\(theme.displayName) — \(theme.detail)")
+                            }
+                        }
+                    }
+                } label: {
+                    Label(
+                        "\(typography.globalTheme.displayName) — \(typography.globalTheme.detail)",
+                        systemImage: "textformat"
+                    )
+                }
+                .frame(maxWidth: 280, alignment: .leading)
+
+                Spacer(minLength: 0)
+
+                Button("Use System Style") {
+                    typography.reset()
+                }
+                .disabled(typography.usesSystemDefaults)
+            }
+
+            TypographyPreviewGrid(
+                resolutions: Dictionary(
+                    uniqueKeysWithValues: WidgetTypographyTarget.allCases.map {
+                        ($0, typography.resolution(for: $0))
+                    }
+                )
+            )
+
+            Divider()
+
+            Text("Widget overrides")
+                .font(.headline)
+
+            LazyVGrid(
+                columns: [GridItem(.flexible(), spacing: 12), GridItem(.flexible(), spacing: 12)],
+                spacing: 10
+            ) {
+                ForEach(WidgetTypographyTarget.allCases) { target in
+                    WidgetTypographyOverrideRow(
+                        target: target,
+                        selection: typography.override(for: target),
+                        onSelect: { typography.setOverride($0, for: target) }
+                    )
+                }
+            }
+
+            Text("Time & Date can follow the global theme, use another theme, or preserve the separate date and time fonts configured on each placed copy.")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+        }
+        .padding(18)
+        .background(WidgetTheme.accent.opacity(0.08), in: RoundedRectangle(cornerRadius: 16))
+        .overlay {
+            RoundedRectangle(cornerRadius: 16)
+                .stroke(WidgetTheme.accent.opacity(0.20), lineWidth: 1)
+        }
+    }
+
     private var setupGuide: some View {
         VStack(alignment: .leading, spacing: 12) {
             SectionTitle(title: "Set up in two steps", subtitle: "You only need the app to install and update the widget.")
@@ -92,12 +172,12 @@ struct ContentView: View {
         VStack(alignment: .leading, spacing: 22) {
             WidgetGuideSection(
                 title: "Time & Date",
-                subtitle: "Local time with independent layout, format, and font choices for every copy.",
+                subtitle: "Local time with independent layouts and formats, plus optional per-copy fonts.",
                 items: [
                     WidgetGuideItem(symbol: "rectangle.3.group", title: "View", detail: "Classic, compact, centered, time first, or side by side."),
                     WidgetGuideItem(symbol: "calendar", title: "Details", detail: "Choose a word-based, month-first, day-first, or ISO date."),
                     WidgetGuideItem(symbol: "clock", title: "Format", detail: "Use a 12-hour or 24-hour clock; AM/PM adapts automatically."),
-                    WidgetGuideItem(symbol: "textformat", title: "Appearance", detail: "Pick separate clean, classic, or handwritten fonts for date and time."),
+                    WidgetGuideItem(symbol: "textformat", title: "Appearance", detail: "Follow the app theme, or preserve separate date and time fonts for each copy."),
                 ]
             )
 
@@ -204,6 +284,156 @@ struct ContentView: View {
         .background(.quaternary.opacity(0.35), in: RoundedRectangle(cornerRadius: 14))
     }
 
+}
+
+@MainActor
+private final class WidgetTypographyController: ObservableObject {
+    @Published private(set) var globalTheme: WidgetTypographyTheme
+    @Published private var overrides: [WidgetTypographyTarget: WidgetTypographyOverride]
+
+    private let store: WidgetTypographyStore
+
+    init(store: WidgetTypographyStore = .live) {
+        self.store = store
+        self.globalTheme = store.globalTheme
+        self.overrides = Dictionary(
+            uniqueKeysWithValues: WidgetTypographyTarget.allCases.map {
+                ($0, store.override(for: $0))
+            }
+        )
+    }
+
+    var usesSystemDefaults: Bool {
+        globalTheme == .system && overrides.values.allSatisfy { $0 == .followGlobal }
+    }
+
+    func override(for target: WidgetTypographyTarget) -> WidgetTypographyOverride {
+        overrides[target] ?? .followGlobal
+    }
+
+    func resolution(for target: WidgetTypographyTarget) -> WidgetTypographyResolution {
+        let override = override(for: target)
+        if override == .widgetFonts {
+            return .widgetFonts
+        }
+        return .theme(override.theme ?? globalTheme)
+    }
+
+    func setGlobalTheme(_ theme: WidgetTypographyTheme) {
+        globalTheme = theme
+        store.globalTheme = theme
+        WidgetCenter.shared.reloadAllTimelines()
+    }
+
+    func setOverride(
+        _ override: WidgetTypographyOverride,
+        for target: WidgetTypographyTarget
+    ) {
+        overrides[target] = override
+        store.setOverride(override, for: target)
+        WidgetCenter.shared.reloadAllTimelines()
+    }
+
+    func reset() {
+        store.reset()
+        globalTheme = .system
+        overrides = Dictionary(
+            uniqueKeysWithValues: WidgetTypographyTarget.allCases.map { ($0, .followGlobal) }
+        )
+        WidgetCenter.shared.reloadAllTimelines()
+    }
+}
+
+private struct TypographyPreviewGrid: View {
+    let resolutions: [WidgetTypographyTarget: WidgetTypographyResolution]
+
+    var body: some View {
+        LazyVGrid(
+            columns: WidgetTypographyTarget.allCases.map { _ in GridItem(.flexible(), spacing: 8) },
+            spacing: 8
+        ) {
+            ForEach(WidgetTypographyTarget.allCases) { target in
+                VStack(alignment: .leading, spacing: 7) {
+                    Label(target.displayName, systemImage: target.symbolName)
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(.secondary)
+                        .lineLimit(1)
+
+                    Text(sampleText(for: target))
+                        .font(
+                            (resolutions[target] ?? .theme(.system)).displayFont(
+                                size: 24,
+                                weight: .black,
+                                fallback: .custom("Noteworthy-Bold", size: 24)
+                            )
+                        )
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.7)
+
+                    Text(sampleDetail(for: target))
+                        .font(.caption2.weight(.medium))
+                        .foregroundStyle(.secondary)
+                        .lineLimit(1)
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(12)
+                .background(.quaternary.opacity(0.28), in: RoundedRectangle(cornerRadius: 12))
+            }
+        }
+    }
+
+    private func sampleText(for target: WidgetTypographyTarget) -> String {
+        switch target {
+        case .timeAndDate: "09:09"
+        case .weather: "72°"
+        case .battery: "82%"
+        case .calendar: "AUG 09"
+        }
+    }
+
+    private func sampleDetail(for target: WidgetTypographyTarget) -> String {
+        resolutions[target] == .widgetFonts ? "Each copy's fonts" : "Display typography"
+    }
+}
+
+private struct WidgetTypographyOverrideRow: View {
+    let target: WidgetTypographyTarget
+    let selection: WidgetTypographyOverride
+    let onSelect: (WidgetTypographyOverride) -> Void
+
+    var body: some View {
+        HStack(spacing: 10) {
+            Image(systemName: target.symbolName)
+                .foregroundStyle(WidgetTheme.accent)
+                .frame(width: 22)
+
+            Text(target.displayName)
+                .font(.subheadline.weight(.semibold))
+
+            Spacer(minLength: 4)
+
+            Menu {
+                ForEach(WidgetTypographyOverride.options(for: target)) { option in
+                    Button {
+                        onSelect(option)
+                    } label: {
+                        if selection == option {
+                            Label(option.displayName, systemImage: "checkmark")
+                        } else {
+                            Text(option.displayName)
+                        }
+                    }
+                }
+            } label: {
+                Text(selection.displayName)
+                    .lineLimit(1)
+            }
+            .accessibilityLabel("Typography for \(target.displayName)")
+            .frame(maxWidth: 190, alignment: .trailing)
+        }
+        .padding(11)
+        .background(.quaternary.opacity(0.22), in: RoundedRectangle(cornerRadius: 12))
+    }
 }
 
 private struct ReadyWidgetCard: View {

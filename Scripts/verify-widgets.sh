@@ -102,6 +102,11 @@ require_file "$SIGNING_CONFIGURATION" "shared signing configuration"
 require_contains "$SIGNING_CONFIGURATION" "#include? \"../Local.xcconfig\"" "optional local signing include"
 require_contains "$SIGNING_CONFIGURATION" "CODE_SIGN_STYLE = Automatic" "automatic signing policy"
 require_contains "$SIGNING_CONFIGURATION" 'DEVELOPMENT_TEAM = $(LOCAL_DEVELOPMENT_TEAM)' "local Personal Team setting"
+require_contains "$SIGNING_CONFIGURATION" 'WIDGET_THEME_APP_GROUP = $(DEVELOPMENT_TEAM).com.joshuawyadao.desktop-widgets' "team-prefixed typography App Group setting"
+require_contains "$PROJECT_ROOT/DesktopWidgetsApp/DesktopWidgetsApp.entitlements" 'com.apple.security.application-groups' "app typography App Group entitlement"
+require_contains "$PROJECT_ROOT/DesktopWidgetsApp/DesktopWidgetsApp.entitlements" '$(WIDGET_THEME_APP_GROUP)' "app shared typography group"
+require_contains "$PROJECT_ROOT/DesktopWidgetsExtension/DesktopWidgetsExtension.entitlements" 'com.apple.security.application-groups' "extension typography App Group entitlement"
+require_contains "$PROJECT_ROOT/DesktopWidgetsExtension/DesktopWidgetsExtension.entitlements" '$(WIDGET_THEME_APP_GROUP)' "extension shared typography group"
 
 readonly CERTIFICATE_SUBJECT_FIXTURE='subject=UID=ABC123DE45,CN=Apple Development: Example Developer (ABC123DE45),OU=ZYX987WV65,O=Example Developer,C=US'
 readonly FIXTURE_TEAM_ID="$("$PERSONAL_TEAM_SCRIPT" --parse-certificate-subject "$CERTIFICATE_SUBJECT_FIXTURE")"
@@ -218,6 +223,12 @@ readonly APP_CALENDAR_USAGE="$(/usr/libexec/PlistBuddy -c 'Print :NSCalendarsFul
 readonly EXTENSION_CALENDAR_USAGE="$(/usr/libexec/PlistBuddy -c 'Print :NSCalendarsFullAccessUsageDescription' "$EXTENSION_INFO")"
 if [[ -z "$APP_CALENDAR_USAGE" || -z "$EXTENSION_CALENDAR_USAGE" ]]; then
     echo "FAIL: Calendar full-access usage descriptions must be present in app and extension" >&2
+    exit 1
+fi
+readonly APP_TYPOGRAPHY_GROUP="$(/usr/libexec/PlistBuddy -c 'Print :WidgetThemeAppGroupIdentifier' "$APP_PATH/Contents/Info.plist")"
+readonly EXTENSION_TYPOGRAPHY_GROUP="$(/usr/libexec/PlistBuddy -c 'Print :WidgetThemeAppGroupIdentifier' "$EXTENSION_INFO")"
+if [[ "$APP_TYPOGRAPHY_GROUP" != "$EXTENSION_TYPOGRAPHY_GROUP" || "$APP_TYPOGRAPHY_GROUP" != *.com.joshuawyadao.desktop-widgets ]]; then
+    echo "FAIL: App and extension must expose the same team-prefixed typography App Group" >&2
     exit 1
 fi
 require_contains "$PROJECT_ROOT/DesktopWidgetsApp/DesktopWidgetsApp.entitlements" "com.apple.security.personal-information.calendars" "app Calendar sandbox entitlement"

@@ -2,6 +2,52 @@ import Foundation
 import XCTest
 
 final class WidgetContractTests: XCTestCase {
+    func testTypographyCatalogKeepsStableCuratedThemesAndOverrides() {
+        XCTAssertEqual(
+            WidgetTypographyTheme.allCases.map(\.rawValue),
+            ["system", "modern", "editorial", "technical", "playful", "handmade"]
+        )
+        XCTAssertEqual(WidgetTypographyOverride.options(for: .weather).first, .followGlobal)
+        XCTAssertFalse(WidgetTypographyOverride.options(for: .weather).contains(.widgetFonts))
+        XCTAssertTrue(WidgetTypographyOverride.options(for: .timeAndDate).contains(.widgetFonts))
+    }
+
+    func testTypographyStorePersistsGlobalThemeAndResolvesSafeOverrides() throws {
+        let suiteName = "com.joshuawyadao.DesktopWidgetsTests.typography.\(UUID().uuidString)"
+        let defaults = try XCTUnwrap(UserDefaults(suiteName: suiteName))
+        defer { defaults.removePersistentDomain(forName: suiteName) }
+        defaults.removePersistentDomain(forName: suiteName)
+        let store = WidgetTypographyStore(defaults: defaults)
+
+        XCTAssertEqual(store.globalTheme, .system)
+        XCTAssertEqual(store.resolution(for: .weather), .theme(.system))
+
+        store.globalTheme = .editorial
+        XCTAssertEqual(store.globalTheme, .editorial)
+        XCTAssertEqual(store.resolution(for: .battery), .theme(.editorial))
+
+        store.setOverride(.technical, for: .weather)
+        XCTAssertEqual(store.override(for: .weather), .technical)
+        XCTAssertEqual(store.resolution(for: .weather), .theme(.technical))
+
+        store.setOverride(.widgetFonts, for: .battery)
+        XCTAssertEqual(store.override(for: .battery), .followGlobal)
+        XCTAssertEqual(store.resolution(for: .battery), .theme(.editorial))
+
+        store.setOverride(.widgetFonts, for: .timeAndDate)
+        XCTAssertEqual(store.resolution(for: .timeAndDate), .widgetFonts)
+
+        defaults.set("unknown", forKey: WidgetTypographyStore.overrideKeyPrefix + WidgetTypographyTarget.calendar.rawValue)
+        XCTAssertEqual(store.override(for: .calendar), .followGlobal)
+        XCTAssertEqual(store.resolution(for: .calendar), .theme(.editorial))
+
+        store.reset()
+        XCTAssertEqual(store.globalTheme, .system)
+        XCTAssertTrue(WidgetTypographyTarget.allCases.allSatisfy {
+            store.override(for: $0) == .followGlobal
+        })
+    }
+
     func testEverySupportedFamilyMapsToOneSharedInformationDensity() {
         XCTAssertEqual(WidgetInformationDensity(family: .systemSmall), .compact)
         XCTAssertEqual(WidgetInformationDensity(family: .systemMedium), .standard)

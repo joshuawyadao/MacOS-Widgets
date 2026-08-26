@@ -70,6 +70,9 @@
 		A0000000000000000000003D /* WidgetRenderingSmokeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0000000000000000000002E /* WidgetRenderingSmokeTests.swift */; };
 		A0000000000000000000003E /* WidgetTheme.swift in Sources */ = {isa = PBXBuildFile; fileRef = F00000000000000000000009 /* WidgetTheme.swift */; };
 		A0000000000000000000003F /* CalendarWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = F00000000000000000000029 /* CalendarWidget.swift */; };
+		A00000000000000000000040 /* WidgetTypography.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0000000000000000000002F /* WidgetTypography.swift */; };
+		A00000000000000000000041 /* WidgetTypography.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0000000000000000000002F /* WidgetTypography.swift */; };
+		A00000000000000000000042 /* WidgetTypography.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0000000000000000000002F /* WidgetTypography.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -137,6 +140,8 @@
 		F0000000000000000000002C /* CalendarEvents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CalendarEvents.swift; sourceTree = "<group>"; };
 		F0000000000000000000002D /* CalendarPermissionController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CalendarPermissionController.swift; sourceTree = "<group>"; };
 		F0000000000000000000002E /* WidgetRenderingSmokeTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WidgetRenderingSmokeTests.swift; sourceTree = "<group>"; };
+		F0000000000000000000002F /* WidgetTypography.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WidgetTypography.swift; sourceTree = "<group>"; };
+		F00000000000000000000030 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		P00000000000000000000001 /* DesktopWidgets.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = DesktopWidgets.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		P00000000000000000000002 /* DesktopWidgetsExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = DesktopWidgetsExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		P00000000000000000000003 /* DesktopWidgetsTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = DesktopWidgetsTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -188,6 +193,7 @@
 				G00000000000000000000003 /* App */,
 				G00000000000000000000010 /* Models */,
 				G00000000000000000000004 /* Views */,
+				F00000000000000000000030 /* Info.plist */,
 				F00000000000000000000003 /* DesktopWidgetsApp.entitlements */,
 			);
 			path = DesktopWidgetsApp;
@@ -294,6 +300,7 @@
 			isa = PBXGroup;
 			children = (
 				F00000000000000000000009 /* WidgetTheme.swift */,
+				F0000000000000000000002F /* WidgetTypography.swift */,
 			);
 			path = Styling;
 			sourceTree = "<group>";
@@ -486,6 +493,7 @@
 				A00000000000000000000002 /* ContentView.swift in Sources */,
 				A00000000000000000000003 /* WidgetIdentifier.swift in Sources */,
 				A00000000000000000000004 /* WidgetTheme.swift in Sources */,
+				A00000000000000000000040 /* WidgetTypography.swift in Sources */,
 				A0000000000000000000000B /* WidgetStatus.swift in Sources */,
 				A00000000000000000000021 /* DesktopWidgetsURLRouter.swift in Sources */,
 				A00000000000000000000037 /* CalendarPermissionController.swift in Sources */,
@@ -518,6 +526,7 @@
 				A0000000000000000000001B /* WeatherPresentation.swift in Sources */,
 				A00000000000000000000008 /* WidgetIdentifier.swift in Sources */,
 				A00000000000000000000009 /* WidgetTheme.swift in Sources */,
+				A00000000000000000000041 /* WidgetTypography.swift in Sources */,
 				A0000000000000000000000A /* Calendar+WidgetTimeline.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -551,6 +560,7 @@
 				A00000000000000000000018 /* WidgetContractTests.swift in Sources */,
 				A0000000000000000000003D /* WidgetRenderingSmokeTests.swift in Sources */,
 				A0000000000000000000003E /* WidgetTheme.swift in Sources */,
+				A00000000000000000000042 /* WidgetTypography.swift in Sources */,
 				A00000000000000000000019 /* WidgetIdentifier.swift in Sources */,
 				A0000000000000000000001A /* Calendar+WidgetTimeline.swift in Sources */,
 				A0000000000000000000001C /* WeatherPresentation.swift in Sources */,
@@ -612,10 +622,8 @@
 				CURRENT_PROJECT_VERSION = 21;
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_PREVIEWS = YES;
-				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_KEY_CFBundleDisplayName = "Desktop Widgets";
-				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
-				INFOPLIST_KEY_NSCalendarsFullAccessUsageDescription = "Desktop Widgets reads event timing to show optional counts and dots. Event titles and notes are never displayed.";
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = DesktopWidgetsApp/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
@@ -634,10 +642,8 @@
 				CODE_SIGN_ENTITLEMENTS = DesktopWidgetsApp/DesktopWidgetsApp.entitlements;
 				CURRENT_PROJECT_VERSION = 21;
 				ENABLE_HARDENED_RUNTIME = YES;
-				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_KEY_CFBundleDisplayName = "Desktop Widgets";
-				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
-				INFOPLIST_KEY_NSCalendarsFullAccessUsageDescription = "Desktop Widgets reads event timing to show optional counts and dots. Event titles and notes are never displayed.";
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = DesktopWidgetsApp/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",

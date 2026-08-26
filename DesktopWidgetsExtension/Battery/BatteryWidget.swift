@@ -51,10 +51,16 @@ struct BatteryWidgetView: View {
 
     let entry: BatteryEntry
     private let familyOverride: WidgetFamily?
+    private let typographyOverride: WidgetTypographyResolution?
 
-    init(entry: BatteryEntry, family: WidgetFamily? = nil) {
+    init(
+        entry: BatteryEntry,
+        family: WidgetFamily? = nil,
+        typography: WidgetTypographyResolution? = nil
+    ) {
         self.entry = entry
         self.familyOverride = family
+        self.typographyOverride = typography
     }
 
     private var family: WidgetFamily {
@@ -76,6 +82,10 @@ struct BatteryWidgetView: View {
 
     private var detailSelection: BatteryDetailSelection {
         BatteryDetailSelection(configuration: entry.configuration, family: family)
+    }
+
+    private var typography: WidgetTypographyResolution {
+        typographyOverride ?? WidgetTypographyStore.live.resolution(for: .battery)
     }
 
     var body: some View {
@@ -158,7 +168,13 @@ struct BatteryWidgetView: View {
     private func heroText(compact: Bool) -> some View {
         VStack(alignment: .leading, spacing: compact ? 1 : 3) {
             Text(presentation.percentageText)
-                .font(.system(size: metrics.percentageFontSize, weight: .black, design: .rounded))
+                .font(
+                    typography.displayFont(
+                        size: metrics.percentageFontSize,
+                        weight: .black,
+                        fallback: .system(size: metrics.percentageFontSize, weight: .black, design: .rounded)
+                    )
+                )
                 .monospacedDigit()
                 .lineLimit(1)
                 .minimumScaleFactor(0.68)

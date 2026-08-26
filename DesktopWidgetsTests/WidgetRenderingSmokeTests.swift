@@ -11,7 +11,8 @@ final class WidgetRenderingSmokeTests: XCTestCase {
         try assertRenders(
             TimeAndDateWidgetView(
                 entry: TimeAndDateEntry(date: .now, configuration: reference),
-                family: .systemSmall
+                family: .systemSmall,
+                typography: .widgetFonts
             ),
             family: .systemSmall,
             name: "Time & Date Small 12-hour"
@@ -24,7 +25,8 @@ final class WidgetRenderingSmokeTests: XCTestCase {
         try assertRenders(
             TimeAndDateWidgetView(
                 entry: TimeAndDateEntry(date: .now, configuration: inline24Hour),
-                family: .systemMedium
+                family: .systemMedium,
+                typography: .widgetFonts
             ),
             family: .systemMedium,
             name: "Time & Date Medium ISO 24-hour"
@@ -35,7 +37,8 @@ final class WidgetRenderingSmokeTests: XCTestCase {
         try assertRenders(
             TimeAndDateWidgetView(
                 entry: TimeAndDateEntry(date: .now, configuration: centered),
-                family: .systemLarge
+                family: .systemLarge,
+                typography: .widgetFonts
             ),
             family: .systemLarge,
             name: "Time & Date Large centered"
@@ -159,6 +162,66 @@ final class WidgetRenderingSmokeTests: XCTestCase {
             family: .systemSmall,
             name: "Calendar Small permission required"
         )
+    }
+
+    func testEveryTypographyThemeRendersAcrossAllFourWidgets() throws {
+        let referenceDate = CalendarProvider.referenceDate
+        let weather = WeatherSnapshot.sample(now: referenceDate)
+        let calendarEntry = CalendarEntry(
+            date: referenceDate,
+            configuration: .referencePreview(showEvents: false),
+            monthOffset: 0,
+            events: .disabled
+        )
+
+        for theme in WidgetTypographyTheme.allCases {
+            let typography = WidgetTypographyResolution.theme(theme)
+            try assertRenders(
+                TimeAndDateWidgetView(
+                    entry: TimeAndDateEntry(date: referenceDate, configuration: .referencePreview()),
+                    family: .systemSmall,
+                    typography: typography
+                ),
+                family: .systemSmall,
+                name: "Time & Date \(theme.rawValue) typography"
+            )
+            try assertRenders(
+                WeatherWidgetView(
+                    entry: WeatherEntry(
+                        date: referenceDate,
+                        configuration: .referencePreview(),
+                        snapshot: weather,
+                        state: .loaded
+                    ),
+                    family: .systemSmall,
+                    typography: typography
+                ),
+                family: .systemSmall,
+                name: "Weather \(theme.rawValue) typography"
+            )
+            try assertRenders(
+                BatteryWidgetView(
+                    entry: BatteryEntry(
+                        date: referenceDate,
+                        configuration: .referencePreview(),
+                        snapshot: .sample
+                    ),
+                    family: .systemSmall,
+                    typography: typography
+                ),
+                family: .systemSmall,
+                name: "Battery \(theme.rawValue) typography"
+            )
+            try assertRenders(
+                CalendarWidgetView(
+                    entry: calendarEntry,
+                    family: .systemSmall,
+                    typography: typography
+                ),
+                family: .systemSmall,
+                name: "Calendar \(theme.rawValue) typography"
+            )
+        }
     }
 
     private func assertRenders<Content: View>(
