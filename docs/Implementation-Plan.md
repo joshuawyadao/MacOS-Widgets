@@ -1,21 +1,19 @@
 # Plan
 
-Replace the companion app's single long page with a native macOS sidebar that organizes setup, appearance, widget-specific guidance, permissions, privacy, and help around the task the user is trying to complete. Keep shared controllers above the navigation switch so Calendar state and unapplied appearance previews remain intact while moving between pages.
+Reduce the companion app's change surface before merging by separating navigation, appearance editing, widget guidance, help/privacy content, and reusable UI components into focused Swift files. Preserve the existing user experience and keep the shared typography draft and Calendar permission state owned by the root view so navigation behavior does not change.
 
 ## Scope
-- In: Sidebar navigation, Home dashboard, dedicated Appearance and widget pages, consolidated Help & Privacy content, navigation-state tests, accessibility labels, window sizing, and app-flow documentation.
-- Out: Changes to widget rendering, configuration schemas, refresh schedules, App Group storage, or unsupported attempts to open or inspect the macOS widget gallery programmatically.
+- In: Companion-app SwiftUI file organization, typography-controller placement, Xcode project references, existing navigation/accessibility behavior, review-history recording, and full repository verification.
+- Out: New user-facing features, widget rendering or configuration changes, installation-flow work, signing changes, and changes to the existing navigation information architecture.
 
 ## Action items
-[x] Add a stable, testable companion-app destination model grouped into Overview, Customize, Widgets, and Support.
-[x] Replace `ContentView`'s single scroll view with `NavigationSplitView` and keep typography and Calendar controllers at the root so state survives page changes.
-[x] Build a focused Home page with clickable widget cards, short setup steps, and clear paths to Appearance and Calendar permission help.
-[x] Move appearance controls to a dedicated page and preserve pending-change indication, Apply Theme, Revert, and System Style behavior across navigation.
-[x] Give Time & Date, Weather, Battery, and Calendar dedicated pages with relevant editing guidance and only their domain-specific tips or permissions.
-[x] Consolidate privacy, data-source, glass-background, and troubleshooting guidance under Help & Privacy using plain language and accessible controls.
-[x] Add navigation contract tests and update `README.md` plus `docs/Widget-Design-System.md` with the companion-app information architecture.
-[x] Run targeted contract tests, the complete `Scripts/verify-widgets.sh` gate, a signed Debug build, and a final scope/accessibility review.
-[x] Commit and push the verified navigation redesign on the current feature branch.
+[x] Extract `WidgetTypographyController` from `ContentView.swift` into a focused app model without changing its draft/apply semantics.
+[x] Split Home, Appearance, widget guidance, and Help & Privacy page content into focused companion-app view files while keeping root navigation state in `ContentView`.
+[x] Move reusable companion-app cards and permission controls into a shared components file with the same accessibility labels and actions.
+[x] Add the extracted Swift files to the Desktop Widgets app target and verify no widget-extension or test-target membership changes are introduced.
+[x] Confirm the refactor preserves destination ordering, pending appearance state, Calendar permission ownership, and all existing user-facing copy.
+[x] Record the Brooks review result and run `git diff --check`, the complete `Scripts/verify-widgets.sh` gate, and GitHub CI before saving the review fix.
+[x] Commit and push the scoped maintainability fix to the current PR branch, then re-check Codex feedback, CI, and mergeability.
 
 ## Open questions
 - None.
