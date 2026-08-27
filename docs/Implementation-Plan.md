@@ -1,18 +1,17 @@
 # Plan
 
-Fix the reproduced blank-today marker by making its treatment explicit for WidgetKit rendering modes: a composited filled marker in full color and a high-contrast outlined marker in vibrant/accented appearances. Lock the mode decision down in tests, validate the supplied screenshot symptom at pixel level, and refresh the signed local widget.
+Address the three actionable Codex review findings with narrow behavior fixes and regression tests, saving each feedback item as an independent commit before rechecking the full PR. Preserve existing widget identities, configuration schemas, and refresh budgets except where an earlier event boundary requires a more accurate Calendar update.
 
 ## Scope
-- In: Today-marker rendering-mode behavior in Week/Month, event-dot contrast within that marker, regression coverage, Calendar documentation, build number, live runtime verification, commit, and push.
-- Out: Calendar data/configuration, non-today cells, Day view, navigation, and unrelated widgets.
+- In: Current-hour UV selection, Calendar next-event boundary scheduling, Battery health normalization, focused regression tests, per-comment commits and acknowledgements, and final PR verification.
+- Out: New widget options, unrelated presentation changes, installation work, signing changes, and broader data-source refactors.
 
 ## Action items
-[x] Preserve the supplied screenshot as a deterministic pixel-level failing signal for a blank today circle.
-[x] Add a testable today-marker style contract that selects filled treatment only in full color and outlined treatment in vibrant/accented modes.
-[x] Refactor the shared Week/Month marker to composite filled content and keep numeral/dots visible in every rendering mode.
-[x] Update Calendar appearance guidance and increment the development build.
-[x] Run targeted Calendar tests, the screenshot/render regression, and `./Scripts/verify-widgets.sh`.
-[x] Build/register the signed extension, verify the live marker, review the diff, mark the plan complete, commit, and push `codex/feature/calendar-widget`.
+[x] Match Weather current UV to the hourly interval containing `current.time`, add a non-hour-aligned fixture regression, run the Weather suite, commit/push the fix, and acknowledge the review comment.
+[x] Carry a next event's end boundary through the private Calendar timing model, refresh at an earlier start/end boundary, add timeline regressions, run the Calendar suite, commit/push the fix, and acknowledge the review comment.
+[x] Treat normalized Battery `MaxCapacity` as an already-computed percentage while calculating ratios only from raw compatible capacity, add parser regressions, run the Battery suite, commit/push the fix, and acknowledge the review comment.
+[x] Run `git diff --check` and the complete `Scripts/verify-widgets.sh` gate after all three fixes.
+[x] Recheck Codex threads, CI Verify, merge conflicts, and GitHub mergeability; leave PR #8 open and merge-ready.
 
 ## Open questions
 - None.

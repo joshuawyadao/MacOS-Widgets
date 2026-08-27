@@ -51,10 +51,19 @@ struct BatteryWidgetView: View {
 
     let entry: BatteryEntry
     private let familyOverride: WidgetFamily?
+    private let typographyOverride: WidgetTypographyResolution?
+    private let coverageOverride: WidgetTypographyCoverage?
 
-    init(entry: BatteryEntry, family: WidgetFamily? = nil) {
+    init(
+        entry: BatteryEntry,
+        family: WidgetFamily? = nil,
+        typography: WidgetTypographyResolution? = nil,
+        coverage: WidgetTypographyCoverage? = nil
+    ) {
         self.entry = entry
         self.familyOverride = family
+        self.typographyOverride = typography
+        self.coverageOverride = coverage
     }
 
     private var family: WidgetFamily {
@@ -78,6 +87,14 @@ struct BatteryWidgetView: View {
         BatteryDetailSelection(configuration: entry.configuration, family: family)
     }
 
+    private var typography: WidgetTypographyStyle {
+        let stored = WidgetTypographyStore.live.style(for: .battery)
+        return WidgetTypographyStyle(
+            resolution: typographyOverride ?? stored.resolution,
+            coverage: coverageOverride ?? stored.coverage
+        )
+    }
+
     var body: some View {
         Group {
             if !metrics.showsExpandedDetails {
@@ -89,22 +106,16 @@ struct BatteryWidgetView: View {
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .foregroundStyle(renderingMode == .fullColor ? Color.white : Color.primary)
-        .shadow(
-            color: renderingMode == .fullColor ? .black.opacity(0.5) : .clear,
-            radius: 1.5,
-            x: 0,
-            y: 1
-        )
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel(presentation.accessibilityLabel)
-        .containerBackground(for: .widget) {
-            Color.clear
-        }
+        .accessibilityLabel(
+            ([presentation.accessibilityLabel] + detailItems.map { "\($0.title), \($0.value)" })
+                .joined(separator: ", ")
+        )
+        .widgetSurface(renderingMode: renderingMode)
     }
 
     private var compactLayout: some View {
-        HStack(spacing: metrics.contentSpacing) {
+        HStack(spacing: typography.horizontalSpacing(metrics.contentSpacing)) {
             heroText(compact: true)
                 .frame(maxWidth: .infinity, alignment: .leading)
 
@@ -113,7 +124,7 @@ struct BatteryWidgetView: View {
     }
 
     private var mediumLayout: some View {
-        HStack(spacing: metrics.contentSpacing) {
+        HStack(spacing: typography.horizontalSpacing(metrics.contentSpacing)) {
             heroText(compact: false)
                 .frame(minWidth: 78, alignment: .leading)
 
@@ -124,7 +135,7 @@ struct BatteryWidgetView: View {
                     .overlay(Color.primary.opacity(0.35))
                     .frame(height: 76)
 
-                VStack(alignment: .leading, spacing: 12) {
+                VStack(alignment: .leading, spacing: typography.verticalSpacing(12)) {
                     ForEach(detailItems) { item in
                         detailRow(item)
                     }
@@ -135,11 +146,11 @@ struct BatteryWidgetView: View {
     }
 
     private var largeLayout: some View {
-        VStack(spacing: 16) {
-            HStack(spacing: metrics.contentSpacing) {
+        VStack(spacing: typography.verticalSpacing(16)) {
+            HStack(spacing: typography.horizontalSpacing(metrics.contentSpacing)) {
                 heroText(compact: false)
 
-                Spacer(minLength: 12)
+                Spacer(minLength: typography.horizontalSpacing(12))
 
                 gauge
             }
@@ -151,10 +162,10 @@ struct BatteryWidgetView: View {
 
                 LazyVGrid(
                     columns: [
-                        GridItem(.flexible(), spacing: 10),
-                        GridItem(.flexible(), spacing: 10),
+                        GridItem(.flexible(), spacing: typography.horizontalSpacing(10)),
+                        GridItem(.flexible(), spacing: typography.horizontalSpacing(10)),
                     ],
-                    spacing: 10
+                    spacing: typography.verticalSpacing(10)
                 ) {
                     ForEach(detailItems) { item in
                         detailCard(item)
@@ -165,17 +176,36 @@ struct BatteryWidgetView: View {
     }
 
     private func heroText(compact: Bool) -> some View {
-        VStack(alignment: .leading, spacing: compact ? 1 : 3) {
+        VStack(
+            alignment: .leading,
+            spacing: typography.verticalSpacing(compact ? 1 : 3)
+        ) {
             Text(presentation.percentageText)
-                .font(.system(size: metrics.percentageFontSize, weight: .black, design: .rounded))
+                .font(
+                    typography.displayFont(
+                        size: metrics.percentageFontSize,
+                        weight: .black,
+                        fallback: .system(size: metrics.percentageFontSize, weight: .black, design: .rounded)
+                    )
+                )
                 .monospacedDigit()
                 .lineLimit(1)
-                .minimumScaleFactor(0.68)
+                .minimumScaleFactor(typography.displayMinimumScaleFactor(0.68))
+                .padding(.vertical, typography.displayTextVerticalPadding)
 
             Text(compact ? presentation.compactStatusText : presentation.statusText)
-                .font(.system(size: metrics.statusFontSize, weight: .medium, design: .rounded))
+                .font(
+                    typography.supportingFont(
+                        size: metrics.statusFontSize,
+                        weight: .medium,
+                        fallback: .system(size: metrics.statusFontSize, weight: .medium, design: .rounded)
+                    )
+                )
                 .lineLimit(1)
-                .minimumScaleFactor(compact ? 0.55 : 0.7)
+                .minimumScaleFactor(
+                    typography.supportingMinimumScaleFactor(compact ? 0.55 : 0.7)
+                )
+                .padding(.vertical, typography.supportingTextVerticalPadding)
         }
         .layoutPriority(1)
     }
@@ -200,44 +230,87 @@ struct BatteryWidgetView: View {
                 BatteryDetailItem(title: "Estimate", value: presentation.estimateDetailText, symbol: "timer")
             case .updated:
                 BatteryDetailItem(title: "Updated", value: presentation.updatedText, symbol: "clock")
+            case .health:
+                BatteryDetailItem(title: "Health", value: presentation.healthText, symbol: "heart.text.square")
+            case .cycles:
+                BatteryDetailItem(
+                    title: "Cycles",
+                    value: presentation.cycleCountText,
+                    symbol: "arrow.triangle.2.circlepath"
+                )
             }
         }
     }
 
     private func detailRow(_ item: BatteryDetailItem) -> some View {
-        HStack(alignment: .firstTextBaseline, spacing: 6) {
+        HStack(alignment: .firstTextBaseline, spacing: typography.horizontalSpacing(6)) {
             Image(systemName: item.symbol)
                 .font(.system(size: 10, weight: .semibold))
                 .frame(width: 12)
 
-            VStack(alignment: .leading, spacing: 0) {
+            VStack(alignment: .leading, spacing: typography.verticalSpacing(0)) {
                 Text(item.title.uppercased())
-                    .font(.system(size: 8, weight: .bold, design: .rounded))
-                    .opacity(0.72)
+                    .font(
+                        typography.supportingFont(
+                            size: 8,
+                            weight: .bold,
+                            fallback: .system(size: 8, weight: .bold, design: .rounded)
+                        )
+                    )
+                    .lineLimit(1)
+                    .minimumScaleFactor(typography.supportingMinimumScaleFactor(0.65))
+                    .padding(.vertical, typography.supportingTextVerticalPadding)
+                    .opacity(WidgetTheme.secondaryOpacity)
 
                 Text(item.value)
-                    .font(.system(size: 11, weight: .semibold, design: .rounded))
+                    .font(
+                        typography.supportingFont(
+                            size: 11,
+                            weight: .semibold,
+                            fallback: .system(size: 11, weight: .semibold, design: .rounded)
+                        )
+                    )
                     .lineLimit(1)
-                    .minimumScaleFactor(0.7)
+                    .minimumScaleFactor(typography.supportingMinimumScaleFactor(0.7))
+                    .padding(.vertical, typography.supportingTextVerticalPadding)
             }
         }
     }
 
     private func detailCard(_ item: BatteryDetailItem) -> some View {
-        VStack(alignment: .leading, spacing: 5) {
+        VStack(alignment: .leading, spacing: typography.verticalSpacing(5)) {
             Label(item.title.uppercased(), systemImage: item.symbol)
-                .font(.system(size: 10, weight: .bold, design: .rounded))
-                .opacity(0.72)
+                .font(
+                    typography.supportingFont(
+                        size: 10,
+                        weight: .bold,
+                        fallback: .system(size: 10, weight: .bold, design: .rounded)
+                    )
+                )
+                .lineLimit(1)
+                .minimumScaleFactor(typography.supportingMinimumScaleFactor(0.65))
+                .padding(.vertical, typography.supportingTextVerticalPadding)
+                .opacity(WidgetTheme.secondaryOpacity)
 
             Text(item.value)
-                .font(.system(size: 15, weight: .bold, design: .rounded))
+                .font(
+                    typography.supportingFont(
+                        size: 15,
+                        weight: .bold,
+                        fallback: .system(size: 15, weight: .bold, design: .rounded)
+                    )
+                )
                 .lineLimit(1)
-                .minimumScaleFactor(0.7)
+                .minimumScaleFactor(typography.supportingMinimumScaleFactor(0.7))
+                .padding(.vertical, typography.supportingTextVerticalPadding)
         }
         .frame(maxWidth: .infinity, minHeight: 48, alignment: .leading)
         .padding(.horizontal, 12)
-        .padding(.vertical, 9)
-        .background(Color.primary.opacity(0.10), in: RoundedRectangle(cornerRadius: 12))
+        .padding(.vertical, typography.verticalSpacing(9))
+        .background(
+            Color.primary.opacity(WidgetTheme.detailCardOpacity),
+            in: RoundedRectangle(cornerRadius: WidgetTheme.detailCardCornerRadius)
+        )
     }
 }
 
@@ -304,7 +377,7 @@ struct BatteryWidget: Widget {
             BatteryWidgetView(entry: entry)
         }
         .configurationDisplayName("Battery")
-        .description("Battery percentage, current power state, and macOS time estimate at a glance.")
+        .description("Battery status with optional health and cycle details.")
         .supportedFamilies([.systemSmall, .systemMedium, .systemLarge])
         .containerBackgroundRemovable(true)
     }

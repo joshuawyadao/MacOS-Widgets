@@ -9,6 +9,8 @@ struct BatteryWidgetPresentation: Equatable {
     let stateDetailText: String
     let estimateDetailText: String
     let updatedText: String
+    let healthText: String
+    let cycleCountText: String
     let fillFraction: Double
     let accessibilityLabel: String
     let showsBattery: Bool
@@ -27,6 +29,8 @@ struct BatteryWidgetPresentation: Equatable {
             stateDetailText = "No Battery"
             estimateDetailText = "Unavailable"
             updatedText = Self.updatedText(updatedAt, locale: locale, timeZone: timeZone)
+            healthText = "Unavailable"
+            cycleCountText = "Unavailable"
             fillFraction = 0
             accessibilityLabel = "No internal battery detected"
             showsBattery = false
@@ -40,6 +44,8 @@ struct BatteryWidgetPresentation: Equatable {
         stateDetailText = Self.stateDetailText(for: snapshot)
         estimateDetailText = Self.estimateDetailText(for: snapshot)
         updatedText = Self.updatedText(updatedAt, locale: locale, timeZone: timeZone)
+        healthText = snapshot.healthPercentage.map { "\($0)% capacity" } ?? "Unavailable"
+        cycleCountText = snapshot.cycleCount.map { "\($0) cycles" } ?? "Unavailable"
         fillFraction = min(max(Double(snapshot.percentage) / 100, 0), 1)
         accessibilityLabel = Self.accessibilityLabel(for: snapshot)
         showsBattery = true
@@ -178,8 +184,8 @@ struct BatteryWidgetLayoutMetrics: Equatable {
     let usesDetailGrid: Bool
 
     init(family: WidgetFamily) {
-        switch family {
-        case .systemSmall:
+        switch WidgetInformationDensity(family: family) {
+        case .compact:
             percentageFontSize = 26
             statusFontSize = 14
             iconWidth = 38
@@ -187,7 +193,7 @@ struct BatteryWidgetLayoutMetrics: Equatable {
             contentSpacing = 10
             showsExpandedDetails = false
             usesDetailGrid = false
-        case .systemLarge:
+        case .expanded:
             percentageFontSize = 50
             statusFontSize = 24
             iconWidth = 72
@@ -195,7 +201,7 @@ struct BatteryWidgetLayoutMetrics: Equatable {
             contentSpacing = 28
             showsExpandedDetails = true
             usesDetailGrid = true
-        default:
+        case .standard:
             percentageFontSize = 34
             statusFontSize = 17
             iconWidth = 48

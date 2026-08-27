@@ -32,15 +32,25 @@ struct TimeAndDateProvider: AppIntentTimelineProvider {
 
 struct TimeAndDateWidgetView: View {
     @Environment(\.widgetFamily) private var environmentFamily
+    @Environment(\.widgetRenderingMode) private var renderingMode
     @Environment(\.locale) private var locale
     @Environment(\.timeZone) private var timeZone
 
     let entry: TimeAndDateEntry
     private let familyOverride: WidgetFamily?
+    private let typographyOverride: WidgetTypographyResolution?
+    private let coverageOverride: WidgetTypographyCoverage?
 
-    init(entry: TimeAndDateEntry, family: WidgetFamily? = nil) {
+    init(
+        entry: TimeAndDateEntry,
+        family: WidgetFamily? = nil,
+        typography: WidgetTypographyResolution? = nil,
+        coverage: WidgetTypographyCoverage? = nil
+    ) {
         self.entry = entry
         self.familyOverride = family
+        self.typographyOverride = typography
+        self.coverageOverride = coverage
     }
 
     private var family: WidgetFamily {
@@ -61,49 +71,76 @@ struct TimeAndDateWidgetView: View {
         )
     }
 
+    private var typography: WidgetTypographyStyle {
+        let stored = WidgetTypographyStore.live.style(for: .timeAndDate)
+        return WidgetTypographyStyle(
+            resolution: typographyOverride ?? stored.resolution,
+            coverage: coverageOverride ?? stored.coverage
+        )
+    }
+
     var body: some View {
-        Group {
-            switch presentation.arrangement {
-            case .classicWide:
-                referenceLayout
-            case .verticalDateFirst:
-                stackedLayout
-            case .verticalTimeFirst:
-                timeFirstLayout
-            case .centeredDateFirst:
-                centeredLayout
-            case .horizontalDateFirst:
-                inlineLayout
+        VStack(alignment: .leading, spacing: typography.verticalSpacing(3)) {
+            Group {
+                switch presentation.arrangement {
+                case .classicWide:
+                    referenceLayout
+                case .verticalDateFirst:
+                    stackedLayout
+                case .verticalTimeFirst:
+                    timeFirstLayout
+                case .centeredDateFirst:
+                    centeredLayout
+                case .horizontalDateFirst:
+                    inlineLayout
+                }
+            }
+            .frame(maxHeight: .infinity)
+
+            if let secondaryClockText = presentation.secondaryClockText {
+                Text(secondaryClockText)
+                    .font(
+                        typography.displayFont(
+                            size: metrics.secondaryClockSize,
+                            weight: .semibold,
+                            fallback: .system(
+                                size: metrics.secondaryClockSize,
+                                weight: .semibold,
+                                design: .rounded
+                            )
+                        )
+                    )
+                    .lineLimit(1)
+                    .minimumScaleFactor(typography.displayMinimumScaleFactor(0.62))
+                    .padding(.vertical, typography.displayTextVerticalPadding)
+                    .frame(maxWidth: .infinity, alignment: .trailing)
             }
         }
-        .foregroundStyle(.white)
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(presentation.accessibilityLabel)
-        .containerBackground(for: .widget) {
-            Color.clear
-        }
+        .widgetSurface(renderingMode: renderingMode)
     }
 
     private var referenceLayout: some View {
-        VStack(alignment: .leading, spacing: metrics.spacing) {
+        VStack(alignment: .leading, spacing: typography.verticalSpacing(metrics.spacing)) {
             dateLabel
             Spacer(minLength: 0)
 
-            HStack(alignment: .top, spacing: 12) {
+            HStack(alignment: .top, spacing: typography.horizontalSpacing(12)) {
                 timeLabel
 
-                Spacer(minLength: 8)
+                Spacer(minLength: typography.horizontalSpacing(8))
 
                 if let periodText = presentation.periodText {
                     periodLabel(periodText)
-                        .padding(.top, metrics.referencePeriodInset)
+                        .padding(.top, typography.verticalSpacing(metrics.referencePeriodInset))
                 }
             }
         }
     }
 
     private var stackedLayout: some View {
-        VStack(alignment: .leading, spacing: metrics.spacing) {
+        VStack(alignment: .leading, spacing: typography.verticalSpacing(metrics.spacing)) {
             dateLabel
             Spacer(minLength: 0)
             compactTimeLabel
@@ -111,7 +148,7 @@ struct TimeAndDateWidgetView: View {
     }
 
     private var timeFirstLayout: some View {
-        VStack(alignment: .leading, spacing: metrics.spacing) {
+        VStack(alignment: .leading, spacing: typography.verticalSpacing(metrics.spacing)) {
             compactTimeLabel
             Spacer(minLength: 0)
             dateLabel
@@ -119,7 +156,7 @@ struct TimeAndDateWidgetView: View {
     }
 
     private var centeredLayout: some View {
-        VStack(alignment: .center, spacing: metrics.spacing) {
+        VStack(alignment: .center, spacing: typography.verticalSpacing(metrics.spacing)) {
             dateLabel
                 .multilineTextAlignment(.center)
             Spacer(minLength: 0)
@@ -129,7 +166,7 @@ struct TimeAndDateWidgetView: View {
     }
 
     private var inlineLayout: some View {
-        HStack(alignment: .center, spacing: metrics.inlineSpacing) {
+        HStack(alignment: .center, spacing: typography.horizontalSpacing(metrics.inlineSpacing)) {
             dateLabel
                 .frame(maxWidth: .infinity, alignment: .leading)
 
@@ -140,23 +177,39 @@ struct TimeAndDateWidgetView: View {
 
     private var dateLabel: some View {
         Text(presentation.dateText)
-            .font(entry.configuration.resolvedDateFont.font(size: metrics.dateSize, role: .date))
-            .fontWeight(entry.configuration.resolvedDateFont == .systemBold ? .black : nil)
+            .font(
+                typography.displayFont(
+                    size: metrics.dateSize,
+                    weight: .black,
+                    fallback: entry.configuration.resolvedDateFont.font(size: metrics.dateSize, role: .date)
+                )
+            )
             .tracking(metrics.dateTracking)
             .lineLimit(1)
-            .minimumScaleFactor(0.55)
+            .minimumScaleFactor(typography.displayMinimumScaleFactor(0.55))
+            .padding(.vertical, typography.displayTextVerticalPadding)
     }
 
     private var timeLabel: some View {
         Text(presentation.timeText)
-            .font(entry.configuration.resolvedTimeFont.font(size: metrics.timeSize, role: .time))
+            .font(
+                typography.displayFont(
+                    size: metrics.timeSize,
+                    weight: .bold,
+                    fallback: entry.configuration.resolvedTimeFont.font(size: metrics.timeSize, role: .time)
+                )
+            )
             .lineLimit(1)
-            .minimumScaleFactor(0.55)
+            .minimumScaleFactor(typography.displayMinimumScaleFactor(0.55))
+            .padding(.vertical, typography.displayTextVerticalPadding)
             .layoutPriority(1)
     }
 
     private var compactTimeLabel: some View {
-        HStack(alignment: .firstTextBaseline, spacing: metrics.periodSpacing) {
+        HStack(
+            alignment: .firstTextBaseline,
+            spacing: typography.horizontalSpacing(metrics.periodSpacing)
+        ) {
             timeLabel
 
             if let periodText = presentation.periodText {
@@ -168,9 +221,16 @@ struct TimeAndDateWidgetView: View {
 
     private func periodLabel(_ text: String) -> some View {
         Text(text)
-            .font(entry.configuration.resolvedTimeFont.font(size: metrics.periodSize, role: .time))
+            .font(
+                typography.displayFont(
+                    size: metrics.periodSize,
+                    weight: .semibold,
+                    fallback: entry.configuration.resolvedTimeFont.font(size: metrics.periodSize, role: .time)
+                )
+            )
             .lineLimit(1)
-            .minimumScaleFactor(0.7)
+            .minimumScaleFactor(typography.displayMinimumScaleFactor(0.7))
+            .padding(.vertical, typography.displayTextVerticalPadding)
     }
 }
 
@@ -178,6 +238,7 @@ private struct TimeAndDateMetrics {
     let dateSize: CGFloat
     let timeSize: CGFloat
     let periodSize: CGFloat
+    let secondaryClockSize: CGFloat
     let dateTracking: CGFloat
     let spacing: CGFloat
     let periodSpacing: CGFloat
@@ -185,29 +246,32 @@ private struct TimeAndDateMetrics {
     let referencePeriodInset: CGFloat
 
     init(family: WidgetFamily) {
-        switch family {
-        case .systemSmall:
+        switch WidgetInformationDensity(family: family) {
+        case .compact:
             dateSize = 18
             timeSize = 50
             periodSize = 18
+            secondaryClockSize = 10
             dateTracking = 0.4
             spacing = 6
             periodSpacing = 6
             inlineSpacing = 8
             referencePeriodInset = 8
-        case .systemLarge:
+        case .expanded:
             dateSize = 32
             timeSize = 100
             periodSize = 42
+            secondaryClockSize = 16
             dateTracking = 1.2
             spacing = 14
             periodSpacing = 12
             inlineSpacing = 28
             referencePeriodInset = 18
-        default:
+        case .standard:
             dateSize = 26
             timeSize = 76
             periodSize = 34
+            secondaryClockSize = 13
             dateTracking = 0.9
             spacing = 10
             periodSpacing = 10
@@ -229,7 +293,7 @@ struct TimeAndDateWidget: Widget {
             TimeAndDateWidgetView(entry: entry)
         }
         .configurationDisplayName("Time & Date")
-        .description("A customizable date and clock with your choice of layout, formats, and fonts.")
+        .description("A customizable date and clock with optional secondary time zone.")
         .supportedFamilies([.systemSmall, .systemMedium, .systemLarge])
         .containerBackgroundRemovable(true)
     }

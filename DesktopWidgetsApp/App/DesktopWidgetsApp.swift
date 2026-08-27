@@ -13,6 +13,6 @@ struct DesktopWidgetsApp: App {
                     NSWorkspace.shared.open(externalURL)
                 }
         }
-        .defaultSize(width: 760, height: 680)
+        .defaultSize(width: 980, height: 720)
     }
 }

@@ -70,9 +70,13 @@ enum WeatherResolvedUnit: String, Codable, Sendable {
 enum WeatherDetail: String, CaseIterable, Hashable, Sendable {
     case temperature
     case condition
+    case apparentTemperature
     case humidity
     case precipitation
     case wind
+    case uvIndex
+    case sunrise
+    case sunset
 }
 
 enum WeatherDetailPreset: String, CaseIterable, Hashable, Sendable, WeatherStringOption {
@@ -80,6 +84,8 @@ enum WeatherDetailPreset: String, CaseIterable, Hashable, Sendable, WeatherStrin
     case simple
     case rain
     case comfort
+    case sun
+    case outdoor
     case detailed
     case full
 
@@ -88,9 +94,11 @@ enum WeatherDetailPreset: String, CaseIterable, Hashable, Sendable, WeatherStrin
         case .minimal: "Minimal — Temperature"
         case .simple: "Simple — Temperature + Condition"
         case .rain: "Rain — Temperature + Rain chance"
-        case .comfort: "Comfort — Temperature + Humidity"
-        case .detailed: "Detailed — 3 details · Large or Medium Day"
-        case .full: "Full — All 5 details · Large Day"
+        case .comfort: "Comfort — Feels like + Humidity"
+        case .sun: "Sun — Sunrise + Sunset + UV"
+        case .outdoor: "Outdoor — Rain + Wind + UV"
+        case .detailed: "Detailed — Conditions + Comfort"
+        case .full: "Full — All 9 available details"
         }
     }
 
@@ -103,9 +111,13 @@ enum WeatherDetailPreset: String, CaseIterable, Hashable, Sendable, WeatherStrin
         case .rain:
             [.temperature, .precipitation]
         case .comfort:
-            [.temperature, .humidity]
+            [.temperature, .apparentTemperature, .humidity]
+        case .sun:
+            [.temperature, .sunrise, .sunset, .uvIndex]
+        case .outdoor:
+            [.temperature, .precipitation, .wind, .uvIndex]
         case .detailed:
-            [.temperature, .condition, .humidity]
+            [.temperature, .condition, .apparentTemperature, .humidity]
         case .full:
             WeatherDetail.allCases
         }
@@ -115,7 +127,7 @@ enum WeatherDetailPreset: String, CaseIterable, Hashable, Sendable, WeatherStrin
 enum WeatherDetailLimits {
     static let small = 2
     static let medium = 3
-    static let large = 5
+    static let large = 6
 
     static func limited(_ details: [WeatherDetail], maximum: Int) -> [WeatherDetail] {
         var seen = Set<WeatherDetail.RawValue>()

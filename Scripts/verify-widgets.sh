@@ -43,6 +43,7 @@ readonly PROJECT_PATH="$PROJECT_ROOT/DesktopWidgets.xcodeproj"
 readonly SCHEME="DesktopWidgets"
 readonly SHARED_SCHEME="$PROJECT_PATH/xcshareddata/xcschemes/DesktopWidgets.xcscheme"
 readonly RUNTIME_REFRESH_SCRIPT="$PROJECT_ROOT/Scripts/refresh-widget-runtime.sh"
+readonly RUNTIME_REFRESH_TEST="$PROJECT_ROOT/Scripts/test-refresh-widget-runtime.sh"
 readonly PERSONAL_TEAM_SCRIPT="$PROJECT_ROOT/Scripts/configure-personal-team.sh"
 readonly SIGNING_CONFIGURATION="$PROJECT_ROOT/Config/Signing.xcconfig"
 SELECTED_DEVELOPER_DIR="$(resolve_developer_dir)"
@@ -91,6 +92,13 @@ if [[ ! -x "$RUNTIME_REFRESH_SCRIPT" ]]; then
 fi
 DEVELOPER_DIR="$SELECTED_DEVELOPER_DIR" /bin/bash -n "$RUNTIME_REFRESH_SCRIPT"
 require_contains "$SHARED_SCHEME" "refresh-widget-runtime.sh" "Xcode Run widget runtime refresh action"
+require_file "$RUNTIME_REFRESH_TEST" "widget runtime refresh regression test"
+if [[ ! -x "$RUNTIME_REFRESH_TEST" ]]; then
+    echo "FAIL: Widget runtime refresh regression test is not executable" >&2
+    exit 1
+fi
+/bin/bash -n "$RUNTIME_REFRESH_TEST"
+"$RUNTIME_REFRESH_TEST"
 
 require_file "$PERSONAL_TEAM_SCRIPT" "Personal Team setup script"
 if [[ ! -x "$PERSONAL_TEAM_SCRIPT" ]]; then
@@ -102,6 +110,11 @@ require_file "$SIGNING_CONFIGURATION" "shared signing configuration"
 require_contains "$SIGNING_CONFIGURATION" "#include? \"../Local.xcconfig\"" "optional local signing include"
 require_contains "$SIGNING_CONFIGURATION" "CODE_SIGN_STYLE = Automatic" "automatic signing policy"
 require_contains "$SIGNING_CONFIGURATION" 'DEVELOPMENT_TEAM = $(LOCAL_DEVELOPMENT_TEAM)' "local Personal Team setting"
+require_contains "$SIGNING_CONFIGURATION" 'WIDGET_THEME_APP_GROUP = $(DEVELOPMENT_TEAM).com.joshuawyadao.desktop-widgets' "team-prefixed typography App Group setting"
+require_contains "$PROJECT_ROOT/DesktopWidgetsApp/DesktopWidgetsApp.entitlements" 'com.apple.security.application-groups' "app typography App Group entitlement"
+require_contains "$PROJECT_ROOT/DesktopWidgetsApp/DesktopWidgetsApp.entitlements" '$(WIDGET_THEME_APP_GROUP)' "app shared typography group"
+require_contains "$PROJECT_ROOT/DesktopWidgetsExtension/DesktopWidgetsExtension.entitlements" 'com.apple.security.application-groups' "extension typography App Group entitlement"
+require_contains "$PROJECT_ROOT/DesktopWidgetsExtension/DesktopWidgetsExtension.entitlements" '$(WIDGET_THEME_APP_GROUP)' "extension shared typography group"
 
 readonly CERTIFICATE_SUBJECT_FIXTURE='subject=UID=ABC123DE45,CN=Apple Development: Example Developer (ABC123DE45),OU=ZYX987WV65,O=Example Developer,C=US'
 readonly FIXTURE_TEAM_ID="$("$PERSONAL_TEAM_SCRIPT" --parse-certificate-subject "$CERTIFICATE_SUBJECT_FIXTURE")"
@@ -177,6 +190,11 @@ require_contains "$APP_INTENTS_METADATA" "PreviousCalendarMonthIntent" "Calendar
 require_contains "$APP_INTENTS_METADATA" "NextCalendarMonthIntent" "Calendar next-month interaction metadata"
 require_contains "$APP_INTENTS_METADATA" "CurrentCalendarMonthIntent" "Calendar current-month interaction metadata"
 require_contains "$APP_INTENTS_METADATA" "CalendarConfigurationIntent" "Calendar configuration metadata"
+if ! jq -e '.actions.TimeAndDateStringConfigurationIntent.parameters[] | select(.name == "secondaryTimeZone" and .dynamicOptionsSupport > 0)' "$APP_INTENTS_METADATA" >/dev/null; then
+    echo "FAIL: Time & Date second time zone is not exported as a dynamic configuration option" >&2
+    exit 1
+fi
+require_contains "$APP_INTENTS_METADATA" "secondaryLabel" "Time & Date second-clock label metadata"
 if ! jq -e '.actions.CalendarConfigurationIntent.parameters[] | select(.name == "viewMode" and .dynamicOptionsSupport > 0)' "$APP_INTENTS_METADATA" >/dev/null; then
     echo "FAIL: Calendar View is not exported as a dynamic configuration option" >&2
     exit 1
@@ -185,8 +203,18 @@ if ! jq -e '.actions.CalendarConfigurationIntent.parameters[] | select(.name == 
     echo "FAIL: Calendar event indicator toggle is missing from App Intents metadata" >&2
     exit 1
 fi
+if ! jq -e '.actions.CalendarConfigurationIntent.parameters[] | select(.name == "showNextEventTime" and .valueType.primitive.wrapper.typeIdentifier == 1)' "$APP_INTENTS_METADATA" >/dev/null; then
+    echo "FAIL: Calendar next-event time toggle is missing from App Intents metadata" >&2
+    exit 1
+fi
 for parameter in showPower showStatus showEstimate showUpdated; do
     if ! jq -e --arg parameter "$parameter" '.actions.BatteryConfigurationIntent.parameters[] | select(.name == $parameter and .valueType.primitive.wrapper.typeIdentifier == 1 and .typeSpecificMetadata[1].int.wrapper == 1)' "$APP_INTENTS_METADATA" >/dev/null; then
+        echo "FAIL: Battery $parameter toggle is missing from App Intents metadata" >&2
+        exit 1
+    fi
+done
+for parameter in showHealth showCycles; do
+    if ! jq -e --arg parameter "$parameter" '.actions.BatteryConfigurationIntent.parameters[] | select(.name == $parameter and .valueType.primitive.wrapper.typeIdentifier == 1)' "$APP_INTENTS_METADATA" >/dev/null; then
         echo "FAIL: Battery $parameter toggle is missing from App Intents metadata" >&2
         exit 1
     fi
@@ -218,6 +246,12 @@ readonly APP_CALENDAR_USAGE="$(/usr/libexec/PlistBuddy -c 'Print :NSCalendarsFul
 readonly EXTENSION_CALENDAR_USAGE="$(/usr/libexec/PlistBuddy -c 'Print :NSCalendarsFullAccessUsageDescription' "$EXTENSION_INFO")"
 if [[ -z "$APP_CALENDAR_USAGE" || -z "$EXTENSION_CALENDAR_USAGE" ]]; then
     echo "FAIL: Calendar full-access usage descriptions must be present in app and extension" >&2
+    exit 1
+fi
+readonly APP_TYPOGRAPHY_GROUP="$(/usr/libexec/PlistBuddy -c 'Print :WidgetThemeAppGroupIdentifier' "$APP_PATH/Contents/Info.plist")"
+readonly EXTENSION_TYPOGRAPHY_GROUP="$(/usr/libexec/PlistBuddy -c 'Print :WidgetThemeAppGroupIdentifier' "$EXTENSION_INFO")"
+if [[ "$APP_TYPOGRAPHY_GROUP" != "$EXTENSION_TYPOGRAPHY_GROUP" || "$APP_TYPOGRAPHY_GROUP" != *.com.joshuawyadao.desktop-widgets ]]; then
+    echo "FAIL: App and extension must expose the same team-prefixed typography App Group" >&2
     exit 1
 fi
 require_contains "$PROJECT_ROOT/DesktopWidgetsApp/DesktopWidgetsApp.entitlements" "com.apple.security.personal-information.calendars" "app Calendar sandbox entitlement"

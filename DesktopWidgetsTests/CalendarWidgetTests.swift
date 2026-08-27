@@ -8,6 +8,7 @@ final class CalendarWidgetTests: XCTestCase {
 
         XCTAssertEqual(configuration.resolvedViewMode, .automatic)
         XCTAssertFalse(configuration.showEvents)
+        XCTAssertFalse(configuration.showNextEventTime)
         XCTAssertEqual(configuration.resolvedView(for: .systemSmall), .day)
         XCTAssertEqual(configuration.resolvedView(for: .systemMedium), .week)
         XCTAssertEqual(configuration.resolvedView(for: .systemLarge), .month)
@@ -327,6 +328,66 @@ final class CalendarWidgetTests: XCTestCase {
         XCTAssertEqual(CalendarEventSnapshot(accessState: .denied, countsByDay: [:]).accessState, .denied)
     }
 
+    func testNextEventTimingIgnoresAllDayAndEndedEventsWithoutReadingEventText() throws {
+        let reference = Date(timeIntervalSince1970: 1_786_262_940)
+        let query = DateInterval(start: reference, duration: 7 * 86_400)
+        let ended = CalendarEventInterval(
+            start: reference.addingTimeInterval(-7_200),
+            end: reference.addingTimeInterval(-3_600)
+        )
+        let allDay = CalendarEventInterval(
+            start: reference.addingTimeInterval(3_600),
+            end: reference.addingTimeInterval(86_400),
+            isAllDay: true
+        )
+        let upcoming = CalendarEventInterval(
+            start: reference.addingTimeInterval(7_200),
+            end: reference.addingTimeInterval(10_800)
+        )
+
+        let timing = try XCTUnwrap(CalendarEventCounter.nextTiming(
+            for: [allDay, upcoming, ended],
+            after: reference,
+            within: query
+        ))
+
+        XCTAssertEqual(timing.start, upcoming.start)
+        XCTAssertEqual(timing.end, upcoming.end)
+        XCTAssertFalse(timing.isOngoing)
+    }
+
+    func testNextEventTimingPrefersAnOngoingTimedEvent() throws {
+        let reference = Date(timeIntervalSince1970: 1_786_262_940)
+        let query = DateInterval(start: reference, duration: 7 * 86_400)
+        let upcoming = CalendarEventInterval(
+            start: reference.addingTimeInterval(3_600),
+            end: reference.addingTimeInterval(7_200)
+        )
+        let ongoing = CalendarEventInterval(
+            start: reference.addingTimeInterval(-1_800),
+            end: reference.addingTimeInterval(1_800)
+        )
+
+        let timing = try XCTUnwrap(CalendarEventCounter.nextTiming(
+            for: [upcoming, ongoing],
+            after: reference,
+            within: query
+        ))
+
+        XCTAssertEqual(timing.start, ongoing.start)
+        XCTAssertEqual(timing.end, ongoing.end)
+        XCTAssertTrue(timing.isOngoing)
+    }
+
+    func testNextEventTimeCanBeEnabledWithoutEventIndicators() {
+        let configuration = CalendarConfigurationIntent()
+        configuration.showEvents = false
+        configuration.showNextEventTime = true
+
+        XCTAssertFalse(configuration.showEvents)
+        XCTAssertTrue(configuration.showNextEventTime)
+    }
+
     func testDisplayIntervalsMatchDayWeekAndSixWeekMonthBudgets() throws {
         let calendar = gregorianCalendar(firstWeekday: 1)
         let date = try XCTUnwrap(calendar.date(from: DateComponents(year: 2026, month: 8, day: 9)))
@@ -357,6 +418,36 @@ final class CalendarWidgetTests: XCTestCase {
         XCTAssertEqual(
             CalendarTimelinePolicy.nextRefresh(after: date, calendar: calendar, eventsEnabled: true),
             date.addingTimeInterval(30 * 60)
+        )
+
+        let upcoming = CalendarNextEventTiming(
+            start: date.addingTimeInterval(5 * 60),
+            end: date.addingTimeInterval(15 * 60),
+            isOngoing: false
+        )
+        XCTAssertEqual(
+            CalendarTimelinePolicy.nextRefresh(
+                after: date,
+                calendar: calendar,
+                eventsEnabled: true,
+                nextEvent: upcoming
+            ),
+            upcoming.start
+        )
+
+        let ongoing = CalendarNextEventTiming(
+            start: date.addingTimeInterval(-5 * 60),
+            end: date.addingTimeInterval(10 * 60),
+            isOngoing: true
+        )
+        XCTAssertEqual(
+            CalendarTimelinePolicy.nextRefresh(
+                after: date,
+                calendar: calendar,
+                eventsEnabled: true,
+                nextEvent: ongoing
+            ),
+            ongoing.end
         )
     }
 

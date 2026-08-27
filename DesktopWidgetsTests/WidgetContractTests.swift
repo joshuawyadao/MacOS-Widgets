@@ -2,6 +2,215 @@ import Foundation
 import XCTest
 
 final class WidgetContractTests: XCTestCase {
+    func testCompanionAppNavigationKeepsEveryTaskReachableOnce() {
+        let groupedDestinations = CompanionAppDestination.overview
+            + CompanionAppDestination.customize
+            + CompanionAppDestination.widgets
+            + CompanionAppDestination.support
+
+        XCTAssertEqual(groupedDestinations, CompanionAppDestination.allCases)
+        XCTAssertEqual(Set(groupedDestinations).count, CompanionAppDestination.allCases.count)
+        XCTAssertEqual(
+            CompanionAppDestination.widgets,
+            [.timeAndDate, .weather, .battery, .calendar]
+        )
+        XCTAssertTrue(CompanionAppDestination.widgets.allSatisfy(\.isWidget))
+        XCTAssertFalse(CompanionAppDestination.home.isWidget)
+        XCTAssertTrue(CompanionAppDestination.allCases.allSatisfy {
+            !$0.title.isEmpty && !$0.symbolName.isEmpty
+        })
+    }
+
+    func testTypographyCatalogKeepsStableCuratedThemesAndOverrides() {
+        XCTAssertEqual(
+            WidgetTypographyTheme.allCases.map(\.rawValue),
+            ["system", "modern", "editorial", "technical", "playful", "handmade"]
+        )
+        XCTAssertEqual(WidgetTypographyOverride.options(for: .weather).first, .followGlobal)
+        XCTAssertFalse(WidgetTypographyOverride.options(for: .weather).contains(.widgetFonts))
+        XCTAssertTrue(WidgetTypographyOverride.options(for: .timeAndDate).contains(.widgetFonts))
+        XCTAssertEqual(
+            WidgetTypographyCoverage.allCases.map(\.rawValue),
+            ["displayText", "allText"]
+        )
+    }
+
+    func testTypographyStorePersistsGlobalThemeAndResolvesSafeOverrides() throws {
+        let suiteName = "com.joshuawyadao.DesktopWidgetsTests.typography.\(UUID().uuidString)"
+        let defaults = try XCTUnwrap(UserDefaults(suiteName: suiteName))
+        defer { defaults.removePersistentDomain(forName: suiteName) }
+        defaults.removePersistentDomain(forName: suiteName)
+        let store = WidgetTypographyStore(defaults: defaults)
+
+        XCTAssertEqual(store.globalTheme, .system)
+        XCTAssertEqual(store.coverage, .displayText)
+        XCTAssertEqual(store.resolution(for: .weather), .theme(.system))
+        XCTAssertEqual(
+            store.style(for: .weather),
+            WidgetTypographyStyle(resolution: .theme(.system), coverage: .displayText)
+        )
+
+        store.globalTheme = .editorial
+        XCTAssertEqual(store.globalTheme, .editorial)
+        XCTAssertEqual(store.resolution(for: .battery), .theme(.editorial))
+
+        store.setOverride(.technical, for: .weather)
+        store.coverage = .allText
+        XCTAssertEqual(store.override(for: .weather), .technical)
+        XCTAssertEqual(store.resolution(for: .weather), .theme(.technical))
+        XCTAssertEqual(
+            store.style(for: .weather),
+            WidgetTypographyStyle(resolution: .theme(.technical), coverage: .allText)
+        )
+
+        store.setOverride(.widgetFonts, for: .battery)
+        XCTAssertEqual(store.override(for: .battery), .followGlobal)
+        XCTAssertEqual(store.resolution(for: .battery), .theme(.editorial))
+
+        store.setOverride(.widgetFonts, for: .timeAndDate)
+        XCTAssertEqual(store.resolution(for: .timeAndDate), .widgetFonts)
+
+        defaults.set("unknown", forKey: WidgetTypographyStore.overrideKeyPrefix + WidgetTypographyTarget.calendar.rawValue)
+        defaults.set("unknown", forKey: WidgetTypographyStore.coverageKey)
+        XCTAssertEqual(store.override(for: .calendar), .followGlobal)
+        XCTAssertEqual(store.resolution(for: .calendar), .theme(.editorial))
+        XCTAssertEqual(store.coverage, .displayText)
+
+        store.reset()
+        XCTAssertEqual(store.globalTheme, .system)
+        XCTAssertEqual(store.coverage, .displayText)
+        XCTAssertTrue(WidgetTypographyTarget.allCases.allSatisfy {
+            store.override(for: $0) == .followGlobal
+        })
+    }
+
+    func testTypographySelectionPreviewsWithoutPersistingAndAppliesAsOneSnapshot() throws {
+        let suiteName = "com.joshuawyadao.DesktopWidgetsTests.typography-selection.\(UUID().uuidString)"
+        let defaults = try XCTUnwrap(UserDefaults(suiteName: suiteName))
+        defer { defaults.removePersistentDomain(forName: suiteName) }
+        defaults.removePersistentDomain(forName: suiteName)
+        let store = WidgetTypographyStore(defaults: defaults)
+
+        let applied = WidgetTypographySelection(store: store)
+        var preview = applied
+        preview.globalTheme = .playful
+        preview.coverage = .allText
+        preview.setOverride(.editorial, for: .weather)
+        preview.setOverride(.widgetFonts, for: .timeAndDate)
+
+        XCTAssertNotEqual(preview, applied)
+        XCTAssertEqual(preview.resolution(for: .weather), .theme(.editorial))
+        XCTAssertEqual(preview.resolution(for: .timeAndDate), .widgetFonts)
+        XCTAssertEqual(store.globalTheme, .system)
+        XCTAssertEqual(store.coverage, .displayText)
+        XCTAssertEqual(store.override(for: .weather), .followGlobal)
+        XCTAssertEqual(store.override(for: .timeAndDate), .followGlobal)
+
+        var reloadRequestCount = 0
+        WidgetTypographyApplier(
+            store: store,
+            requestReload: { reloadRequestCount += 1 }
+        ).apply(preview)
+
+        XCTAssertEqual(reloadRequestCount, 1)
+        XCTAssertEqual(WidgetTypographySelection(store: store), preview)
+        XCTAssertEqual(store.globalTheme, .playful)
+        XCTAssertEqual(store.coverage, .allText)
+        XCTAssertEqual(store.override(for: .weather), .editorial)
+        XCTAssertEqual(store.override(for: .timeAndDate), .widgetFonts)
+    }
+
+    func testSystemDefaultSelectionClearsEveryAppearanceOverrideWhenApplied() throws {
+        let suiteName = "com.joshuawyadao.DesktopWidgetsTests.typography-system-selection.\(UUID().uuidString)"
+        let defaults = try XCTUnwrap(UserDefaults(suiteName: suiteName))
+        defer { defaults.removePersistentDomain(forName: suiteName) }
+        defaults.removePersistentDomain(forName: suiteName)
+        let store = WidgetTypographyStore(defaults: defaults)
+        store.globalTheme = .technical
+        store.coverage = .allText
+        for target in WidgetTypographyTarget.allCases {
+            store.setOverride(.handmade, for: target)
+        }
+
+        WidgetTypographySelection.systemDefault.persist(to: store)
+
+        let restored = WidgetTypographySelection(store: store)
+        XCTAssertTrue(restored.usesSystemDefaults)
+        XCTAssertEqual(restored, .systemDefault)
+        XCTAssertTrue(WidgetTypographyTarget.allCases.allSatisfy {
+            store.override(for: $0) == .followGlobal
+        })
+    }
+
+    func testTypographyLayoutProfilesStayConservativeAndPreserveSystemMetrics() {
+        XCTAssertEqual(WidgetTypographyLayoutProfile(theme: .system), .neutral)
+
+        for theme in WidgetTypographyTheme.allCases where theme != .system {
+            let profile = WidgetTypographyLayoutProfile(theme: theme)
+            XCTAssertGreaterThanOrEqual(profile.displayFontScale, 0.9, theme.rawValue)
+            XCTAssertLessThan(profile.displayFontScale, 1, theme.rawValue)
+            XCTAssertGreaterThanOrEqual(profile.supportingFontScale, 0.9, theme.rawValue)
+            XCTAssertLessThan(profile.supportingFontScale, 1, theme.rawValue)
+            XCTAssertGreaterThanOrEqual(profile.horizontalSpacingScale, 0.94, theme.rawValue)
+            XCTAssertLessThan(profile.horizontalSpacingScale, 1, theme.rawValue)
+            XCTAssertGreaterThan(profile.verticalSpacingScale, 1, theme.rawValue)
+            XCTAssertLessThanOrEqual(profile.verticalSpacingScale, 1.05, theme.rawValue)
+            XCTAssertGreaterThan(profile.glyphVerticalPadding, 0, theme.rawValue)
+            XCTAssertLessThanOrEqual(profile.glyphVerticalPadding, 0.6, theme.rawValue)
+        }
+
+        let handmade = WidgetTypographyStyle(
+            resolution: .theme(.handmade),
+            coverage: .allText
+        )
+        XCTAssertEqual(handmade.horizontalSpacing(10), 9.5, accuracy: 0.001)
+        XCTAssertEqual(handmade.verticalSpacing(10), 10.4, accuracy: 0.001)
+        XCTAssertEqual(handmade.displayMinimumScaleFactor(0.7), 0.56)
+        XCTAssertEqual(handmade.supportingMinimumScaleFactor(0.7), 0.56)
+        XCTAssertEqual(handmade.displayTextVerticalPadding, 0.6)
+        XCTAssertEqual(handmade.supportingTextVerticalPadding, 0.6)
+
+        let displayOnly = WidgetTypographyStyle(
+            resolution: .theme(.handmade),
+            coverage: .displayText
+        )
+        XCTAssertEqual(displayOnly.supportingMinimumScaleFactor(0.7), 0.7)
+        XCTAssertEqual(displayOnly.supportingTextVerticalPadding, 0)
+
+        let widgetFonts = WidgetTypographyStyle(
+            resolution: .widgetFonts,
+            coverage: .allText
+        )
+        XCTAssertEqual(widgetFonts.layoutProfile, .neutral)
+        XCTAssertEqual(widgetFonts.horizontalSpacing(10), 10)
+        XCTAssertEqual(widgetFonts.verticalSpacing(10), 10)
+    }
+
+    func testEverySupportedFamilyMapsToOneSharedInformationDensity() {
+        XCTAssertEqual(WidgetInformationDensity(family: .systemSmall), .compact)
+        XCTAssertEqual(WidgetInformationDensity(family: .systemMedium), .standard)
+        XCTAssertEqual(WidgetInformationDensity(family: .systemLarge), .expanded)
+    }
+
+    func testSharedChromeMetricsGrowWithAvailableWidgetSpace() {
+        let compact = WidgetChromeMetrics(family: .systemSmall)
+        let standard = WidgetChromeMetrics(family: .systemMedium)
+        let expanded = WidgetChromeMetrics(family: .systemLarge)
+
+        XCTAssertLessThan(compact.statusFontSize, standard.statusFontSize)
+        XCTAssertLessThan(standard.statusFontSize, expanded.statusFontSize)
+        XCTAssertLessThan(compact.statusIconSize, expanded.statusIconSize)
+        XCTAssertLessThan(compact.sectionSpacing, expanded.sectionSpacing)
+    }
+
+    func testSharedSurfaceUsesWallpaperContrastOnlyInFullColor() {
+        XCTAssertEqual(WidgetSurfaceTreatment(renderingMode: .fullColor), .wallpaperContrast)
+        XCTAssertTrue(WidgetSurfaceTreatment(renderingMode: .fullColor).usesContrastShadow)
+        XCTAssertEqual(WidgetSurfaceTreatment(renderingMode: .vibrant), .systemTint)
+        XCTAssertEqual(WidgetSurfaceTreatment(renderingMode: .accented), .systemTint)
+        XCTAssertFalse(WidgetSurfaceTreatment(renderingMode: .accented).usesContrastShadow)
+    }
+
     func testReadyWidgetIdentifiersRemainDistinctAndStable() {
         XCTAssertEqual(
             WidgetIdentifier.timeAndDate.rawValue,

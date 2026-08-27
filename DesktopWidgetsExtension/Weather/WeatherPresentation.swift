@@ -24,10 +24,11 @@ struct WeatherWidgetLayoutMetrics: Equatable, Sendable {
     let usesFlexibleForecastItemSpacing: Bool
 
     init(family: WidgetFamily) {
-        switch family {
-        case .systemSmall:
+        let chrome = WidgetChromeMetrics(family: family)
+        switch WidgetInformationDensity(family: family) {
+        case .compact:
             self.init(
-                contentSpacing: 5,
+                contentSpacing: chrome.sectionSpacing,
                 forecastColumnSpacing: 6,
                 forecastVerticalSpacing: 4,
                 headerFontSize: 13,
@@ -48,9 +49,9 @@ struct WeatherWidgetLayoutMetrics: Equatable, Sendable {
                 fillsForecastSection: false,
                 usesFlexibleForecastItemSpacing: false
             )
-        case .systemLarge:
+        case .expanded:
             self.init(
-                contentSpacing: 10,
+                contentSpacing: chrome.sectionSpacing,
                 forecastColumnSpacing: 8,
                 forecastVerticalSpacing: 8,
                 headerFontSize: 15,
@@ -71,9 +72,9 @@ struct WeatherWidgetLayoutMetrics: Equatable, Sendable {
                 fillsForecastSection: true,
                 usesFlexibleForecastItemSpacing: false
             )
-        default:
+        case .standard:
             self.init(
-                contentSpacing: 10,
+                contentSpacing: chrome.sectionSpacing,
                 forecastColumnSpacing: 9,
                 forecastVerticalSpacing: 7,
                 headerFontSize: 15,
@@ -240,8 +241,8 @@ struct WeatherWidgetPresentation: Equatable, Sendable {
     }
 
     var dayAccessibilityLabel: String? {
-        guard case let .day(current, _) = content else { return nil }
-        return (["Today", current.condition.displayName] + metricValues(for: current)
+        guard case let .day(current, forecast) = content else { return nil }
+        return (["Today", current.condition.displayName] + metricValues(for: current, daily: forecast)
             .filter { $0.detail != .condition }
             .map(\.spokenText))
             .joined(separator: ", ")
@@ -346,12 +347,19 @@ struct WeatherWidgetPresentation: Equatable, Sendable {
         return calendar.dateInterval(of: .hour, for: date)?.start ?? date
     }
 
-    func metricValues(for point: WeatherPoint) -> [WeatherMetricValue] {
+    func metricValues(
+        for point: WeatherPoint,
+        daily: DailyWeather? = nil
+    ) -> [WeatherMetricValue] {
         metricValues(
             temperature: point.temperature,
+            apparentTemperature: point.apparentTemperature,
             humidity: point.humidity,
             precipitation: point.precipitationProbability,
             wind: point.windSpeed,
+            uvIndex: point.uvIndex ?? daily?.uvIndex,
+            sunrise: daily?.sunrise,
+            sunset: daily?.sunset,
             condition: point.condition
         )
     }
@@ -359,18 +367,26 @@ struct WeatherWidgetPresentation: Equatable, Sendable {
     func metricValues(for day: DailyWeather) -> [WeatherMetricValue] {
         metricValues(
             temperature: day.highTemperature,
+            apparentTemperature: day.apparentHighTemperature,
             humidity: day.humidity,
             precipitation: day.precipitationProbability,
             wind: day.windSpeed,
+            uvIndex: day.uvIndex,
+            sunrise: day.sunrise,
+            sunset: day.sunset,
             condition: day.condition
         )
     }
 
     private func metricValues(
         temperature: Double,
+        apparentTemperature: Double?,
         humidity: Double?,
         precipitation: Double?,
         wind: Double?,
+        uvIndex: Double?,
+        sunrise: Date?,
+        sunset: Date?,
         condition: WeatherCondition
     ) -> [WeatherMetricValue] {
         detailPresentation.visibleDetails.compactMap { detail in
@@ -391,6 +407,17 @@ struct WeatherWidgetPresentation: Equatable, Sendable {
                     spokenText: condition.displayName,
                     symbolName: condition.symbolName
                 )
+            case .apparentTemperature:
+                apparentTemperature.map {
+                    let text = WeatherValueFormatter.temperature($0, unit: unit)
+                    return WeatherMetricValue(
+                        detail: detail,
+                        text: text,
+                        unitSuffix: nil,
+                        spokenText: "Feels like \(text)",
+                        symbolName: "thermometer.variable"
+                    )
+                }
             case .humidity:
                 WeatherValueFormatter.percentage(humidity).map {
                     WeatherMetricValue(
@@ -419,6 +446,36 @@ struct WeatherWidgetPresentation: Equatable, Sendable {
                         unitSuffix: nil,
                         spokenText: "Wind \($0)",
                         symbolName: "wind"
+                    )
+                }
+            case .uvIndex:
+                WeatherValueFormatter.uvIndex(uvIndex).map {
+                    WeatherMetricValue(
+                        detail: detail,
+                        text: $0,
+                        unitSuffix: nil,
+                        spokenText: "Ultraviolet index \($0.replacingOccurrences(of: "UV ", with: ""))",
+                        symbolName: "sun.max.fill"
+                    )
+                }
+            case .sunrise:
+                WeatherValueFormatter.time(sunrise, timeZone: timeZone, locale: locale).map {
+                    WeatherMetricValue(
+                        detail: detail,
+                        text: $0,
+                        unitSuffix: nil,
+                        spokenText: "Sunrise \($0)",
+                        symbolName: "sunrise.fill"
+                    )
+                }
+            case .sunset:
+                WeatherValueFormatter.time(sunset, timeZone: timeZone, locale: locale).map {
+                    WeatherMetricValue(
+                        detail: detail,
+                        text: $0,
+                        unitSuffix: nil,
+                        spokenText: "Sunset \($0)",
+                        symbolName: "sunset.fill"
                     )
                 }
             }

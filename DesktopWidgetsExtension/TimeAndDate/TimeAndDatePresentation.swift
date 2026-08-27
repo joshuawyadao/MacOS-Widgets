@@ -14,6 +14,7 @@ struct TimeAndDatePresentation: Equatable, Sendable {
     let dateText: String
     let timeText: String
     let periodText: String?
+    let secondaryClockText: String?
     let accessibilityLabel: String
 
     init(
@@ -39,6 +40,28 @@ struct TimeAndDatePresentation: Equatable, Sendable {
             timeZone: timeZone
         )
 
+        if let secondaryTimeZone = configuration.resolvedSecondaryZone.timeZone {
+            let secondaryTime = configuration.resolvedTimeFormat.timeString(
+                from: date,
+                locale: locale,
+                timeZone: secondaryTimeZone
+            )
+            let secondaryPeriod = configuration.resolvedTimeFormat.periodString(
+                from: date,
+                locale: locale,
+                timeZone: secondaryTimeZone
+            )
+            secondaryClockText = [
+                configuration.resolvedSecondaryLabel.uppercased(with: locale),
+                secondaryTime,
+                secondaryPeriod,
+            ]
+            .compactMap { $0 }
+            .joined(separator: " ")
+        } else {
+            secondaryClockText = nil
+        }
+
         switch configuration.resolvedLayout {
         case .reference:
             arrangement = family == .systemSmall ? .verticalDateFirst : .classicWide
@@ -52,7 +75,7 @@ struct TimeAndDatePresentation: Equatable, Sendable {
             arrangement = family == .systemSmall ? .verticalDateFirst : .horizontalDateFirst
         }
 
-        accessibilityLabel = [dateText, timeText, periodText]
+        accessibilityLabel = [dateText, timeText, periodText, secondaryClockText]
             .compactMap { $0 }
             .joined(separator: ", ")
     }

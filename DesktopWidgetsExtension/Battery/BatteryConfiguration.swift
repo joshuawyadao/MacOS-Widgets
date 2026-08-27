@@ -6,6 +6,8 @@ enum BatteryDetail: String, CaseIterable, Hashable, Sendable {
     case status
     case estimate
     case updated
+    case health
+    case cycles
 }
 
 enum BatteryDetailLimits {
@@ -16,7 +18,7 @@ enum BatteryDetailLimits {
         case .systemMedium:
             2
         case .systemLarge:
-            4
+            6
         default:
             0
         }
@@ -25,7 +27,7 @@ enum BatteryDetailLimits {
     static func priority(for family: WidgetFamily) -> [BatteryDetail] {
         switch family {
         case .systemMedium:
-            [.status, .updated, .power, .estimate]
+            [.status, .updated, .power, .estimate, .health, .cycles]
         default:
             BatteryDetail.allCases
         }
@@ -54,7 +56,7 @@ struct BatteryDetailSelection: Equatable, Sendable {
 struct BatteryConfigurationIntent: WidgetConfigurationIntent {
     static let title: LocalizedStringResource = "Customize Battery"
     static let description = IntentDescription(
-        "Choose the extra details shown beside the battery. Small shows none, Medium shows up to two, and Large shows up to four."
+        "Choose the extra details shown beside the battery. Small shows none, Medium shows up to two, and Large shows up to six."
     )
 
     @Parameter(
@@ -85,6 +87,20 @@ struct BatteryConfigurationIntent: WidgetConfigurationIntent {
     )
     var showUpdated: Bool
 
+    @Parameter(
+        title: "Show Battery Health",
+        description: "Current full-charge capacity compared with the battery's design capacity when macOS provides it.",
+        default: false
+    )
+    var showHealth: Bool
+
+    @Parameter(
+        title: "Show Cycle Count",
+        description: "The internal battery's charge-cycle count when macOS provides it.",
+        default: false
+    )
+    var showCycles: Bool
+
     init() {}
 
     var resolvedDetails: Set<BatteryDetail> {
@@ -93,6 +109,8 @@ struct BatteryConfigurationIntent: WidgetConfigurationIntent {
         if showStatus { details.insert(.status) }
         if showEstimate { details.insert(.estimate) }
         if showUpdated { details.insert(.updated) }
+        if showHealth { details.insert(.health) }
+        if showCycles { details.insert(.cycles) }
         return details
     }
 

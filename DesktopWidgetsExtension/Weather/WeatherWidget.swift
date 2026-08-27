@@ -8,10 +8,19 @@ struct WeatherWidgetView: View {
 
     let entry: WeatherEntry
     private let familyOverride: WidgetFamily?
+    private let typographyOverride: WidgetTypographyResolution?
+    private let coverageOverride: WidgetTypographyCoverage?
 
-    init(entry: WeatherEntry, family: WidgetFamily? = nil) {
+    init(
+        entry: WeatherEntry,
+        family: WidgetFamily? = nil,
+        typography: WidgetTypographyResolution? = nil,
+        coverage: WidgetTypographyCoverage? = nil
+    ) {
         self.entry = entry
         self.familyOverride = family
+        self.typographyOverride = typography
+        self.coverageOverride = coverage
     }
 
     private var family: WidgetFamily {
@@ -33,6 +42,14 @@ struct WeatherWidgetView: View {
         )
     }
 
+    private var typography: WidgetTypographyStyle {
+        let stored = WidgetTypographyStore.live.style(for: .weather)
+        return WidgetTypographyStyle(
+            resolution: typographyOverride ?? stored.resolution,
+            coverage: coverageOverride ?? stored.coverage
+        )
+    }
+
     var body: some View {
         Group {
             if let snapshot = entry.snapshot {
@@ -41,20 +58,11 @@ struct WeatherWidgetView: View {
                 failureView
             }
         }
-        .foregroundStyle(renderingMode == .fullColor ? Color.white : Color.primary)
-        .shadow(
-            color: renderingMode == .fullColor ? .black.opacity(0.55) : .clear,
-            radius: 1.5,
-            x: 0,
-            y: 1
-        )
-        .containerBackground(for: .widget) {
-            Color.clear
-        }
+        .widgetSurface(renderingMode: renderingMode)
     }
 
     private func loadedView(_ snapshot: WeatherSnapshot) -> some View {
-        VStack(alignment: .leading, spacing: layout.contentSpacing) {
+        VStack(alignment: .leading, spacing: typography.verticalSpacing(layout.contentSpacing)) {
             header
 
             switch presentation.content {
@@ -101,7 +109,7 @@ struct WeatherWidgetView: View {
     @ViewBuilder
     private var header: some View {
         if layout.usesStackedHeader {
-            VStack(alignment: .leading, spacing: 3) {
+            VStack(alignment: .leading, spacing: typography.verticalSpacing(3)) {
                 locationLabel
 
                 HStack {
@@ -110,11 +118,11 @@ struct WeatherWidgetView: View {
                 }
             }
         } else {
-            HStack(alignment: .firstTextBaseline, spacing: 8) {
+            HStack(alignment: .firstTextBaseline, spacing: typography.horizontalSpacing(8)) {
                 locationLabel
 
                 if family != .systemSmall {
-                    Spacer(minLength: 4)
+                    Spacer(minLength: typography.horizontalSpacing(4))
                     attributionControl(compact: true)
                 }
             }
@@ -123,15 +131,27 @@ struct WeatherWidgetView: View {
 
     private var locationLabel: some View {
         Text(headerLocationName)
-            .font(.system(size: layout.headerFontSize, weight: .medium, design: .monospaced))
+            .font(
+                typography.displayFont(
+                    size: layout.headerFontSize,
+                    weight: .semibold,
+                    fallback: .system(size: layout.headerFontSize, weight: .medium, design: .monospaced)
+                )
+            )
             .lineLimit(1)
-            .minimumScaleFactor(layout.usesStackedHeader ? 0.65 : 0.75)
+            .minimumScaleFactor(
+                typography.displayMinimumScaleFactor(layout.usesStackedHeader ? 0.65 : 0.75)
+            )
+            .padding(.vertical, typography.displayTextVerticalPadding)
             .frame(maxWidth: .infinity, alignment: .leading)
             .accessibilityLabel("Weather for \(presentation.locationName)")
     }
 
     private func weekView(_ days: [DailyWeather]) -> some View {
-        HStack(alignment: .top, spacing: layout.forecastColumnSpacing) {
+        HStack(
+            alignment: .top,
+            spacing: typography.horizontalSpacing(layout.forecastColumnSpacing)
+        ) {
             ForEach(Array(days.enumerated()), id: \.offset) { index, day in
                 forecastColumn(
                     title: presentation.forecastTitles[index],
@@ -151,7 +171,10 @@ struct WeatherWidgetView: View {
     }
 
     private func hourView(_ hours: [WeatherPoint]) -> some View {
-        HStack(alignment: .top, spacing: layout.forecastColumnSpacing) {
+        HStack(
+            alignment: .top,
+            spacing: typography.horizontalSpacing(layout.forecastColumnSpacing)
+        ) {
             ForEach(Array(hours.enumerated()), id: \.offset) { index, hour in
                 forecastColumn(
                     title: presentation.forecastTitles[index],
@@ -174,12 +197,12 @@ struct WeatherWidgetView: View {
         snapshot: WeatherSnapshot,
         @ViewBuilder forecastContent: () -> ForecastContent
     ) -> some View {
-        VStack(spacing: layout.expandedSectionSpacing) {
+        VStack(spacing: typography.verticalSpacing(layout.expandedSectionSpacing)) {
             expandedCurrentSummary(snapshot)
                 .frame(maxHeight: .infinity, alignment: .center)
 
             Divider()
-                .overlay(Color.white.opacity(0.3))
+                .overlay(Color.primary.opacity(0.3))
 
             forecastContent()
                 .frame(maxHeight: .infinity, alignment: .center)
@@ -194,10 +217,13 @@ struct WeatherWidgetView: View {
         } else {
             snapshot.current
         }
-        let details = presentation.metricValues(for: current)
         let forecast = snapshot.dailyForecast(for: entry.date)
+        let details = presentation.metricValues(for: current, daily: forecast)
 
-        return HStack(alignment: .center, spacing: layout.dayHorizontalSpacing) {
+        return HStack(
+            alignment: .center,
+            spacing: typography.horizontalSpacing(layout.dayHorizontalSpacing)
+        ) {
             Image(systemName: current.condition.symbolName)
                 .symbolRenderingMode(.multicolor)
                 .font(.system(size: layout.expandedIconSize))
@@ -207,31 +233,63 @@ struct WeatherWidgetView: View {
                 )
                 .widgetAccentable()
 
-            VStack(alignment: .leading, spacing: 5) {
+            VStack(alignment: .leading, spacing: typography.verticalSpacing(5)) {
                 if let temperature = details.first(where: { $0.detail == .temperature }) {
-                    temperatureLabel(temperature, size: layout.expandedTemperatureSize)
+                    temperatureLabel(
+                        temperature,
+                        size: layout.expandedTemperatureSize,
+                        usesDisplayTypography: true
+                    )
                 }
 
                 Text(current.condition.displayName)
-                    .font(.system(size: 15, weight: .bold, design: .rounded))
+                    .font(
+                        typography.supportingFont(
+                            size: 15,
+                            weight: .bold,
+                            fallback: .system(size: 15, weight: .bold, design: .rounded)
+                        )
+                    )
                     .lineLimit(1)
+                    .minimumScaleFactor(typography.supportingMinimumScaleFactor(0.7))
+                    .padding(.vertical, typography.supportingTextVerticalPadding)
 
                 if let forecast {
                     Text(
                         "High \(WeatherValueFormatter.temperature(forecast.highTemperature, unit: snapshot.unit, includeUnit: false))  ·  Low \(WeatherValueFormatter.temperature(forecast.lowTemperature, unit: snapshot.unit, includeUnit: false))"
                     )
-                    .font(.caption.weight(.semibold))
+                    .font(
+                        typography.supportingFont(
+                            size: 12,
+                            weight: .semibold,
+                            fallback: .system(size: 12, weight: .semibold, design: .rounded)
+                        )
+                    )
                     .monospacedDigit()
+                    .lineLimit(1)
+                    .minimumScaleFactor(typography.supportingMinimumScaleFactor(0.7))
+                    .padding(.vertical, typography.supportingTextVerticalPadding)
                 }
             }
 
-            Spacer(minLength: 8)
+            Spacer(minLength: typography.horizontalSpacing(8))
 
-            VStack(alignment: .trailing, spacing: layout.forecastVerticalSpacing) {
+            VStack(
+                alignment: .trailing,
+                spacing: typography.verticalSpacing(layout.forecastVerticalSpacing)
+            ) {
                 ForEach(details.filter { $0.detail != .temperature && $0.detail != .condition }) { value in
                     Label(value.text, systemImage: value.symbolName)
-                        .font(.system(size: 13, weight: .semibold, design: .rounded))
+                        .font(
+                            typography.supportingFont(
+                                size: 13,
+                                weight: .semibold,
+                                fallback: .system(size: 13, weight: .semibold, design: .rounded)
+                            )
+                        )
                         .lineLimit(1)
+                        .minimumScaleFactor(typography.supportingMinimumScaleFactor(0.68))
+                        .padding(.vertical, typography.supportingTextVerticalPadding)
                 }
             }
         }
@@ -250,12 +308,27 @@ struct WeatherWidgetView: View {
         forecast: DailyWeather?,
         snapshot: WeatherSnapshot
     ) -> some View {
-        let details = presentation.metricValues(for: current)
+        let details = presentation.metricValues(for: current, daily: forecast)
 
-        return HStack(alignment: .center, spacing: layout.dayHorizontalSpacing) {
-            VStack(alignment: .leading, spacing: family == .systemSmall ? 4 : 6) {
+        return HStack(
+            alignment: .center,
+            spacing: typography.horizontalSpacing(layout.dayHorizontalSpacing)
+        ) {
+            VStack(
+                alignment: .leading,
+                spacing: typography.verticalSpacing(family == .systemSmall ? 4 : 6)
+            ) {
                 Text("Today")
-                    .font(.headline)
+                    .font(
+                        typography.supportingFont(
+                            size: 17,
+                            weight: .semibold,
+                            fallback: .headline
+                        )
+                    )
+                    .lineLimit(1)
+                    .minimumScaleFactor(typography.supportingMinimumScaleFactor(0.7))
+                    .padding(.vertical, typography.supportingTextVerticalPadding)
 
                 Image(systemName: current.condition.symbolName)
                     .symbolRenderingMode(.multicolor)
@@ -264,15 +337,30 @@ struct WeatherWidgetView: View {
 
                 if visibleDetails.contains(.condition) {
                     Text(current.condition.displayName)
-                        .font(.caption.weight(.semibold))
+                        .font(
+                            typography.supportingFont(
+                                size: 12,
+                                weight: .semibold,
+                                fallback: .caption.weight(.semibold)
+                            )
+                        )
                         .lineLimit(1)
+                        .minimumScaleFactor(typography.supportingMinimumScaleFactor(0.7))
+                        .padding(.vertical, typography.supportingTextVerticalPadding)
                 }
             }
             .frame(maxWidth: .infinity, alignment: .leading)
 
-            VStack(alignment: .trailing, spacing: family == .systemSmall ? 4 : 7) {
+            VStack(
+                alignment: .trailing,
+                spacing: typography.verticalSpacing(family == .systemSmall ? 4 : 7)
+            ) {
                 if let temperature = details.first(where: { $0.detail == .temperature }) {
-                    temperatureLabel(temperature, size: layout.dayTemperatureSize)
+                    temperatureLabel(
+                        temperature,
+                        size: layout.dayTemperatureSize,
+                        usesDisplayTypography: true
+                    )
 
                     if let forecast {
                         highLowLabel(forecast, snapshot: snapshot)
@@ -302,20 +390,25 @@ struct WeatherWidgetView: View {
         isCurrent: Bool,
         accessibilityLabel: String
     ) -> some View {
-        return VStack(spacing: layout.forecastVerticalSpacing) {
+        return VStack(spacing: typography.verticalSpacing(layout.forecastVerticalSpacing)) {
             Text(title)
                 .font(
-                    .system(
+                    typography.supportingFont(
                         size: layout.forecastTitleSize,
                         weight: isCurrent ? .black : .bold,
-                        design: .rounded
+                        fallback: .system(
+                            size: layout.forecastTitleSize,
+                            weight: isCurrent ? .black : .bold,
+                            design: .rounded
+                        )
                     )
                 )
                 .lineLimit(1)
-                .minimumScaleFactor(0.7)
+                .minimumScaleFactor(typography.supportingMinimumScaleFactor(0.7))
+                .padding(.vertical, typography.supportingTextVerticalPadding)
 
             if layout.usesFlexibleForecastItemSpacing {
-                Spacer(minLength: layout.forecastVerticalSpacing)
+                Spacer(minLength: typography.verticalSpacing(layout.forecastVerticalSpacing))
             }
 
             Image(systemName: condition.symbolName)
@@ -325,7 +418,7 @@ struct WeatherWidgetView: View {
                 .widgetAccentable()
 
             if layout.usesFlexibleForecastItemSpacing {
-                Spacer(minLength: layout.forecastVerticalSpacing)
+                Spacer(minLength: typography.verticalSpacing(layout.forecastVerticalSpacing))
             }
 
             ForEach(values) { value in
@@ -355,16 +448,34 @@ struct WeatherWidgetView: View {
         )
 
         if family == .systemSmall {
-            VStack(alignment: .trailing, spacing: 0) {
+            VStack(alignment: .trailing, spacing: typography.verticalSpacing(0)) {
                 Text("H \(high)")
                 Text("L \(low)")
             }
-            .font(.caption.weight(.semibold))
+            .font(
+                typography.supportingFont(
+                    size: 12,
+                    weight: .semibold,
+                    fallback: .caption.weight(.semibold)
+                )
+            )
             .monospacedDigit()
+            .lineLimit(2)
+            .minimumScaleFactor(typography.supportingMinimumScaleFactor(0.65))
+            .padding(.vertical, typography.supportingTextVerticalPadding)
         } else {
             Text("H \(high)  L \(low)")
-                .font(.caption.weight(.semibold))
+                .font(
+                    typography.supportingFont(
+                        size: 12,
+                        weight: .semibold,
+                        fallback: .caption.weight(.semibold)
+                    )
+                )
                 .monospacedDigit()
+                .lineLimit(1)
+                .minimumScaleFactor(typography.supportingMinimumScaleFactor(0.65))
+                .padding(.vertical, typography.supportingTextVerticalPadding)
         }
     }
 
@@ -376,36 +487,72 @@ struct WeatherWidgetView: View {
                 Label(value.text, systemImage: value.symbolName)
             }
         }
-        .font(.system(size: layout.metricFontSize, weight: .semibold, design: .rounded))
+        .font(
+            typography.supportingFont(
+                size: layout.metricFontSize,
+                weight: .semibold,
+                fallback: .system(size: layout.metricFontSize, weight: .semibold, design: .rounded)
+            )
+        )
         .lineLimit(value.detail == .condition ? 2 : 1)
         .multilineTextAlignment(.center)
-        .minimumScaleFactor(0.75)
+        .minimumScaleFactor(typography.supportingMinimumScaleFactor(0.75))
+        .padding(.vertical, typography.supportingTextVerticalPadding)
     }
 
     private func temperatureLabel(
         _ value: WeatherMetricValue,
-        size: CGFloat
+        size: CGFloat,
+        usesDisplayTypography: Bool = false
     ) -> some View {
         ViewThatFits(in: .horizontal) {
-            temperatureText(value.displayText, size: size)
+            temperatureText(value.displayText, size: size, usesDisplayTypography: usesDisplayTypography)
             temperatureText(
                 value.displayText,
-                size: max(layout.minimumTemperaturePointSize, size * 0.84)
+                size: max(layout.minimumTemperaturePointSize, size * 0.84),
+                usesDisplayTypography: usesDisplayTypography
             )
             temperatureText(
                 value.displayText,
-                size: max(layout.minimumTemperaturePointSize, size * 0.68)
+                size: max(layout.minimumTemperaturePointSize, size * 0.68),
+                usesDisplayTypography: usesDisplayTypography
             )
-            temperatureText(value.displayText, size: layout.minimumTemperaturePointSize)
+            temperatureText(
+                value.displayText,
+                size: layout.minimumTemperaturePointSize,
+                usesDisplayTypography: usesDisplayTypography
+            )
         }
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(value.spokenText)
     }
 
-    private func temperatureText(_ text: String, size: CGFloat) -> some View {
+    private func temperatureText(
+        _ text: String,
+        size: CGFloat,
+        usesDisplayTypography: Bool
+    ) -> some View {
         Text(text)
-            .font(.system(size: size, weight: .bold, design: .rounded))
+            .font(
+                usesDisplayTypography
+                    ? typography.displayFont(
+                        size: size,
+                        weight: .bold,
+                        fallback: .system(size: size, weight: .bold, design: .rounded)
+                    )
+                    : typography.supportingFont(
+                        size: size,
+                        weight: .bold,
+                        fallback: .system(size: size, weight: .bold, design: .rounded)
+                    )
+            )
             .monospacedDigit()
+            .padding(
+                .vertical,
+                usesDisplayTypography
+                    ? typography.displayTextVerticalPadding
+                    : typography.supportingTextVerticalPadding
+            )
             .fixedSize(horizontal: true, vertical: true)
     }
 
@@ -416,13 +563,12 @@ struct WeatherWidgetView: View {
     }
 
     private func staleLabel(_ snapshot: WeatherSnapshot) -> some View {
-        Label(
-            "Last updated \(snapshot.fetchedAt.formatted(date: .omitted, time: .shortened))",
-            systemImage: "arrow.clockwise"
+        WidgetStatusLine(
+            text: "Last updated \(snapshot.fetchedAt.formatted(date: .omitted, time: .shortened))",
+            systemImage: "arrow.clockwise",
+            accessibilityText: "Showing saved weather from \(snapshot.fetchedAt.formatted())",
+            typography: typography
         )
-        .font(.system(size: 9, weight: .medium))
-        .opacity(0.8)
-        .accessibilityLabel("Showing saved weather from \(snapshot.fetchedAt.formatted())")
     }
 
     private var visibleDetails: [WeatherDetail] {
@@ -438,24 +584,27 @@ struct WeatherWidgetView: View {
     }
 
     private var detailLimitNotice: some View {
-        Label(
-            presentation.detailLimitNotice ?? "Weather detail limit applied",
-            systemImage: "info.circle.fill"
-        )
-        .font(.system(size: 9, weight: .semibold))
-        .lineLimit(1)
-        .minimumScaleFactor(0.75)
-        .opacity(0.9)
-        .accessibilityLabel(
-            "\(hiddenDetailCount) weather details hidden because this widget size limit is \(detailLimit)"
+        WidgetStatusLine(
+            text: presentation.detailLimitNotice ?? "Weather detail limit applied",
+            systemImage: "info.circle.fill",
+            accessibilityText: "\(hiddenDetailCount) weather details hidden because this widget size limit is \(detailLimit)",
+            typography: typography
         )
     }
 
     private var failureView: some View {
-        VStack(alignment: .leading, spacing: 10) {
+        VStack(alignment: .leading, spacing: typography.verticalSpacing(10)) {
             Text(presentation.locationName)
-                .font(.system(.headline, design: .monospaced))
+                .font(
+                    typography.displayFont(
+                        size: 15,
+                        weight: .bold,
+                        fallback: .system(.headline, design: .monospaced)
+                    )
+                )
                 .lineLimit(1)
+                .minimumScaleFactor(typography.displayMinimumScaleFactor(0.7))
+                .padding(.vertical, typography.displayTextVerticalPadding)
 
             Spacer(minLength: 0)
 
@@ -465,8 +614,15 @@ struct WeatherWidgetView: View {
 
             if let message = presentation.failureMessage {
                 Text(message)
-                    .font(.caption.weight(.semibold))
+                    .font(
+                        typography.supportingFont(
+                            size: 12,
+                            weight: .semibold,
+                            fallback: .caption.weight(.semibold)
+                        )
+                    )
                     .fixedSize(horizontal: false, vertical: true)
+                    .padding(.vertical, typography.supportingTextVerticalPadding)
             }
 
             attributionControl(compact: false)
@@ -484,8 +640,17 @@ struct WeatherWidgetView: View {
 
     private func attributionLabel(compact: Bool) -> some View {
         Text(compact ? "Open-Meteo" : "Weather data by Open-Meteo")
-            .font(.system(size: compact ? 8 : 9, weight: .medium))
+            .font(
+                typography.supportingFont(
+                    size: compact ? 8 : 9,
+                    weight: .medium,
+                    fallback: .system(size: compact ? 8 : 9, weight: .medium)
+                )
+            )
             .underline()
+            .lineLimit(1)
+            .minimumScaleFactor(typography.supportingMinimumScaleFactor(0.7))
+            .padding(.vertical, typography.supportingTextVerticalPadding)
             .opacity(compact ? 0.82 : 1)
     }
 

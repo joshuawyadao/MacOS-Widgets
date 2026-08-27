@@ -5,3 +5,8 @@
 CODE_SIGN_STYLE = Automatic
 CODE_SIGN_IDENTITY = Apple Development
 DEVELOPMENT_TEAM = $(LOCAL_DEVELOPMENT_TEAM)
+
+// A Team-ID-prefixed group is the macOS-native App Group form and does not
+// require committing a machine-specific Team ID or registering an iOS-style
+// group identifier. Both targets receive the same expanded value.
+WIDGET_THEME_APP_GROUP = $(DEVELOPMENT_TEAM).com.joshuawyadao.desktop-widgets

@@ -49,7 +49,8 @@ struct CalendarProvider: AppIntentTimelineProvider {
         let refreshDate = CalendarTimelinePolicy.nextRefresh(
             after: now,
             calendar: .autoupdatingCurrent,
-            eventsEnabled: configuration.showEvents
+            eventsEnabled: configuration.showEvents || configuration.showNextEventTime,
+            nextEvent: configuration.showNextEventTime ? entry.events.nextEvent : nil
         )
         return Timeline(entries: [entry], policy: .after(refreshDate))
     }
@@ -73,9 +74,21 @@ struct CalendarProvider: AppIntentTimelineProvider {
             monthOffset: monthOffset,
             calendar: calendar
         )
+        let upcomingInterval = DateInterval(
+            start: date,
+            end: calendar.date(byAdding: .day, value: 7, to: date)
+                ?? date.addingTimeInterval(7 * 86_400)
+        )
+        let eventsEnabled = configuration.showEvents || configuration.showNextEventTime
         let events = usesSampleEvents
             ? CalendarEventSnapshot.sample(referenceDate: date, calendar: calendar)
-            : eventReader.snapshot(in: interval, calendar: calendar, enabled: configuration.showEvents)
+            : eventReader.snapshot(
+                in: interval,
+                upcomingWithin: configuration.showNextEventTime ? upcomingInterval : nil,
+                calendar: calendar,
+                enabled: eventsEnabled,
+                referenceDate: date
+            )
         return CalendarEntry(
             date: date,
             configuration: configuration,
@@ -92,12 +105,39 @@ struct CalendarProvider: AppIntentTimelineProvider {
 }
 
 struct CalendarWidgetView: View {
-    @Environment(\.widgetFamily) private var family
+    @Environment(\.widgetFamily) private var environmentFamily
     @Environment(\.widgetRenderingMode) private var renderingMode
     @Environment(\.locale) private var locale
     @Environment(\.timeZone) private var timeZone
 
     let entry: CalendarEntry
+    private let familyOverride: WidgetFamily?
+    private let typographyOverride: WidgetTypographyResolution?
+    private let coverageOverride: WidgetTypographyCoverage?
+
+    init(
+        entry: CalendarEntry,
+        family: WidgetFamily? = nil,
+        typography: WidgetTypographyResolution? = nil,
+        coverage: WidgetTypographyCoverage? = nil
+    ) {
+        self.entry = entry
+        self.familyOverride = family
+        self.typographyOverride = typography
+        self.coverageOverride = coverage
+    }
+
+    private var family: WidgetFamily {
+        familyOverride ?? environmentFamily
+    }
+
+    private var typography: WidgetTypographyStyle {
+        let stored = WidgetTypographyStore.live.style(for: .calendar)
+        return WidgetTypographyStyle(
+            resolution: typographyOverride ?? stored.resolution,
+            coverage: coverageOverride ?? stored.coverage
+        )
+    }
 
     private var calendar: Calendar {
         var calendar = Calendar.autoupdatingCurrent
@@ -156,42 +196,69 @@ struct CalendarWidgetView: View {
             case .month: monthView
             }
         }
-        .foregroundStyle(renderingMode == .fullColor ? Color.white : Color.primary)
-        .fontDesign(.rounded)
-        .shadow(
-            color: renderingMode == .fullColor ? .black.opacity(0.30) : .clear,
-            radius: 1,
-            y: 1
-        )
-        .containerBackground(for: .widget) {
-            Color.clear
-        }
+        .widgetSurface(renderingMode: renderingMode)
     }
 
     private var dayView: some View {
-        VStack(alignment: .leading, spacing: family == .systemLarge ? 10 : 4) {
+        VStack(
+            alignment: .leading,
+            spacing: typography.verticalSpacing(family == .systemLarge ? 10 : 4)
+        ) {
             HStack(alignment: .firstTextBaseline) {
                 Text(dayPresentation.monthYearText)
-                    .font(.system(size: family == .systemLarge ? 20 : 12, weight: .heavy, design: .rounded))
+                    .font(
+                        typography.displayFont(
+                            size: family == .systemLarge ? 20 : 12,
+                            weight: .heavy,
+                            fallback: .system(size: family == .systemLarge ? 20 : 12, weight: .heavy, design: .rounded)
+                        )
+                    )
                     .lineLimit(1)
-                    .minimumScaleFactor(0.7)
-                Spacer(minLength: 4)
+                    .minimumScaleFactor(typography.displayMinimumScaleFactor(0.7))
+                    .padding(.vertical, typography.displayTextVerticalPadding)
+                Spacer(minLength: typography.horizontalSpacing(4))
                 eventAccessBadge
             }
 
             Spacer(minLength: 0)
 
             Text(dayPresentation.weekdayText)
-                .font(.system(size: family == .systemLarge ? 24 : 14, weight: .bold, design: .rounded))
+                .font(
+                    typography.supportingFont(
+                        size: family == .systemLarge ? 24 : 14,
+                        weight: .bold,
+                        fallback: .system(
+                            size: family == .systemLarge ? 24 : 14,
+                            weight: .bold,
+                            design: .rounded
+                        )
+                    )
+                )
                 .lineLimit(1)
-                .minimumScaleFactor(0.7)
+                .minimumScaleFactor(typography.supportingMinimumScaleFactor(0.7))
+                .padding(.vertical, typography.supportingTextVerticalPadding)
 
             Text(dayPresentation.dayText)
-                .font(.system(size: family == .systemLarge ? 112 : (family == .systemMedium ? 72 : 62), weight: .black, design: .rounded))
+                .font(
+                    typography.displayFont(
+                        size: family == .systemLarge ? 112 : (family == .systemMedium ? 72 : 62),
+                        weight: .black,
+                        fallback: .system(
+                            size: family == .systemLarge ? 112 : (family == .systemMedium ? 72 : 62),
+                            weight: .black,
+                            design: .rounded
+                        )
+                    )
+                )
                 .lineLimit(1)
-                .minimumScaleFactor(0.65)
+                .minimumScaleFactor(typography.displayMinimumScaleFactor(0.65))
+                .padding(.vertical, typography.displayTextVerticalPadding)
 
             dayEventSummary
+
+            if showsNextEventLine {
+                nextEventLine
+            }
         }
         .accessibilityElement(children: .combine)
         .accessibilityLabel(dayAccessibilityLabel)
@@ -199,49 +266,81 @@ struct CalendarWidgetView: View {
 
     private var dayEventSummary: some View {
         let count = entry.events.count(on: entry.date, calendar: calendar)
-        return HStack(spacing: 5) {
-            switch entry.events.accessState {
-            case .disabled:
+        return HStack(spacing: typography.horizontalSpacing(5)) {
+            if !entry.configuration.showEvents {
                 Text("TODAY")
-            case .available:
-                Image(systemName: count == 0 ? "calendar" : "calendar.badge.clock")
-                Text(count == 1 ? "1 EVENT" : "\(count) EVENTS")
-            case .requiresPermission:
-                Image(systemName: "calendar.badge.exclamationmark")
-                Text("ENABLE IN APP")
-            case .denied:
-                Image(systemName: "calendar.badge.exclamationmark")
-                Text("ACCESS OFF")
+            } else {
+                switch entry.events.accessState {
+                case .disabled:
+                    Text("TODAY")
+                case .available:
+                    Image(systemName: count == 0 ? "calendar" : "calendar.badge.clock")
+                    Text(count == 1 ? "1 EVENT" : "\(count) EVENTS")
+                case .requiresPermission:
+                    Image(systemName: "calendar.badge.exclamationmark")
+                    Text("ENABLE IN APP")
+                case .denied:
+                    Image(systemName: "calendar.badge.exclamationmark")
+                    Text("ACCESS OFF")
+                }
             }
         }
-        .font(.system(size: family == .systemLarge ? 15 : 10, weight: .bold, design: .rounded))
+        .font(
+            typography.supportingFont(
+                size: family == .systemLarge ? 15 : 10,
+                weight: .bold,
+                fallback: .system(
+                    size: family == .systemLarge ? 15 : 10,
+                    weight: .bold,
+                    design: .rounded
+                )
+            )
+        )
         .lineLimit(1)
-        .minimumScaleFactor(0.7)
+        .minimumScaleFactor(typography.supportingMinimumScaleFactor(0.7))
+        .padding(.vertical, typography.supportingTextVerticalPadding)
     }
 
     private var dayAccessibilityLabel: String {
         let count = entry.events.count(on: entry.date, calendar: calendar)
-        return CalendarDayFocusAccessibility.label(
+        let dayLabel = CalendarDayFocusAccessibility.label(
             dateLabel: dayPresentation.accessibilityLabel,
-            accessState: entry.events.accessState,
+            accessState: entry.configuration.showEvents ? entry.events.accessState : .disabled,
             eventCount: count
         )
+        guard entry.configuration.showNextEventTime else { return dayLabel }
+        return "\(dayLabel), \(nextEventAccessibilityText)"
     }
 
     private var weekView: some View {
-        VStack(spacing: family == .systemLarge ? 14 : 8) {
+        VStack(spacing: typography.verticalSpacing(family == .systemLarge ? 14 : 8)) {
             HStack {
                 Text(weekPresentation.headerText)
-                    .font(.system(size: family == .systemLarge ? 22 : 14, weight: .heavy, design: .rounded))
+                    .font(
+                        typography.displayFont(
+                            size: family == .systemLarge ? 22 : 14,
+                            weight: .heavy,
+                            fallback: .system(size: family == .systemLarge ? 22 : 14, weight: .heavy, design: .rounded)
+                        )
+                    )
                     .lineLimit(1)
-                Spacer(minLength: 4)
+                    .minimumScaleFactor(typography.displayMinimumScaleFactor(0.7))
+                    .padding(.vertical, typography.displayTextVerticalPadding)
+                Spacer(minLength: typography.horizontalSpacing(4))
                 eventAccessBadge
             }
 
-            HStack(alignment: .top, spacing: family == .systemLarge ? 8 : 3) {
+            HStack(
+                alignment: .top,
+                spacing: typography.horizontalSpacing(family == .systemLarge ? 8 : 3)
+            ) {
                 ForEach(weekPresentation.days) { day in
                     weekDay(day)
                 }
+            }
+
+            if showsNextEventLine {
+                nextEventLine
             }
         }
     }
@@ -251,12 +350,25 @@ struct CalendarWidgetView: View {
         let marker = CalendarDayMarkerPresentation(
             day: day,
             eventCount: eventCount,
-            showsEventIndicators: entry.events.accessState == .available
+            showsEventIndicators: entry.configuration.showEvents
+                && entry.events.accessState == .available
         )
-        return VStack(spacing: family == .systemLarge ? 8 : 4) {
+        return VStack(spacing: typography.verticalSpacing(family == .systemLarge ? 8 : 4)) {
             Text(day.weekdayText)
-                .font(.system(size: family == .systemLarge ? 14 : 9, weight: .bold, design: .rounded))
+                .font(
+                    typography.supportingFont(
+                        size: family == .systemLarge ? 14 : 9,
+                        weight: .bold,
+                        fallback: .system(
+                            size: family == .systemLarge ? 14 : 9,
+                            weight: .bold,
+                            design: .rounded
+                        )
+                    )
+                )
                 .lineLimit(1)
+                .minimumScaleFactor(typography.supportingMinimumScaleFactor(0.65))
+                .padding(.vertical, typography.supportingTextVerticalPadding)
 
             calendarDayMarker(
                 marker,
@@ -265,10 +377,20 @@ struct CalendarWidgetView: View {
                 dotSize: family == .systemLarge ? 4 : 3
             )
 
-            if family == .systemLarge, entry.events.accessState == .available {
+            if family == .systemLarge,
+               entry.configuration.showEvents,
+               entry.events.accessState == .available {
                 Text(eventCount == 1 ? "1 event" : "\(eventCount) events")
-                    .font(.caption2.weight(.semibold))
+                    .font(
+                        typography.supportingFont(
+                            size: 11,
+                            weight: .semibold,
+                            fallback: .caption2.weight(.semibold)
+                        )
+                    )
                     .lineLimit(1)
+                    .minimumScaleFactor(typography.supportingMinimumScaleFactor(0.65))
+                    .padding(.vertical, typography.supportingTextVerticalPadding)
             }
         }
         .frame(maxWidth: .infinity)
@@ -278,15 +400,18 @@ struct CalendarWidgetView: View {
     }
 
     private var monthView: some View {
-        VStack(spacing: monthMetrics.sectionSpacing) {
+        VStack(spacing: typography.verticalSpacing(monthMetrics.sectionSpacing)) {
             monthHeader
             weekdayHeader
             monthGrid
+            if showsNextEventLine {
+                nextEventLine
+            }
         }
     }
 
     private var monthHeader: some View {
-        HStack(spacing: 4) {
+        HStack(spacing: typography.horizontalSpacing(4)) {
             Button(intent: PreviousCalendarMonthIntent()) {
                 Image(systemName: "arrow.left")
                     .font(.system(size: monthMetrics.arrowSize, weight: .medium))
@@ -296,19 +421,26 @@ struct CalendarWidgetView: View {
             .buttonStyle(.plain)
             .accessibilityLabel("Previous month")
 
-            Spacer(minLength: 2)
+            Spacer(minLength: typography.horizontalSpacing(2))
 
             Button(intent: CurrentCalendarMonthIntent()) {
                 Text(monthTitle)
-                    .font(.system(size: monthMetrics.headerFontSize, weight: .heavy, design: .rounded))
+                    .font(
+                        typography.displayFont(
+                            size: monthMetrics.headerFontSize,
+                            weight: .heavy,
+                            fallback: .system(size: monthMetrics.headerFontSize, weight: .heavy, design: .rounded)
+                        )
+                    )
                     .tracking(monthMetrics.usesCompactMonth ? 0.2 : 0.7)
                     .lineLimit(1)
-                    .minimumScaleFactor(0.72)
+                    .minimumScaleFactor(typography.displayMinimumScaleFactor(0.72))
+                    .padding(.vertical, typography.displayTextVerticalPadding)
             }
             .buttonStyle(.plain)
             .accessibilityLabel("\(monthPresentation.accessibilityLabel), show current month")
 
-            Spacer(minLength: 2)
+            Spacer(minLength: typography.horizontalSpacing(2))
             eventAccessBadge
 
             Button(intent: NextCalendarMonthIntent()) {
@@ -333,9 +465,20 @@ struct CalendarWidgetView: View {
         LazyVGrid(columns: columns, spacing: 0) {
             ForEach(Array(monthWeekdayTexts.enumerated()), id: \.offset) { _, weekday in
                 Text(weekday)
-                    .font(.system(size: monthMetrics.weekdayFontSize, weight: .bold, design: .rounded))
+                    .font(
+                        typography.supportingFont(
+                            size: monthMetrics.weekdayFontSize,
+                            weight: .bold,
+                            fallback: .system(
+                                size: monthMetrics.weekdayFontSize,
+                                weight: .bold,
+                                design: .rounded
+                            )
+                        )
+                    )
                     .lineLimit(1)
-                    .minimumScaleFactor(0.65)
+                    .minimumScaleFactor(typography.supportingMinimumScaleFactor(0.65))
+                    .padding(.vertical, typography.supportingTextVerticalPadding)
                     .frame(maxWidth: .infinity)
                     .accessibilityHidden(true)
             }
@@ -349,7 +492,7 @@ struct CalendarWidgetView: View {
     }
 
     private var monthGrid: some View {
-        LazyVGrid(columns: columns, spacing: monthMetrics.rowSpacing) {
+        LazyVGrid(columns: columns, spacing: typography.verticalSpacing(monthMetrics.rowSpacing)) {
             ForEach(monthPresentation.days) { day in
                 monthDay(day)
             }
@@ -361,7 +504,8 @@ struct CalendarWidgetView: View {
         let marker = CalendarDayMarkerPresentation(
             day: day,
             eventCount: eventCount,
-            showsEventIndicators: entry.events.accessState == .available
+            showsEventIndicators: entry.configuration.showEvents
+                && entry.events.accessState == .available
         )
         return calendarDayMarker(
             marker,
@@ -409,7 +553,15 @@ struct CalendarWidgetView: View {
         dotSize: CGFloat
     ) -> some View {
         Text(marker.dayText)
-            .font(.system(size: fontSize, weight: .bold, design: .rounded))
+            .font(
+                typography.supportingFont(
+                    size: fontSize,
+                    weight: .bold,
+                    fallback: .system(size: fontSize, weight: .bold, design: .rounded)
+                )
+            )
+            .lineLimit(1)
+            .minimumScaleFactor(typography.supportingMinimumScaleFactor(0.65))
             .foregroundStyle(renderingMode == .fullColor ? Color.white : Color.primary)
             .offset(y: marker.eventDotCount > 0 ? -(dotSize * 0.55) : 0)
             .frame(width: diameter, height: diameter)
@@ -435,7 +587,15 @@ struct CalendarWidgetView: View {
                 .fill(.white)
                 .overlay {
                     Text(marker.dayText)
-                        .font(.system(size: fontSize, weight: .bold, design: .rounded))
+                        .font(
+                            typography.supportingFont(
+                                size: fontSize,
+                                weight: .bold,
+                                fallback: .system(size: fontSize, weight: .bold, design: .rounded)
+                            )
+                        )
+                        .lineLimit(1)
+                        .minimumScaleFactor(typography.supportingMinimumScaleFactor(0.65))
                         .foregroundStyle(.black)
                         .offset(y: marker.eventDotCount > 0 ? -(dotSize * 0.55) : 0)
                 }
@@ -449,7 +609,15 @@ struct CalendarWidgetView: View {
                 .stroke(Color.primary, lineWidth: max(1.5, diameter * 0.07))
                 .overlay {
                     Text(marker.dayText)
-                        .font(.system(size: fontSize, weight: .bold, design: .rounded))
+                        .font(
+                            typography.supportingFont(
+                                size: fontSize,
+                                weight: .bold,
+                                fallback: .system(size: fontSize, weight: .bold, design: .rounded)
+                            )
+                        )
+                        .lineLimit(1)
+                        .minimumScaleFactor(typography.supportingMinimumScaleFactor(0.65))
                         .foregroundStyle(Color.primary)
                         .offset(y: marker.eventDotCount > 0 ? -(dotSize * 0.55) : 0)
                 }
@@ -486,25 +654,89 @@ struct CalendarWidgetView: View {
 
     @ViewBuilder
     private var eventAccessBadge: some View {
-        if entry.configuration.showEvents {
+        if entry.configuration.showEvents || entry.configuration.showNextEventTime {
             switch entry.events.accessState {
             case .requiresPermission, .denied:
-                Image(systemName: "calendar.badge.exclamationmark")
-                    .font(.caption.weight(.bold))
-                    .accessibilityLabel(entry.events.accessState == .requiresPermission
+                WidgetStatusBadge(
+                    systemImage: "calendar.badge.exclamationmark",
+                    accessibilityText: entry.events.accessState == .requiresPermission
                         ? "Enable Calendar access in the Desktop Widgets app"
-                        : "Calendar access is turned off")
+                        : "Calendar access is turned off"
+                )
             default:
                 EmptyView()
             }
         }
     }
 
+    private var showsNextEventLine: Bool {
+        guard entry.configuration.showNextEventTime else { return false }
+        return switch resolvedView {
+        case .day:
+            true
+        case .week:
+            family != .systemSmall
+        case .month:
+            family == .systemLarge
+        }
+    }
+
+    private var nextEventLine: some View {
+        WidgetStatusLine(
+            text: nextEventDisplayText,
+            systemImage: "calendar.badge.clock",
+            accessibilityText: nextEventAccessibilityText,
+            typography: typography
+        )
+    }
+
+    private var nextEventDisplayText: String {
+        switch entry.events.accessState {
+        case .available:
+            guard let nextEvent = entry.events.nextEvent else { return "No timed events soon" }
+            return nextEvent.isOngoing ? "Event now" : "Next \(formattedEventTime(nextEvent.start))"
+        case .requiresPermission:
+            return "Enable Calendar access"
+        case .denied:
+            return "Calendar access off"
+        case .disabled:
+            return "Next event unavailable"
+        }
+    }
+
+    private var nextEventAccessibilityText: String {
+        switch entry.events.accessState {
+        case .available:
+            guard let nextEvent = entry.events.nextEvent else {
+                return "No timed events in the next seven days"
+            }
+            return nextEvent.isOngoing
+                ? "A calendar event is happening now"
+                : "Next calendar event at \(formattedEventTime(nextEvent.start))"
+        case .requiresPermission:
+            return "Enable Calendar access in the Desktop Widgets app"
+        case .denied:
+            return "Calendar access is turned off"
+        case .disabled:
+            return "Next event time is unavailable"
+        }
+    }
+
+    private func formattedEventTime(_ date: Date) -> String {
+        let formatter = DateFormatter()
+        formatter.calendar = calendar
+        formatter.locale = locale
+        formatter.timeZone = timeZone
+        formatter.setLocalizedDateFormatFromTemplate("jm")
+        return formatter.string(from: date)
+    }
+
     private func dayAccessibilityLabel(
         _ day: CalendarDayPresentation,
         eventCount: Int
     ) -> String {
-        guard entry.events.accessState == .available else { return day.accessibilityLabel }
+        guard entry.configuration.showEvents,
+              entry.events.accessState == .available else { return day.accessibilityLabel }
         return "\(day.accessibilityLabel), \(eventCount) \(eventCount == 1 ? "event" : "events")"
     }
 }
@@ -521,7 +753,7 @@ struct CalendarWidget: Widget {
             CalendarWidgetView(entry: entry)
         }
         .configurationDisplayName("Calendar")
-        .description("A configurable day, week, or month calendar with optional event indicators.")
+        .description("A configurable calendar with private event counts and next-event timing.")
         .supportedFamilies([.systemSmall, .systemMedium, .systemLarge])
         .containerBackgroundRemovable(true)
     }

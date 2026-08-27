@@ -11,7 +11,8 @@ final class WidgetRenderingSmokeTests: XCTestCase {
         try assertRenders(
             TimeAndDateWidgetView(
                 entry: TimeAndDateEntry(date: .now, configuration: reference),
-                family: .systemSmall
+                family: .systemSmall,
+                typography: .widgetFonts
             ),
             family: .systemSmall,
             name: "Time & Date Small 12-hour"
@@ -21,10 +22,13 @@ final class WidgetRenderingSmokeTests: XCTestCase {
         inline24Hour.layout = TimeAndDateLayout.inline.rawValue
         inline24Hour.dateFormat = TimeAndDateDateFormat.iso.rawValue
         inline24Hour.timeFormat = TimeAndDateTimeFormat.twentyFourHour.rawValue
+        inline24Hour.secondaryTimeZone = TimeAndDateSecondaryZone.tokyo.rawValue
+        inline24Hour.secondaryLabel = "Family"
         try assertRenders(
             TimeAndDateWidgetView(
                 entry: TimeAndDateEntry(date: .now, configuration: inline24Hour),
-                family: .systemMedium
+                family: .systemMedium,
+                typography: .widgetFonts
             ),
             family: .systemMedium,
             name: "Time & Date Medium ISO 24-hour"
@@ -35,7 +39,8 @@ final class WidgetRenderingSmokeTests: XCTestCase {
         try assertRenders(
             TimeAndDateWidgetView(
                 entry: TimeAndDateEntry(date: .now, configuration: centered),
-                family: .systemLarge
+                family: .systemLarge,
+                typography: .widgetFonts
             ),
             family: .systemLarge,
             name: "Time & Date Large centered"
@@ -55,6 +60,7 @@ final class WidgetRenderingSmokeTests: XCTestCase {
             daily: sample.daily
         )
         let configuration = WeatherV8ConfigurationIntent.referencePreview()
+        configuration.detailPreset = WeatherDetailPreset.sun.rawValue
 
         try assertRenders(
             WeatherWidgetView(
@@ -64,7 +70,9 @@ final class WidgetRenderingSmokeTests: XCTestCase {
                     snapshot: longLocationSnapshot,
                     state: .loaded
                 ),
-                family: .systemSmall
+                family: .systemSmall,
+                typography: .theme(.handmade),
+                coverage: .allText
             ),
             family: .systemSmall,
             name: "Weather Small long location"
@@ -77,7 +85,9 @@ final class WidgetRenderingSmokeTests: XCTestCase {
                     snapshot: sample,
                     state: .stale("Offline")
                 ),
-                family: .systemMedium
+                family: .systemMedium,
+                typography: .theme(.technical),
+                coverage: .allText
             ),
             family: .systemMedium,
             name: "Weather Medium stale"
@@ -90,7 +100,9 @@ final class WidgetRenderingSmokeTests: XCTestCase {
                     snapshot: nil,
                     state: .failed("No weather location matched the selected city.", retryable: false)
                 ),
-                family: .systemLarge
+                family: .systemLarge,
+                typography: .theme(.playful),
+                coverage: .allText
             ),
             family: .systemLarge,
             name: "Weather Large failure"
@@ -99,13 +111,22 @@ final class WidgetRenderingSmokeTests: XCTestCase {
 
     func testBatteryRendersAvailableAndUnavailableStatesAcrossFamilies() throws {
         let configuration = BatteryConfigurationIntent.referencePreview()
+        configuration.showHealth = true
+        configuration.showCycles = true
+        let diagnosticSnapshot = BatterySnapshot(
+            percentage: 85,
+            state: .discharging,
+            timeRemainingMinutes: 366,
+            healthPercentage: 91,
+            cycleCount: 247
+        )
         for family in [WidgetFamily.systemSmall, .systemMedium, .systemLarge] {
             try assertRenders(
                 BatteryWidgetView(
                     entry: BatteryEntry(
                         date: .now,
                         configuration: configuration,
-                        snapshot: .sample
+                        snapshot: diagnosticSnapshot
                     ),
                     family: family
                 ),
@@ -126,6 +147,113 @@ final class WidgetRenderingSmokeTests: XCTestCase {
             family: .systemSmall,
             name: "Battery Small unavailable"
         )
+    }
+
+    func testCalendarRendersAutomaticViewsAndPermissionStateAcrossFamilies() throws {
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.timeZone = TimeZone(secondsFromGMT: 0)!
+        let referenceDate = CalendarProvider.referenceDate
+        let configuration = CalendarConfigurationIntent.referencePreview(
+            showEvents: true,
+            showNextEventTime: true
+        )
+        let availableEntry = CalendarEntry(
+            date: referenceDate,
+            configuration: configuration,
+            monthOffset: 0,
+            events: .sample(referenceDate: referenceDate, calendar: calendar)
+        )
+
+        for family in [WidgetFamily.systemSmall, .systemMedium, .systemLarge] {
+            try assertRenders(
+                CalendarWidgetView(entry: availableEntry, family: family),
+                family: family,
+                name: "Calendar \(family) automatic"
+            )
+        }
+
+        let permissionEntry = CalendarEntry(
+            date: referenceDate,
+            configuration: configuration,
+            monthOffset: 0,
+            events: CalendarEventSnapshot(accessState: .requiresPermission, countsByDay: [:])
+        )
+        try assertRenders(
+            CalendarWidgetView(entry: permissionEntry, family: .systemSmall),
+            family: .systemSmall,
+            name: "Calendar Small permission required"
+        )
+    }
+
+    func testEveryTypographyThemeAndCoverageRendersAcrossAllFourWidgets() throws {
+        let referenceDate = CalendarProvider.referenceDate
+        let weather = WeatherSnapshot.sample(now: referenceDate)
+        let calendarEntry = CalendarEntry(
+            date: referenceDate,
+            configuration: .referencePreview(showEvents: false),
+            monthOffset: 0,
+            events: .disabled
+        )
+
+        for theme in WidgetTypographyTheme.allCases {
+            let typography = WidgetTypographyResolution.theme(theme)
+            for coverage in WidgetTypographyCoverage.allCases {
+                for family in [WidgetFamily.systemSmall, .systemMedium, .systemLarge] {
+                    try assertRenders(
+                        TimeAndDateWidgetView(
+                            entry: TimeAndDateEntry(
+                                date: referenceDate,
+                                configuration: .referencePreview()
+                            ),
+                            family: family,
+                            typography: typography,
+                            coverage: coverage
+                        ),
+                        family: family,
+                        name: "Time & Date \(family) \(theme.rawValue) \(coverage.rawValue) typography"
+                    )
+                    try assertRenders(
+                        WeatherWidgetView(
+                            entry: WeatherEntry(
+                                date: referenceDate,
+                                configuration: .referencePreview(),
+                                snapshot: weather,
+                                state: .loaded
+                            ),
+                            family: family,
+                            typography: typography,
+                            coverage: coverage
+                        ),
+                        family: family,
+                        name: "Weather \(family) \(theme.rawValue) \(coverage.rawValue) typography"
+                    )
+                    try assertRenders(
+                        BatteryWidgetView(
+                            entry: BatteryEntry(
+                                date: referenceDate,
+                                configuration: .referencePreview(),
+                                snapshot: .sample
+                            ),
+                            family: family,
+                            typography: typography,
+                            coverage: coverage
+                        ),
+                        family: family,
+                        name: "Battery \(family) \(theme.rawValue) \(coverage.rawValue) typography"
+                    )
+                    try assertRenders(
+                        CalendarWidgetView(
+                            entry: calendarEntry,
+                            family: family,
+                            typography: typography,
+                            coverage: coverage
+                        ),
+                        family: family,
+                        name: "Calendar \(family) \(theme.rawValue) \(coverage.rawValue) typography"
+                    )
+                }
+            }
+        }
     }
 
     private func assertRenders<Content: View>(

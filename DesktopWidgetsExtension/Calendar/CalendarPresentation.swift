@@ -280,8 +280,8 @@ struct CalendarWidgetLayoutMetrics: Equatable, Sendable {
     let usesCompactWeekdays: Bool
 
     init(family: WidgetFamily) {
-        switch family {
-        case .systemSmall:
+        switch WidgetInformationDensity(family: family) {
+        case .compact:
             headerFontSize = 11
             weekdayFontSize = 7.5
             dayFontSize = 9
@@ -291,7 +291,7 @@ struct CalendarWidgetLayoutMetrics: Equatable, Sendable {
             rowSpacing = 1
             usesCompactMonth = true
             usesCompactWeekdays = true
-        case .systemLarge:
+        case .expanded:
             headerFontSize = 20
             weekdayFontSize = 12
             dayFontSize = 16
@@ -301,7 +301,7 @@ struct CalendarWidgetLayoutMetrics: Equatable, Sendable {
             rowSpacing = 7
             usesCompactMonth = false
             usesCompactWeekdays = false
-        default:
+        case .standard:
             headerFontSize = 14
             weekdayFontSize = 9
             dayFontSize = 11
@@ -319,13 +319,19 @@ enum CalendarTimelinePolicy {
     static func nextRefresh(
         after date: Date,
         calendar: Calendar,
-        eventsEnabled: Bool = false
+        eventsEnabled: Bool = false,
+        nextEvent: CalendarNextEventTiming? = nil
     ) -> Date {
         let startOfDay = calendar.startOfDay(for: date)
         let midnight = calendar.date(byAdding: .day, value: 1, to: startOfDay)
             ?? date.addingTimeInterval(86_400)
         guard eventsEnabled else { return midnight }
-        return min(midnight, date.addingTimeInterval(30 * 60))
+
+        let periodicRefresh = min(midnight, date.addingTimeInterval(30 * 60))
+        guard let nextEvent else { return periodicRefresh }
+        let eventBoundary = nextEvent.isOngoing ? nextEvent.end : nextEvent.start
+        guard eventBoundary > date else { return periodicRefresh }
+        return min(periodicRefresh, eventBoundary)
     }
 }
 

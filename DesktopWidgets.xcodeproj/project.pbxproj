@@ -17,7 +17,7 @@
 		A00000000000000000000008 /* WidgetIdentifier.swift in Sources */ = {isa = PBXBuildFile; fileRef = F00000000000000000000008 /* WidgetIdentifier.swift */; };
 		A00000000000000000000009 /* WidgetTheme.swift in Sources */ = {isa = PBXBuildFile; fileRef = F00000000000000000000009 /* WidgetTheme.swift */; };
 		A0000000000000000000000A /* Calendar+WidgetTimeline.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0000000000000000000000A /* Calendar+WidgetTimeline.swift */; };
-		A0000000000000000000000B /* WidgetStatus.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0000000000000000000000B /* WidgetStatus.swift */; };
+		A0000000000000000000000B /* CompanionAppNavigation.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0000000000000000000000B /* CompanionAppNavigation.swift */; };
 		A0000000000000000000000C /* TimeAndDateConfiguration.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0000000000000000000000C /* TimeAndDateConfiguration.swift */; };
 		A0000000000000000000000D /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = F0000000000000000000000D /* Assets.xcassets */; };
 		A0000000000000000000000E /* TimeAndDateConfiguration.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0000000000000000000000C /* TimeAndDateConfiguration.swift */; };
@@ -68,6 +68,18 @@
 		A0000000000000000000003B /* SystemBatteryReader.swift in Sources */ = {isa = PBXBuildFile; fileRef = F00000000000000000000021 /* SystemBatteryReader.swift */; };
 		A0000000000000000000003C /* IOKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F00000000000000000000025 /* IOKit.framework */; };
 		A0000000000000000000003D /* WidgetRenderingSmokeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0000000000000000000002E /* WidgetRenderingSmokeTests.swift */; };
+		A0000000000000000000003E /* WidgetTheme.swift in Sources */ = {isa = PBXBuildFile; fileRef = F00000000000000000000009 /* WidgetTheme.swift */; };
+		A0000000000000000000003F /* CalendarWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = F00000000000000000000029 /* CalendarWidget.swift */; };
+		A00000000000000000000040 /* WidgetTypography.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0000000000000000000002F /* WidgetTypography.swift */; };
+		A00000000000000000000041 /* WidgetTypography.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0000000000000000000002F /* WidgetTypography.swift */; };
+		A00000000000000000000042 /* WidgetTypography.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0000000000000000000002F /* WidgetTypography.swift */; };
+		A00000000000000000000043 /* CompanionAppNavigation.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0000000000000000000000B /* CompanionAppNavigation.swift */; };
+		A00000000000000000000044 /* WidgetTypographyController.swift in Sources */ = {isa = PBXBuildFile; fileRef = F00000000000000000000031 /* WidgetTypographyController.swift */; };
+		A00000000000000000000045 /* CompanionAppComponents.swift in Sources */ = {isa = PBXBuildFile; fileRef = F00000000000000000000032 /* CompanionAppComponents.swift */; };
+		A00000000000000000000046 /* HomePage.swift in Sources */ = {isa = PBXBuildFile; fileRef = F00000000000000000000033 /* HomePage.swift */; };
+		A00000000000000000000047 /* AppearancePage.swift in Sources */ = {isa = PBXBuildFile; fileRef = F00000000000000000000034 /* AppearancePage.swift */; };
+		A00000000000000000000048 /* WidgetGuidePage.swift in Sources */ = {isa = PBXBuildFile; fileRef = F00000000000000000000035 /* WidgetGuidePage.swift */; };
+		A00000000000000000000049 /* HelpAndPrivacyPage.swift in Sources */ = {isa = PBXBuildFile; fileRef = F00000000000000000000036 /* HelpAndPrivacyPage.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -105,7 +117,7 @@
 		F00000000000000000000008 /* WidgetIdentifier.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WidgetIdentifier.swift; sourceTree = "<group>"; };
 		F00000000000000000000009 /* WidgetTheme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WidgetTheme.swift; sourceTree = "<group>"; };
 		F0000000000000000000000A /* Calendar+WidgetTimeline.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Calendar+WidgetTimeline.swift"; sourceTree = "<group>"; };
-		F0000000000000000000000B /* WidgetStatus.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WidgetStatus.swift; sourceTree = "<group>"; };
+		F0000000000000000000000B /* CompanionAppNavigation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CompanionAppNavigation.swift; sourceTree = "<group>"; };
 		F0000000000000000000000C /* TimeAndDateConfiguration.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimeAndDateConfiguration.swift; sourceTree = "<group>"; };
 		F0000000000000000000000D /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Resources/Assets.xcassets; sourceTree = "<group>"; };
 		F0000000000000000000000E /* TimeAndDateConfigurationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimeAndDateConfigurationTests.swift; sourceTree = "<group>"; };
@@ -135,6 +147,14 @@
 		F0000000000000000000002C /* CalendarEvents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CalendarEvents.swift; sourceTree = "<group>"; };
 		F0000000000000000000002D /* CalendarPermissionController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CalendarPermissionController.swift; sourceTree = "<group>"; };
 		F0000000000000000000002E /* WidgetRenderingSmokeTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WidgetRenderingSmokeTests.swift; sourceTree = "<group>"; };
+		F0000000000000000000002F /* WidgetTypography.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WidgetTypography.swift; sourceTree = "<group>"; };
+		F00000000000000000000030 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		F00000000000000000000031 /* WidgetTypographyController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WidgetTypographyController.swift; sourceTree = "<group>"; };
+		F00000000000000000000032 /* CompanionAppComponents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CompanionAppComponents.swift; sourceTree = "<group>"; };
+		F00000000000000000000033 /* HomePage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomePage.swift; sourceTree = "<group>"; };
+		F00000000000000000000034 /* AppearancePage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppearancePage.swift; sourceTree = "<group>"; };
+		F00000000000000000000035 /* WidgetGuidePage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WidgetGuidePage.swift; sourceTree = "<group>"; };
+		F00000000000000000000036 /* HelpAndPrivacyPage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HelpAndPrivacyPage.swift; sourceTree = "<group>"; };
 		P00000000000000000000001 /* DesktopWidgets.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = DesktopWidgets.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		P00000000000000000000002 /* DesktopWidgetsExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = DesktopWidgetsExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		P00000000000000000000003 /* DesktopWidgetsTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = DesktopWidgetsTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -186,6 +206,7 @@
 				G00000000000000000000003 /* App */,
 				G00000000000000000000010 /* Models */,
 				G00000000000000000000004 /* Views */,
+				F00000000000000000000030 /* Info.plist */,
 				F00000000000000000000003 /* DesktopWidgetsApp.entitlements */,
 			);
 			path = DesktopWidgetsApp;
@@ -203,6 +224,11 @@
 			isa = PBXGroup;
 			children = (
 				F00000000000000000000002 /* ContentView.swift */,
+				F00000000000000000000032 /* CompanionAppComponents.swift */,
+				F00000000000000000000033 /* HomePage.swift */,
+				F00000000000000000000034 /* AppearancePage.swift */,
+				F00000000000000000000035 /* WidgetGuidePage.swift */,
+				F00000000000000000000036 /* HelpAndPrivacyPage.swift */,
 			);
 			path = Views;
 			sourceTree = "<group>";
@@ -292,6 +318,7 @@
 			isa = PBXGroup;
 			children = (
 				F00000000000000000000009 /* WidgetTheme.swift */,
+				F0000000000000000000002F /* WidgetTypography.swift */,
 			);
 			path = Styling;
 			sourceTree = "<group>";
@@ -317,8 +344,9 @@
 		G00000000000000000000010 /* Models */ = {
 			isa = PBXGroup;
 			children = (
-				F0000000000000000000000B /* WidgetStatus.swift */,
+				F0000000000000000000000B /* CompanionAppNavigation.swift */,
 				F0000000000000000000002D /* CalendarPermissionController.swift */,
+				F00000000000000000000031 /* WidgetTypographyController.swift */,
 			);
 			path = Models;
 			sourceTree = "<group>";
@@ -484,9 +512,16 @@
 				A00000000000000000000002 /* ContentView.swift in Sources */,
 				A00000000000000000000003 /* WidgetIdentifier.swift in Sources */,
 				A00000000000000000000004 /* WidgetTheme.swift in Sources */,
-				A0000000000000000000000B /* WidgetStatus.swift in Sources */,
+				A00000000000000000000040 /* WidgetTypography.swift in Sources */,
+				A0000000000000000000000B /* CompanionAppNavigation.swift in Sources */,
 				A00000000000000000000021 /* DesktopWidgetsURLRouter.swift in Sources */,
 				A00000000000000000000037 /* CalendarPermissionController.swift in Sources */,
+				A00000000000000000000044 /* WidgetTypographyController.swift in Sources */,
+				A00000000000000000000045 /* CompanionAppComponents.swift in Sources */,
+				A00000000000000000000046 /* HomePage.swift in Sources */,
+				A00000000000000000000047 /* AppearancePage.swift in Sources */,
+				A00000000000000000000048 /* WidgetGuidePage.swift in Sources */,
+				A00000000000000000000049 /* HelpAndPrivacyPage.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -516,6 +551,7 @@
 				A0000000000000000000001B /* WeatherPresentation.swift in Sources */,
 				A00000000000000000000008 /* WidgetIdentifier.swift in Sources */,
 				A00000000000000000000009 /* WidgetTheme.swift in Sources */,
+				A00000000000000000000041 /* WidgetTypography.swift in Sources */,
 				A0000000000000000000000A /* Calendar+WidgetTimeline.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -534,6 +570,7 @@
 				A00000000000000000000036 /* CalendarEvents.swift in Sources */,
 				A00000000000000000000030 /* CalendarPresentation.swift in Sources */,
 				A00000000000000000000031 /* CalendarNavigation.swift in Sources */,
+				A0000000000000000000003F /* CalendarWidget.swift in Sources */,
 				A00000000000000000000032 /* CalendarWidgetTests.swift in Sources */,
 				A0000000000000000000000E /* TimeAndDateConfiguration.swift in Sources */,
 				A0000000000000000000001E /* TimeAndDatePresentation.swift in Sources */,
@@ -547,10 +584,13 @@
 				A00000000000000000000017 /* WeatherConfigurationTests.swift in Sources */,
 				A00000000000000000000018 /* WidgetContractTests.swift in Sources */,
 				A0000000000000000000003D /* WidgetRenderingSmokeTests.swift in Sources */,
+				A0000000000000000000003E /* WidgetTheme.swift in Sources */,
+				A00000000000000000000042 /* WidgetTypography.swift in Sources */,
 				A00000000000000000000019 /* WidgetIdentifier.swift in Sources */,
 				A0000000000000000000001A /* Calendar+WidgetTimeline.swift in Sources */,
 				A0000000000000000000001C /* WeatherPresentation.swift in Sources */,
 				A00000000000000000000022 /* DesktopWidgetsURLRouter.swift in Sources */,
+				A00000000000000000000043 /* CompanionAppNavigation.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -608,10 +648,8 @@
 				CURRENT_PROJECT_VERSION = 21;
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_PREVIEWS = YES;
-				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_KEY_CFBundleDisplayName = "Desktop Widgets";
-				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
-				INFOPLIST_KEY_NSCalendarsFullAccessUsageDescription = "Desktop Widgets reads event timing to show optional counts and dots. Event titles and notes are never displayed.";
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = DesktopWidgetsApp/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
@@ -630,10 +668,8 @@
 				CODE_SIGN_ENTITLEMENTS = DesktopWidgetsApp/DesktopWidgetsApp.entitlements;
 				CURRENT_PROJECT_VERSION = 21;
 				ENABLE_HARDENED_RUNTIME = YES;
-				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_KEY_CFBundleDisplayName = "Desktop Widgets";
-				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
-				INFOPLIST_KEY_NSCalendarsFullAccessUsageDescription = "Desktop Widgets reads event timing to show optional counts and dots. Event titles and notes are never displayed.";
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = DesktopWidgetsApp/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
