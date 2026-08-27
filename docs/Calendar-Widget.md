@@ -10,7 +10,7 @@ The Calendar widget adapts its content to the available space while retaining th
 4. Leave **View** set to **Automatic**, or choose **Day**, **Week**, or **Month** for that widget copy.
 5. Turn on **Show Event Indicators** for counts and dots, **Show Next Event Time** for a title-free start time, or both.
 
-The next-event field gives Calendar a fresh WidgetKit identity. Remove any existing Calendar once and add it again so macOS creates the current configurable version.
+The next-event field preserves Calendar's established WidgetKit identity and defaults to Off, so existing copies and macOS's cached gallery previews remain compatible.
 
 ## Views by size
 
@@ -59,7 +59,7 @@ Without event features, the next timeline refresh is requested for the next loca
 
 `./Scripts/verify-widgets.sh` covers automatic and explicit view selection, event-count normalization, upcoming and ongoing timed-event selection, all-day and ended-event filtering, independent feature toggles, the August 2026 reference grid, calendar boundaries, DST-safe refreshes, responsive metrics, App Intent metadata, Calendar privacy configuration, rendering, and Release embedding. The remaining macOS-owned checks are:
 
-- [ ] Remove any build-18 Calendar, then add Small, Medium, and Large Calendar widgets.
+- [ ] Keep an existing Calendar in place, then add Small, Medium, and Large Calendar widgets and confirm both old and new copies render.
 - [ ] Confirm Automatic shows Day, Week, and Month respectively without clipping.
 - [ ] Edit each copy, select every explicit view, and confirm the choice persists after reopening Edit Widget.
 - [ ] Confirm indicators are absent by default and the permission signifier appears when enabled without access.

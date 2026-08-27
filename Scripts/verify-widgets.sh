@@ -238,10 +238,10 @@ fi
 require_contains "$APP_INTENTS_METADATA" "detailPreset" "Weather preset editor parameter"
 
 strings "$EXTENSION_BINARY" > "$EXTENSION_STRINGS"
-require_contains "$EXTENSION_STRINGS" "com.joshuawyadao.desktop-widgets.time-and-date.configurable-v3-secondary-clock" "Time & Date widget identity"
+require_contains "$EXTENSION_STRINGS" "com.joshuawyadao.desktop-widgets.time-and-date.configurable-v2-string" "Time & Date widget identity"
 require_contains "$EXTENSION_STRINGS" "com.joshuawyadao.desktop-widgets.weather.entity-search-v8" "Weather widget identity"
-require_contains "$EXTENSION_STRINGS" "com.joshuawyadao.desktop-widgets.battery.configurable-v3-health" "Battery widget identity"
-require_contains "$EXTENSION_STRINGS" "com.joshuawyadao.desktop-widgets.calendar.configurable-v3-next-event" "Calendar widget identity"
+require_contains "$EXTENSION_STRINGS" "com.joshuawyadao.desktop-widgets.battery.configurable-v2" "Battery widget identity"
+require_contains "$EXTENSION_STRINGS" "com.joshuawyadao.desktop-widgets.calendar.configurable-v2" "Calendar widget identity"
 readonly APP_CALENDAR_USAGE="$(/usr/libexec/PlistBuddy -c 'Print :NSCalendarsFullAccessUsageDescription' "$APP_PATH/Contents/Info.plist")"
 readonly EXTENSION_CALENDAR_USAGE="$(/usr/libexec/PlistBuddy -c 'Print :NSCalendarsFullAccessUsageDescription' "$EXTENSION_INFO")"
 if [[ -z "$APP_CALENDAR_USAGE" || -z "$EXTENSION_CALENDAR_USAGE" ]]; then

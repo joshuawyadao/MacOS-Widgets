@@ -6,7 +6,7 @@ The Time and Date widget is inspired by the supplied desktop reference: white up
 
 1. Run the `DesktopWidgets` app once from Xcode.
 2. Choose an **Appearance theme** in the app. Leave Time & Date on **Follow Global Theme**, choose a different curated theme for every Time & Date widget, or select **Use Each Widget's Fonts** to activate the per-copy font rows described below. Font Coverage does not visibly change Time & Date because its date, clock, and AM/PM are all display roles already.
-3. Remove any existing Time & Date widget once. The second-clock fields intentionally use a fresh widget identity, so macOS cannot migrate an older placed copy to this editor schema.
+3. Keep any existing Time & Date copies in place. The second-clock fields preserve the established widget identity and default to Off for an older saved configuration.
 4. Add **Time & Date** from the macOS widget gallery.
 5. Control-click the widget on the desktop.
 6. Choose **Edit Time and Date**.

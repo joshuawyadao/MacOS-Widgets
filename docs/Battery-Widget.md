@@ -5,7 +5,7 @@ The Battery widget follows the supplied reference's compact hierarchy: a bold pe
 ## Add it
 
 1. Open `DesktopWidgets.xcodeproj`, select **My Mac**, and run the `DesktopWidgets` scheme once.
-2. Remove any existing Battery widget once. Health and cycle-count controls use a fresh WidgetKit identity, so macOS cannot migrate an older placed copy to this editor schema.
+2. Keep any existing Battery copies in place. Health and cycle-count controls preserve the established widget identity and default to Off for an older saved configuration.
 3. Control-click the desktop, choose **Edit Widgets**, and search for **Desktop Widgets**.
 4. Add **Battery** in Small, Medium, or Large.
 5. Control-click the placed widget, choose **Edit Battery**, and toggle any of these extra details:

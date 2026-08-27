@@ -34,10 +34,10 @@ Free Personal Team provisioning is intended for personal development and can req
 
 1. Open `DesktopWidgets.xcodeproj` in Xcode.
 2. Select **My Mac** and run the `DesktopWidgets` scheme once. The app and widget extension use the same free Personal Team from ignored local configuration. The shared Run scheme unregisters stale copies of this extension from other Xcode DerivedData/worktree builds, registers the current extension, and refreshes the macOS widget runtime before opening the app. It never deletes a build, placed widget, or saved configuration, and it leaves matching installed copies outside DerivedData registered.
-3. Remove any existing Time & Date widget once before adding the current version. The optional second-time-zone fields use a fresh WidgetKit identity so macOS cannot attach the new editor schema to an older placed copy.
+3. Existing Time & Date copies remain compatible. The optional second-time-zone fields extend the established widget identity and default to Off for older configurations.
 4. Remove any earlier Weather widget once before adding the current one. Build 15 replaces the awkward two-row city editor with one searchable **City** field and therefore has a new WidgetKit identity; an existing build-14 Weather instance cannot migrate and appears as a blank system placeholder. If the widget is blank or its editor still shows **Location** or separate **Search City / Matching City** rows, remove that older widget and add Weather again.
-5. Remove any existing Battery widget once before adding the current version. Optional health and cycle-count fields use a fresh WidgetKit identity; the prior configuration cannot migrate.
-6. Remove any existing Calendar widget once before adding the current version. Optional next-event timing uses a fresh WidgetKit identity; the prior configuration cannot migrate.
+5. Existing Battery copies remain compatible; Health and Cycles default to Off until enabled for that copy.
+6. Existing Calendar copies remain compatible; Show Next Event Time defaults to Off until enabled for that copy.
 7. Control-click the desktop, choose **Edit Widgets**, and add **Time & Date**, **Weather**, **Battery**, or **Calendar**.
 8. Control-click a configurable widget and choose **Edit** to change its options. Calendar defaults to a size-appropriate view; Month keeps its navigation arrows. To use event indicators or next-event timing, enable Calendar access in the companion app and turn on the desired option for each widget copy.
 9. In the companion app, choose an **Appearance theme** for the whole set. Use **Widget overrides** for exceptions; changes ask WidgetKit to reload every timeline automatically.
