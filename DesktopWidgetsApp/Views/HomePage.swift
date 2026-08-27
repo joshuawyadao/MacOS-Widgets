@@ -1,3 +1,4 @@
+import AppKit
 import SwiftUI
 
 struct HomePage: View {
@@ -10,6 +11,7 @@ struct HomePage: View {
             subtitle: "Everything you need to set up and personalize your desktop widgets."
         ) {
             header
+            installationCard
             shortcuts
             readyWidgets
             setupGuide
@@ -21,6 +23,48 @@ struct HomePage: View {
                 )
                 CalendarPermissionCard(controller: calendarPermission)
             }
+        }
+    }
+
+    private var installationStatus: DesktopWidgetsInstallationStatus {
+        .current()
+    }
+
+    private var installationCard: some View {
+        let status = installationStatus
+        return HStack(alignment: .top, spacing: 14) {
+            Image(systemName: status.isReady ? "checkmark.seal.fill" : "wrench.and.screwdriver.fill")
+                .font(.title2)
+                .foregroundStyle(status.isReady ? .green : WidgetTheme.accent)
+                .frame(width: 38)
+
+            VStack(alignment: .leading, spacing: 5) {
+                Text(status.isReady ? "Installed and ready" : "Finish the friendly setup")
+                    .font(.headline)
+
+                Text(status.isReady
+                     ? "Desktop Widgets is in your Applications folder and has the shared signing setup its widgets need."
+                     : "Double-click Install Desktop Widgets.command in the folder you received. It will explain any one-time Xcode step.")
+                    .font(.callout)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+
+                if status.refreshCommandExists, let refreshURL = status.refreshCommandURL {
+                    Button("Show Refresh Command") {
+                        NSWorkspace.shared.activateFileViewerSelecting([refreshURL])
+                    }
+                    .buttonStyle(.link)
+                    .accessibilityHint("Shows the manual refresh command in Finder")
+                }
+            }
+
+            Spacer(minLength: 0)
+        }
+        .padding(16)
+        .background((status.isReady ? Color.green : WidgetTheme.accent).opacity(0.09), in: RoundedRectangle(cornerRadius: 14))
+        .overlay {
+            RoundedRectangle(cornerRadius: 14)
+                .stroke((status.isReady ? Color.green : WidgetTheme.accent).opacity(0.22), lineWidth: 1)
         }
     }
 
@@ -114,20 +158,32 @@ struct HomePage: View {
     private var setupGuide: some View {
         VStack(alignment: .leading, spacing: 12) {
             SectionTitle(
-                title: "Set up in two steps",
-                subtitle: "You only need the app to install and update the widget."
+                title: "Your setup checklist",
+                subtitle: "The installer handles the technical work. macOS leaves placement and style up to you."
             )
 
             SetupStep(
                 number: 1,
-                title: "Add it to the desktop",
-                detail: "Control-click the desktop, choose Edit Widgets, search for Desktop Widgets, then drag Time & Date, Weather, Battery, or Calendar onto the desktop."
+                title: "Install once",
+                detail: "Double-click Install Desktop Widgets.command. If asked, add your Apple Account in Xcode; the installer never sees your password."
             )
 
             SetupStep(
                 number: 2,
+                title: "Add it to the desktop",
+                detail: "Control-click the desktop, choose Edit Widgets, search for Desktop Widgets, then drag a widget into place. Apple requires you to place widgets yourself; this app cannot arrange the desktop."
+            )
+
+            SetupStep(
+                number: 3,
                 title: "Make it yours",
-                detail: "Control-click configurable widgets to edit their options. Calendar can use Automatic, Day, Week, or Month, with optional event indicators or next-event timing after you enable access below."
+                detail: "Open Appearance here to choose a shared style, or Control-click a placed widget and choose Edit to customize only that copy."
+            )
+
+            SetupStep(
+                number: 4,
+                title: "Refresh once a week",
+                detail: "Free Apple signing normally expires after 7 days. Double-click Refresh Desktop Widgets.command; it rebuilds and refreshes the same installation without making you work through Xcode by hand."
             )
         }
     }

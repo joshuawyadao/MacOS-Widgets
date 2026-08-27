@@ -2,6 +2,45 @@ import Foundation
 import XCTest
 
 final class WidgetContractTests: XCTestCase {
+    func testInstallationStatusRecognizesPreferredSignedPersonalInstall() {
+        let home = URL(fileURLWithPath: "/Users/friendly", isDirectory: true)
+        let bundle = home.appendingPathComponent("Applications/Desktop Widgets.app", isDirectory: true)
+        let refresh = home.appendingPathComponent("Library/Application Support/Desktop Widgets/Installer/Refresh Desktop Widgets.command")
+        let status = DesktopWidgetsInstallationStatus(
+            bundleURL: bundle,
+            infoDictionary: [
+                "CFBundleIdentifier": "io.desktopwidgets.personal.abc123de45.app",
+                "DesktopWidgetsDevelopmentTeam": "ABC123DE45",
+                "WidgetThemeAppGroupIdentifier": "ABC123DE45.io.desktopwidgets.personal.abc123de45.shared",
+                "DesktopWidgetsRefreshCommandPath": "$(HOME)/Library/Application Support/Desktop Widgets/Installer/Refresh Desktop Widgets.command",
+            ],
+            homeDirectory: home,
+            fileExists: { $0 == refresh.path }
+        )
+
+        XCTAssertTrue(status.isInPreferredLocation)
+        XCTAssertTrue(status.hasRequiredSigningConfiguration)
+        XCTAssertTrue(status.refreshCommandExists)
+        XCTAssertEqual(status.refreshCommandURL, refresh)
+        XCTAssertTrue(status.isReady)
+    }
+
+    func testInstallationStatusExplainsUnsignedOrMovedBuildsWithoutClaimingReady() {
+        let home = URL(fileURLWithPath: "/Users/friendly", isDirectory: true)
+        let status = DesktopWidgetsInstallationStatus(
+            bundleURL: URL(fileURLWithPath: "/tmp/DesktopWidgets.app"),
+            infoDictionary: ["CFBundleIdentifier": "com.example.DesktopWidgets"],
+            homeDirectory: home,
+            fileExists: { _ in false }
+        )
+
+        XCTAssertFalse(status.isInPreferredLocation)
+        XCTAssertFalse(status.hasRequiredSigningConfiguration)
+        XCTAssertFalse(status.refreshCommandExists)
+        XCTAssertNil(status.refreshCommandURL)
+        XCTAssertFalse(status.isReady)
+    }
+
     func testCompanionAppNavigationKeepsEveryTaskReachableOnce() {
         let groupedDestinations = CompanionAppDestination.overview
             + CompanionAppDestination.customize

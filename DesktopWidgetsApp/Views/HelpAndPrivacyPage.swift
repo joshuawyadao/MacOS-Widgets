@@ -1,3 +1,4 @@
+import AppKit
 import SwiftUI
 
 struct HelpAndPrivacyPage: View {
@@ -9,6 +10,7 @@ struct HelpAndPrivacyPage: View {
             subtitle: "Find editing help, permission controls, data details, and quick troubleshooting."
         ) {
             helpGuide
+            installationHelp
 
             VStack(alignment: .leading, spacing: 12) {
                 SectionTitle(
@@ -20,6 +22,60 @@ struct HelpAndPrivacyPage: View {
 
             weatherDataTip
             GlassBackgroundTip()
+        }
+    }
+
+    private var installationHelp: some View {
+        let status = DesktopWidgetsInstallationStatus.current()
+        return VStack(alignment: .leading, spacing: 12) {
+            SectionTitle(
+                title: "Installation & refresh",
+                subtitle: "The normal fix for an expired free build is one manual refresh."
+            )
+
+            HStack(alignment: .top, spacing: 12) {
+                Image(systemName: "arrow.triangle.2.circlepath")
+                    .font(.title3)
+                    .foregroundStyle(WidgetTheme.accent)
+
+                VStack(alignment: .leading, spacing: 6) {
+                    Text("If widgets disappear or say they need attention")
+                        .font(.headline)
+                    Text("Double-click Refresh Desktop Widgets.command. Keep the installer folder in Application Support; the app can show the command in Finder when it is available.")
+                        .font(.callout)
+                        .foregroundStyle(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
+
+                    if status.refreshCommandExists, let refreshURL = status.refreshCommandURL {
+                        Button("Show Refresh Command") {
+                            NSWorkspace.shared.activateFileViewerSelecting([refreshURL])
+                        }
+                        .buttonStyle(.link)
+                    } else {
+                        Text("If the button is missing, run Install Desktop Widgets.command again from the folder you received.")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+
+                    DisclosureGroup("Technical details") {
+                        VStack(alignment: .leading, spacing: 3) {
+                            Text("App: \(status.bundleURL.path)")
+                            Text("Expected: \(status.expectedBundleURL.path)")
+                            Text("Bundle ID: \(status.bundleIdentifier)")
+                            Text("Signing team: \(status.teamIdentifier.isEmpty ? "Not detected" : status.teamIdentifier)")
+                            Text("App Group: \(status.appGroupIdentifier.isEmpty ? "Not detected" : status.appGroupIdentifier)")
+                        }
+                        .font(.caption.monospaced())
+                        .textSelection(.enabled)
+                        .padding(.top, 5)
+                    }
+                    .font(.caption)
+                }
+
+                Spacer(minLength: 0)
+            }
+            .padding(16)
+            .background(.quaternary.opacity(0.28), in: RoundedRectangle(cornerRadius: 14))
         }
     }
 

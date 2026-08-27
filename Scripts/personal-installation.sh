@@ -96,6 +96,8 @@ validate_signed_product() {
     local bundle_path
     local profile_path
     local decoded_profile
+    local profile_team
+    local profile_group
 
     [[ -d "$extension_path" ]] || {
         echo "The built app is missing its Desktop Widgets extension." >&2
@@ -129,6 +131,12 @@ validate_signed_product() {
         }
         decoded_profile="$validation_directory/$(/usr/bin/basename "$bundle_path").profile.plist"
         /usr/bin/security cms -D -i "$profile_path" -o "$decoded_profile" >/dev/null
+        profile_team="$(/usr/libexec/PlistBuddy -c 'Print :TeamIdentifier:0' "$decoded_profile" 2>/dev/null || true)"
+        profile_group="$(/usr/libexec/PlistBuddy -c 'Print :Entitlements:com.apple.security.application-groups:0' "$decoded_profile" 2>/dev/null || true)"
+        if [[ "$profile_team" != "$expected_team" || "$profile_group" != "$expected_group" ]]; then
+            echo "The embedded profile does not grant the selected team and required App Group." >&2
+            return 1
+        fi
         if ! /usr/bin/plutil -extract ExpirationDate raw -o - "$decoded_profile" >/dev/null 2>&1; then
             echo "The embedded Personal Team profile has no readable expiration date." >&2
             return 1

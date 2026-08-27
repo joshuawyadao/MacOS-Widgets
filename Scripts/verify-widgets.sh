@@ -45,6 +45,15 @@ readonly SHARED_SCHEME="$PROJECT_PATH/xcshareddata/xcschemes/DesktopWidgets.xcsc
 readonly RUNTIME_REFRESH_SCRIPT="$PROJECT_ROOT/Scripts/refresh-widget-runtime.sh"
 readonly RUNTIME_REFRESH_TEST="$PROJECT_ROOT/Scripts/test-refresh-widget-runtime.sh"
 readonly PERSONAL_TEAM_SCRIPT="$PROJECT_ROOT/Scripts/configure-personal-team.sh"
+readonly FRIENDLY_INSTALL_SCRIPT="$PROJECT_ROOT/Scripts/personal-installation.sh"
+readonly FRIENDLY_INSTALL_LIBRARY="$PROJECT_ROOT/Scripts/personal-installation-lib.sh"
+readonly FRIENDLY_INSTALL_TEST="$PROJECT_ROOT/Scripts/test-personal-installation.sh"
+readonly PACKAGE_SCRIPT="$PROJECT_ROOT/Scripts/package-personal-installer.sh"
+readonly PACKAGE_TEST="$PROJECT_ROOT/Scripts/test-package-personal-installer.sh"
+readonly INSTALL_COMMAND="$PROJECT_ROOT/Install Desktop Widgets.command"
+readonly REFRESH_COMMAND="$PROJECT_ROOT/Refresh Desktop Widgets.command"
+readonly PACKAGE_COMMAND="$PROJECT_ROOT/Package Desktop Widgets for Another Mac.command"
+readonly INSTALL_GUIDE="$PROJECT_ROOT/Installation Guide.md"
 readonly SIGNING_CONFIGURATION="$PROJECT_ROOT/Config/Signing.xcconfig"
 SELECTED_DEVELOPER_DIR="$(resolve_developer_dir)"
 readonly SELECTED_DEVELOPER_DIR
@@ -100,6 +109,26 @@ fi
 /bin/bash -n "$RUNTIME_REFRESH_TEST"
 "$RUNTIME_REFRESH_TEST"
 
+for executable in \
+    "$FRIENDLY_INSTALL_SCRIPT" \
+    "$FRIENDLY_INSTALL_LIBRARY" \
+    "$FRIENDLY_INSTALL_TEST" \
+    "$PACKAGE_SCRIPT" \
+    "$PACKAGE_TEST" \
+    "$INSTALL_COMMAND" \
+    "$REFRESH_COMMAND" \
+    "$PACKAGE_COMMAND"; do
+    require_file "$executable" "personal installation helper"
+    if [[ ! -x "$executable" ]]; then
+        echo "FAIL: Personal installation helper is not executable: $executable" >&2
+        exit 1
+    fi
+    /bin/bash -n "$executable"
+done
+require_file "$INSTALL_GUIDE" "non-developer installation guide"
+"$FRIENDLY_INSTALL_TEST"
+"$PACKAGE_TEST"
+
 require_file "$PERSONAL_TEAM_SCRIPT" "Personal Team setup script"
 if [[ ! -x "$PERSONAL_TEAM_SCRIPT" ]]; then
     echo "FAIL: Personal Team setup script is not executable" >&2
@@ -110,7 +139,11 @@ require_file "$SIGNING_CONFIGURATION" "shared signing configuration"
 require_contains "$SIGNING_CONFIGURATION" "#include? \"../Local.xcconfig\"" "optional local signing include"
 require_contains "$SIGNING_CONFIGURATION" "CODE_SIGN_STYLE = Automatic" "automatic signing policy"
 require_contains "$SIGNING_CONFIGURATION" 'DEVELOPMENT_TEAM = $(LOCAL_DEVELOPMENT_TEAM)' "local Personal Team setting"
+require_contains "$SIGNING_CONFIGURATION" 'DESKTOP_WIDGETS_APP_BUNDLE_IDENTIFIER = com.joshuawyadao.DesktopWidgets' "legacy-compatible app bundle identifier default"
+require_contains "$SIGNING_CONFIGURATION" 'DESKTOP_WIDGETS_EXTENSION_BUNDLE_IDENTIFIER = com.joshuawyadao.DesktopWidgets.Widgets' "legacy-compatible extension bundle identifier default"
 require_contains "$SIGNING_CONFIGURATION" 'WIDGET_THEME_APP_GROUP = $(DEVELOPMENT_TEAM).com.joshuawyadao.desktop-widgets' "team-prefixed typography App Group setting"
+require_contains "$PROJECT_PATH/project.pbxproj" 'PRODUCT_BUNDLE_IDENTIFIER = "$(DESKTOP_WIDGETS_APP_BUNDLE_IDENTIFIER)";' "locally configurable app bundle identifier"
+require_contains "$PROJECT_PATH/project.pbxproj" 'PRODUCT_BUNDLE_IDENTIFIER = "$(DESKTOP_WIDGETS_EXTENSION_BUNDLE_IDENTIFIER)";' "locally configurable extension bundle identifier"
 require_contains "$PROJECT_ROOT/DesktopWidgetsApp/DesktopWidgetsApp.entitlements" 'com.apple.security.application-groups' "app typography App Group entitlement"
 require_contains "$PROJECT_ROOT/DesktopWidgetsApp/DesktopWidgetsApp.entitlements" '$(WIDGET_THEME_APP_GROUP)' "app shared typography group"
 require_contains "$PROJECT_ROOT/DesktopWidgetsExtension/DesktopWidgetsExtension.entitlements" 'com.apple.security.application-groups' "extension typography App Group entitlement"
@@ -136,6 +169,15 @@ if ! git -C "$PROJECT_ROOT" check-ignore --quiet Local.xcconfig; then
     echo "FAIL: Local.xcconfig must remain ignored by Git" >&2
     exit 1
 fi
+if ! git -C "$PROJECT_ROOT" check-ignore --quiet Desktop-Widgets-Personal-Installer.zip; then
+    echo "FAIL: Generated personal handoff archives must remain ignored by Git" >&2
+    exit 1
+fi
+require_contains "$PROJECT_ROOT/DesktopWidgetsApp/Info.plist" "DesktopWidgetsDevelopmentTeam" "companion-app signing status metadata"
+require_contains "$PROJECT_ROOT/DesktopWidgetsApp/Info.plist" "DesktopWidgetsRefreshCommandPath" "companion-app refresh helper metadata"
+require_contains "$PROJECT_ROOT/DesktopWidgetsApp/Views/HomePage.swift" "Apple requires you to place widgets yourself" "macOS-controlled placement guidance"
+require_contains "$PROJECT_ROOT/DesktopWidgetsApp/Views/HomePage.swift" "Refresh Desktop Widgets.command" "free provisioning refresh guidance"
+require_contains "$PROJECT_ROOT/DesktopWidgetsApp/Views/HelpAndPrivacyPage.swift" "Technical details" "progressively disclosed installation diagnostics"
 
 echo "[1/3] Running the complete Debug test suite"
 DEVELOPER_DIR="$SELECTED_DEVELOPER_DIR" xcodebuild test -quiet \
