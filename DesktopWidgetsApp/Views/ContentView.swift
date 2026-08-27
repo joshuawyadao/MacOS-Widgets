@@ -5,22 +5,33 @@ struct ContentView: View {
     @Environment(\.scenePhase) private var scenePhase
     @StateObject private var calendarPermission = CalendarPermissionController()
     @StateObject private var typography = WidgetTypographyController()
+    @State private var destination: CompanionAppDestination? = .home
 
     var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 24) {
-                header
-                typographyGuide
-                readyWidgets
-                setupGuide
-                widgetGuides
-                weatherDetailLimitsTip
-                appearanceTip
-                weatherDataTip
+        NavigationSplitView {
+            List(selection: $destination) {
+                sidebarRows(destinations: CompanionAppDestination.overview)
+
+                Section("Customize") {
+                    sidebarRows(destinations: CompanionAppDestination.customize)
+                }
+
+                Section("Widgets") {
+                    sidebarRows(destinations: CompanionAppDestination.widgets)
+                }
+
+                Section("Support") {
+                    sidebarRows(destinations: CompanionAppDestination.support)
+                }
             }
-            .padding(28)
+            .listStyle(.sidebar)
+            .navigationTitle("Desktop Widgets")
+            .navigationSplitViewColumnWidth(min: 180, ideal: 210, max: 250)
+        } detail: {
+            detailPage(for: destination ?? .home)
         }
-        .frame(minWidth: 680, minHeight: 560)
+        .navigationSplitViewStyle(.balanced)
+        .frame(minWidth: 820, minHeight: 620)
         .onAppear {
             calendarPermission.refresh()
         }
@@ -30,14 +41,162 @@ struct ContentView: View {
         }
     }
 
+    @ViewBuilder
+    private func sidebarRows(destinations: [CompanionAppDestination]) -> some View {
+        ForEach(destinations) { destination in
+            sidebarRow(destination)
+        }
+    }
+
+    private func sidebarRow(_ item: CompanionAppDestination) -> some View {
+        HStack(spacing: 8) {
+            Label(item.title, systemImage: item.symbolName)
+            Spacer(minLength: 4)
+            if item == .appearance && typography.hasPendingChanges {
+                Circle()
+                    .fill(WidgetTheme.accent)
+                    .frame(width: 7, height: 7)
+                    .accessibilityLabel("Unapplied appearance changes")
+            }
+        }
+        .tag(item)
+        .accessibilityHint("Shows the \(item.title) page")
+    }
+
+    @ViewBuilder
+    private func detailPage(for destination: CompanionAppDestination) -> some View {
+        switch destination {
+        case .home:
+            homePage
+        case .appearance:
+            appearancePage
+        case .timeAndDate, .weather, .battery, .calendar:
+            widgetPage(destination)
+        case .helpAndPrivacy:
+            helpAndPrivacyPage
+        }
+    }
+
+    private var homePage: some View {
+        appPage(title: "Home", subtitle: "Everything you need to set up and personalize your desktop widgets.") {
+            header
+            homeShortcuts
+            readyWidgets
+            setupGuide
+
+            VStack(alignment: .leading, spacing: 12) {
+                SectionTitle(
+                    title: "Optional Calendar features",
+                    subtitle: "Calendar access is only needed for private event dots, counts, or next-event timing."
+                )
+                CalendarPermissionCard(controller: calendarPermission)
+            }
+        }
+    }
+
+    private var appearancePage: some View {
+        appPage(
+            title: "Appearance",
+            subtitle: "Preview one coordinated style, then apply it to all four widget types."
+        ) {
+            typographyGuide
+            appearanceTip
+        }
+    }
+
+    private func widgetPage(_ widget: CompanionAppDestination) -> some View {
+        appPage(title: widget.title, subtitle: widgetSubtitle(widget)) {
+            editWidgetCard(widget)
+            widgetGuide(widget)
+
+            if widget == .weather {
+                weatherDetailLimitsTip
+            }
+
+            if widget == .calendar {
+                CalendarPermissionCard(controller: calendarPermission)
+            }
+
+            Button {
+                destination = .appearance
+            } label: {
+                Label("Customize \(widget.title) appearance", systemImage: "paintbrush")
+            }
+        }
+    }
+
+    private var helpAndPrivacyPage: some View {
+        appPage(
+            title: "Help & Privacy",
+            subtitle: "Find editing help, permission controls, data details, and quick troubleshooting."
+        ) {
+            helpGuide
+
+            VStack(alignment: .leading, spacing: 12) {
+                SectionTitle(
+                    title: "Calendar access",
+                    subtitle: "Optional, local, and used only for event timing."
+                )
+                CalendarPermissionCard(controller: calendarPermission)
+            }
+
+            weatherDataTip
+            appearanceTip
+        }
+    }
+
+    private func appPage<Content: View>(
+        title: String,
+        subtitle: String,
+        @ViewBuilder content: () -> Content
+    ) -> some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 24) {
+                PageHeader(title: title, subtitle: subtitle)
+                content()
+            }
+            .frame(maxWidth: 940, alignment: .leading)
+            .padding(28)
+        }
+        .navigationTitle(title)
+    }
+
     private var header: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text("Desktop Widgets")
-                .font(.largeTitle.bold())
+            Text("Welcome")
+                .font(.title.bold())
 
-            Text("Simple, personal widgets without subscriptions or upgrade prompts.")
-                .font(.title3)
+            Text("Simple, personal widgets without subscriptions or upgrade prompts. Choose a widget below whenever you want help changing it.")
+                .font(.callout)
                 .foregroundStyle(.secondary)
+        }
+    }
+
+    private var homeShortcuts: some View {
+        HStack(spacing: 12) {
+            Button {
+                destination = .appearance
+            } label: {
+                HomeShortcutCard(
+                    symbol: "paintbrush",
+                    title: "Personalize the look",
+                    detail: "Preview fonts and apply one coordinated theme."
+                )
+            }
+            .buttonStyle(.plain)
+            .accessibilityHint("Opens Appearance")
+
+            Button {
+                destination = .helpAndPrivacy
+            } label: {
+                HomeShortcutCard(
+                    symbol: "questionmark.circle",
+                    title: "Get help",
+                    detail: "Find editing, privacy, and troubleshooting guidance."
+                )
+            }
+            .buttonStyle(.plain)
+            .accessibilityHint("Opens Help and Privacy")
         }
     }
 
@@ -49,28 +208,41 @@ struct ContentView: View {
                 columns: [GridItem(.flexible(), spacing: 12), GridItem(.flexible(), spacing: 12)],
                 spacing: 12
             ) {
-                ReadyWidgetCard(
-                    symbol: "clock",
-                    title: "Time & Date",
+                widgetCard(
+                    destination: .timeAndDate,
                     detail: "Arrange and style the clock, with an optional second time zone."
                 )
-                ReadyWidgetCard(
-                    symbol: "cloud.sun",
-                    title: "Weather",
+                widgetCard(
+                    destination: .weather,
                     detail: "Choose a city, forecast view, units, and details."
                 )
-                ReadyWidgetCard(
-                    symbol: "battery.75percent",
-                    title: "Battery",
+                widgetCard(
+                    destination: .battery,
                     detail: "See charge and runtime, then choose which extra details each copy shows."
                 )
-                ReadyWidgetCard(
-                    symbol: "calendar",
-                    title: "Calendar",
+                widgetCard(
+                    destination: .calendar,
                     detail: "Choose Day, Week, or Month with private event timing options."
                 )
             }
         }
+    }
+
+    private func widgetCard(
+        destination widget: CompanionAppDestination,
+        detail: String
+    ) -> some View {
+        Button {
+            destination = widget
+        } label: {
+            ReadyWidgetCard(
+                symbol: widget.symbolName,
+                title: widget.title,
+                detail: detail
+            )
+        }
+        .buttonStyle(.plain)
+        .accessibilityHint("Opens \(widget.title) options and setup help")
     }
 
     private var typographyGuide: some View {
@@ -220,55 +392,139 @@ struct ContentView: View {
         }
     }
 
-    private var widgetGuides: some View {
-        VStack(alignment: .leading, spacing: 22) {
-            WidgetGuideSection(
-                title: "Time & Date",
-                subtitle: "Local time with independent layouts and formats, optional per-copy fonts, and a second world clock.",
-                items: [
-                    WidgetGuideItem(symbol: "rectangle.3.group", title: "View", detail: "Classic, compact, centered, time first, or side by side."),
-                    WidgetGuideItem(symbol: "calendar", title: "Details", detail: "Choose a word-based, month-first, day-first, or ISO date."),
-                    WidgetGuideItem(symbol: "clock", title: "Format", detail: "Use a 12-hour or 24-hour clock; AM/PM adapts automatically."),
-                    WidgetGuideItem(symbol: "globe", title: "Second Clock", detail: "Add a world time zone and optional short label such as Home or Family."),
-                    WidgetGuideItem(symbol: "textformat", title: "Appearance", detail: "Follow the app theme, or preserve separate date and time fonts for each copy."),
-                ]
+    private func widgetSubtitle(_ widget: CompanionAppDestination) -> String {
+        switch widget {
+        case .timeAndDate:
+            "Arrange the clock, choose date and time formats, and optionally add a second time zone."
+        case .weather:
+            "Choose a city, forecast view, units, and the weather details that matter to you."
+        case .battery:
+            "See this Mac's charge and power state with optional runtime and battery-health details."
+        case .calendar:
+            "Choose a focused Day, Week, or Month view with optional private event timing."
+        default:
+            ""
+        }
+    }
+
+    private func editWidgetCard(_ widget: CompanionAppDestination) -> some View {
+        HStack(alignment: .top, spacing: 14) {
+            Image(systemName: "slider.horizontal.3")
+                .font(.title2)
+                .foregroundStyle(WidgetTheme.accent)
+                .frame(width: 38)
+
+            VStack(alignment: .leading, spacing: 4) {
+                Text("Edit a placed \(widget.title) widget")
+                    .font(.headline)
+                Text("Control-click the widget on your desktop, choose Edit \(widget.title), then adjust the options for that copy.")
+                    .font(.callout)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+
+            Spacer(minLength: 0)
+        }
+        .padding(16)
+        .background(WidgetTheme.accent.opacity(0.08), in: RoundedRectangle(cornerRadius: 14))
+        .overlay {
+            RoundedRectangle(cornerRadius: 14)
+                .stroke(WidgetTheme.accent.opacity(0.18), lineWidth: 1)
+        }
+    }
+
+    private func widgetGuide(_ widget: CompanionAppDestination) -> some View {
+        WidgetGuideSection(
+            title: widget.title,
+            subtitle: widgetGuideSubtitle(widget),
+            items: widgetGuideItems(widget)
+        )
+    }
+
+    private func widgetGuideSubtitle(_ widget: CompanionAppDestination) -> String {
+        switch widget {
+        case .timeAndDate:
+            "Every placed copy keeps its own layout and format choices."
+        case .weather:
+            "Forecast content adapts to the widget's size and selected view."
+        case .battery:
+            "All readings stay local to this Mac and require no account."
+        case .calendar:
+            "Event features use timing only and never display event titles or notes."
+        default:
+            ""
+        }
+    }
+
+    private func widgetGuideItems(_ widget: CompanionAppDestination) -> [WidgetGuideItem] {
+        switch widget {
+        case .timeAndDate:
+            [
+                WidgetGuideItem(symbol: "rectangle.3.group", title: "View", detail: "Classic, compact, centered, time first, or side by side."),
+                WidgetGuideItem(symbol: "calendar", title: "Date", detail: "Choose a word-based, month-first, day-first, or ISO date."),
+                WidgetGuideItem(symbol: "clock", title: "Time", detail: "Use a 12-hour or 24-hour clock; AM/PM adapts automatically."),
+                WidgetGuideItem(symbol: "globe", title: "Second Clock", detail: "Add a world time zone and an optional label such as Home or Family."),
+                WidgetGuideItem(symbol: "textformat", title: "Appearance", detail: "Follow the app theme or preserve separate date and time fonts for each copy."),
+            ]
+        case .weather:
+            [
+                WidgetGuideItem(symbol: "building.2", title: "City", detail: "Search for a city and choose the exact region and country."),
+                WidgetGuideItem(symbol: "calendar.day.timeline.leading", title: "View", detail: "Switch between the week, today, and the next six hours."),
+                WidgetGuideItem(symbol: "square.stack.3d.up", title: "Details", detail: "Choose presets for comfort, rain, outdoor conditions, UV, sunrise, and sunset."),
+                WidgetGuideItem(symbol: "thermometer.medium", title: "Units", detail: "Follow this Mac or choose Fahrenheit or Celsius."),
+            ]
+        case .battery:
+            [
+                WidgetGuideItem(symbol: "battery.75percent", title: "Source", detail: "Reads this Mac's internal battery through the local system API."),
+                WidgetGuideItem(symbol: "rectangle.3.group", title: "Size", detail: "Small emphasizes charge; Medium and Large progressively add details."),
+                WidgetGuideItem(symbol: "timer", title: "Details", detail: "Toggle Power, Status, Estimate, Updated, Health, and Cycles for each copy."),
+                WidgetGuideItem(symbol: "bolt.fill", title: "Status", detail: "Distinguishes charging, discharging, AC power, calculating, and no battery."),
+            ]
+        case .calendar:
+            [
+                WidgetGuideItem(symbol: "calendar", title: "Source", detail: "Uses this Mac's calendar, locale, time zone, and first-weekday preference."),
+                WidgetGuideItem(symbol: "rectangle.3.group", title: "View", detail: "Automatic chooses Day, Week, or Month by size; each copy can override it."),
+                WidgetGuideItem(symbol: "circle.grid.2x2.fill", title: "Event Marks", detail: "Optional counts and dots show busy days without revealing event text."),
+                WidgetGuideItem(symbol: "calendar.badge.clock", title: "Next Event", detail: "Optionally show only the next timed event's start time, never its title."),
+                WidgetGuideItem(symbol: "arrow.left.arrow.right", title: "Navigation", detail: "Month view can move backward, forward, or return to the current month."),
+            ]
+        default:
+            []
+        }
+    }
+
+    private var helpGuide: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            SectionTitle(
+                title: "Quick help",
+                subtitle: "The most common widget tasks are available from the desktop."
             )
 
-            WidgetGuideSection(
-                title: "Weather",
-                subtitle: "A cached city forecast with size-aware views, details, and provider attribution.",
-                items: [
-                    WidgetGuideItem(symbol: "building.2", title: "Source", detail: "Search for a city and choose the exact region and country."),
-                    WidgetGuideItem(symbol: "calendar.day.timeline.leading", title: "View", detail: "Switch between the week, today, and the next six hours."),
-                    WidgetGuideItem(symbol: "square.stack.3d.up", title: "Details", detail: "Choose presets for comfort, rain, outdoor conditions, UV, sunrise, and sunset."),
-                    WidgetGuideItem(symbol: "thermometer.medium", title: "Format", detail: "Follow this Mac or choose Fahrenheit or Celsius."),
-                ]
-            )
-
-            WidgetGuideSection(
-                title: "Battery",
-                subtitle: "Local charge and power information with no account, network, or accessory access.",
-                items: [
-                    WidgetGuideItem(symbol: "battery.75percent", title: "Source", detail: "Reads this Mac's internal battery through the local system API."),
-                    WidgetGuideItem(symbol: "rectangle.3.group", title: "View", detail: "Small emphasizes charge; Medium and Large progressively add details."),
-                    WidgetGuideItem(symbol: "timer", title: "Details", detail: "Toggle Power, Status, Estimate, Updated, Health, and Cycles for each copy."),
-                    WidgetGuideItem(symbol: "bolt.fill", title: "Status", detail: "Distinguishes charging, discharging, AC power, calculating, and no battery."),
-                ]
-            )
-
-            WidgetGuideSection(
-                title: "Calendar",
-                subtitle: "Locale-aware Day, Week, and Month views with private event indicators and next-event timing.",
-                items: [
-                    WidgetGuideItem(symbol: "calendar", title: "Source", detail: "Uses this Mac's calendar, locale, time zone, and first-weekday preference."),
-                    WidgetGuideItem(symbol: "rectangle.3.group", title: "View", detail: "Automatic chooses Day, Week, or Month by size; each copy can override it."),
-                    WidgetGuideItem(symbol: "circle.grid.2x2.fill", title: "Details", detail: "Optional counts and dots show busy days without revealing event text."),
-                    WidgetGuideItem(symbol: "calendar.badge.clock", title: "Next Event", detail: "Optionally show only the next timed event's start time, never its title."),
-                    WidgetGuideItem(symbol: "arrow.left.arrow.right", title: "Interaction", detail: "Month view can move backward, forward, or return to the current month."),
-                ]
-            )
-
-            CalendarPermissionCard(controller: calendarPermission)
+            LazyVGrid(
+                columns: [GridItem(.flexible(), spacing: 12), GridItem(.flexible(), spacing: 12)],
+                spacing: 12
+            ) {
+                CustomizationItem(
+                    symbol: "plus.rectangle.on.rectangle",
+                    title: "Add a widget",
+                    detail: "Control-click the desktop, choose Edit Widgets, then search for Desktop Widgets."
+                )
+                CustomizationItem(
+                    symbol: "slider.horizontal.3",
+                    title: "Edit a widget",
+                    detail: "Control-click a placed widget and choose Edit to change only that copy."
+                )
+                CustomizationItem(
+                    symbol: "arrow.clockwise",
+                    title: "Appearance update",
+                    detail: "After Apply Theme, macOS updates each placed widget independently; they may finish a few moments apart."
+                )
+                CustomizationItem(
+                    symbol: "rectangle.dashed.badge.record",
+                    title: "Blank placeholder",
+                    detail: "Close Edit Widgets and reopen Desktop Widgets. Time & Date, Battery, and Calendar should stay in place; only a legacy Weather copy may need to be added again."
+                )
+            }
         }
     }
 
@@ -586,17 +842,79 @@ private struct ReadyWidgetCard: View {
 
             Spacer(minLength: 4)
 
-            Image(systemName: "checkmark.circle.fill")
-                .foregroundStyle(.green)
-                .accessibilityLabel("Ready")
+            VStack(alignment: .trailing, spacing: 10) {
+                Image(systemName: "checkmark.circle.fill")
+                    .foregroundStyle(.green)
+                    .accessibilityLabel("Ready")
+
+                Spacer(minLength: 0)
+
+                Image(systemName: "chevron.right")
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(.tertiary)
+                    .accessibilityHidden(true)
+            }
         }
         .padding(16)
-        .frame(maxWidth: .infinity, minHeight: 98, alignment: .topLeading)
+        .frame(maxWidth: .infinity, minHeight: 106, alignment: .topLeading)
         .background(WidgetTheme.accent.opacity(0.08), in: RoundedRectangle(cornerRadius: 16))
         .overlay {
             RoundedRectangle(cornerRadius: 16)
                 .stroke(WidgetTheme.accent.opacity(0.20), lineWidth: 1)
         }
+    }
+}
+
+private struct PageHeader: View {
+    let title: String
+    let subtitle: String
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text(title)
+                .font(.largeTitle.bold())
+
+            Text(subtitle)
+                .font(.title3)
+                .foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        .accessibilityElement(children: .combine)
+    }
+}
+
+private struct HomeShortcutCard: View {
+    let symbol: String
+    let title: String
+    let detail: String
+
+    var body: some View {
+        HStack(spacing: 14) {
+            Image(systemName: symbol)
+                .font(.title2.weight(.semibold))
+                .foregroundStyle(WidgetTheme.accent)
+                .frame(width: 42, height: 42)
+                .background(WidgetTheme.accent.opacity(0.12), in: RoundedRectangle(cornerRadius: 11))
+
+            VStack(alignment: .leading, spacing: 3) {
+                Text(title)
+                    .font(.headline)
+                Text(detail)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+
+            Spacer(minLength: 4)
+
+            Image(systemName: "chevron.right")
+                .font(.caption.weight(.semibold))
+                .foregroundStyle(.tertiary)
+                .accessibilityHidden(true)
+        }
+        .padding(15)
+        .frame(maxWidth: .infinity, minHeight: 82, alignment: .leading)
+        .background(.quaternary.opacity(0.25), in: RoundedRectangle(cornerRadius: 14))
     }
 }
 
@@ -781,33 +1099,6 @@ private struct CalendarPermissionCard: View {
         case .fullAccess: "Enabled"
         case .denied: "Open Settings"
         }
-    }
-}
-
-private struct WidgetStatusCard: View {
-    let widget: WidgetStatus
-
-    var body: some View {
-        HStack(spacing: 10) {
-            Image(systemName: widget.symbol)
-                .font(.title3)
-                .frame(width: 28, height: 28)
-                .foregroundStyle(.secondary)
-
-            VStack(alignment: .leading, spacing: 2) {
-                Text(widget.name)
-                    .font(.subheadline.weight(.semibold))
-
-                Text(widget.status)
-                    .font(.caption2)
-                    .foregroundStyle(.secondary)
-            }
-
-            Spacer(minLength: 0)
-        }
-        .padding(12)
-        .frame(maxWidth: .infinity)
-        .background(.quaternary.opacity(0.20), in: RoundedRectangle(cornerRadius: 12))
     }
 }
 

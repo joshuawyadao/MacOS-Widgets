@@ -2,6 +2,25 @@ import Foundation
 import XCTest
 
 final class WidgetContractTests: XCTestCase {
+    func testCompanionAppNavigationKeepsEveryTaskReachableOnce() {
+        let groupedDestinations = CompanionAppDestination.overview
+            + CompanionAppDestination.customize
+            + CompanionAppDestination.widgets
+            + CompanionAppDestination.support
+
+        XCTAssertEqual(groupedDestinations, CompanionAppDestination.allCases)
+        XCTAssertEqual(Set(groupedDestinations).count, CompanionAppDestination.allCases.count)
+        XCTAssertEqual(
+            CompanionAppDestination.widgets,
+            [.timeAndDate, .weather, .battery, .calendar]
+        )
+        XCTAssertTrue(CompanionAppDestination.widgets.allSatisfy(\.isWidget))
+        XCTAssertFalse(CompanionAppDestination.home.isWidget)
+        XCTAssertTrue(CompanionAppDestination.allCases.allSatisfy {
+            !$0.title.isEmpty && !$0.symbolName.isEmpty
+        })
+    }
+
     func testTypographyCatalogKeepsStableCuratedThemesAndOverrides() {
         XCTAssertEqual(
             WidgetTypographyTheme.allCases.map(\.rawValue),

@@ -2,6 +2,17 @@
 
 All four widgets share one visual and behavioral shell while keeping the controls, data, and interactions that belong to their individual jobs. This contract applies to Time & Date, Weather, Battery, and Calendar.
 
+## Companion app navigation
+
+The companion app uses a two-column `NavigationSplitView` with a persistent macOS sidebar. Destinations have one stable order and one clear responsibility:
+
+- **Home** is the starting dashboard with two-step setup, clickable widget cards, an Appearance shortcut, and optional Calendar access.
+- **Appearance** contains the complete draft preview, global theme, Font Coverage, widget overrides, System Style, Revert, and Apply Theme flow. A sidebar indicator remains visible while the draft differs from the last applied selection.
+- **Time & Date**, **Weather**, **Battery**, and **Calendar** each explain how to edit a placed copy and show only controls or caveats relevant to that widget. Weather owns detail-capacity guidance; Calendar owns a direct permission control.
+- **Help & Privacy** consolidates add/edit instructions, refresh expectations, blank-placeholder guidance, Calendar permission management, Weather provider links, and Liquid Glass readability guidance.
+
+Typography and Calendar permission controllers belong to the root view rather than an individual destination. Navigation must not discard an unapplied appearance draft, repeat a reload, or recreate permission state. Sidebar rows and clickable Home cards use native labels, selection, and accessibility hints; pages remain independently scrollable so the sidebar stays available throughout longer guidance.
+
 ## Shared contract
 
 - Support Small, Medium, and Large widget families.

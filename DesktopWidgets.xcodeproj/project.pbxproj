@@ -17,7 +17,7 @@
 		A00000000000000000000008 /* WidgetIdentifier.swift in Sources */ = {isa = PBXBuildFile; fileRef = F00000000000000000000008 /* WidgetIdentifier.swift */; };
 		A00000000000000000000009 /* WidgetTheme.swift in Sources */ = {isa = PBXBuildFile; fileRef = F00000000000000000000009 /* WidgetTheme.swift */; };
 		A0000000000000000000000A /* Calendar+WidgetTimeline.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0000000000000000000000A /* Calendar+WidgetTimeline.swift */; };
-		A0000000000000000000000B /* WidgetStatus.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0000000000000000000000B /* WidgetStatus.swift */; };
+		A0000000000000000000000B /* CompanionAppNavigation.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0000000000000000000000B /* CompanionAppNavigation.swift */; };
 		A0000000000000000000000C /* TimeAndDateConfiguration.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0000000000000000000000C /* TimeAndDateConfiguration.swift */; };
 		A0000000000000000000000D /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = F0000000000000000000000D /* Assets.xcassets */; };
 		A0000000000000000000000E /* TimeAndDateConfiguration.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0000000000000000000000C /* TimeAndDateConfiguration.swift */; };
@@ -73,6 +73,7 @@
 		A00000000000000000000040 /* WidgetTypography.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0000000000000000000002F /* WidgetTypography.swift */; };
 		A00000000000000000000041 /* WidgetTypography.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0000000000000000000002F /* WidgetTypography.swift */; };
 		A00000000000000000000042 /* WidgetTypography.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0000000000000000000002F /* WidgetTypography.swift */; };
+		A00000000000000000000043 /* CompanionAppNavigation.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0000000000000000000000B /* CompanionAppNavigation.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -110,7 +111,7 @@
 		F00000000000000000000008 /* WidgetIdentifier.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WidgetIdentifier.swift; sourceTree = "<group>"; };
 		F00000000000000000000009 /* WidgetTheme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WidgetTheme.swift; sourceTree = "<group>"; };
 		F0000000000000000000000A /* Calendar+WidgetTimeline.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Calendar+WidgetTimeline.swift"; sourceTree = "<group>"; };
-		F0000000000000000000000B /* WidgetStatus.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WidgetStatus.swift; sourceTree = "<group>"; };
+		F0000000000000000000000B /* CompanionAppNavigation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CompanionAppNavigation.swift; sourceTree = "<group>"; };
 		F0000000000000000000000C /* TimeAndDateConfiguration.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimeAndDateConfiguration.swift; sourceTree = "<group>"; };
 		F0000000000000000000000D /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Resources/Assets.xcassets; sourceTree = "<group>"; };
 		F0000000000000000000000E /* TimeAndDateConfigurationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimeAndDateConfigurationTests.swift; sourceTree = "<group>"; };
@@ -326,7 +327,7 @@
 		G00000000000000000000010 /* Models */ = {
 			isa = PBXGroup;
 			children = (
-				F0000000000000000000000B /* WidgetStatus.swift */,
+				F0000000000000000000000B /* CompanionAppNavigation.swift */,
 				F0000000000000000000002D /* CalendarPermissionController.swift */,
 			);
 			path = Models;
@@ -494,7 +495,7 @@
 				A00000000000000000000003 /* WidgetIdentifier.swift in Sources */,
 				A00000000000000000000004 /* WidgetTheme.swift in Sources */,
 				A00000000000000000000040 /* WidgetTypography.swift in Sources */,
-				A0000000000000000000000B /* WidgetStatus.swift in Sources */,
+				A0000000000000000000000B /* CompanionAppNavigation.swift in Sources */,
 				A00000000000000000000021 /* DesktopWidgetsURLRouter.swift in Sources */,
 				A00000000000000000000037 /* CalendarPermissionController.swift in Sources */,
 			);
@@ -565,6 +566,7 @@
 				A0000000000000000000001A /* Calendar+WidgetTimeline.swift in Sources */,
 				A0000000000000000000001C /* WeatherPresentation.swift in Sources */,
 				A00000000000000000000022 /* DesktopWidgetsURLRouter.swift in Sources */,
+				A00000000000000000000043 /* CompanionAppNavigation.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
