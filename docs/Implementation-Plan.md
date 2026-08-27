@@ -14,8 +14,8 @@ Create a friendly, repeatable Personal Team installer and refresher that keeps s
 - [x] Add a safe handoff packager that includes tracked source and friendly commands/guides but excludes Git metadata, products, credentials, logs, and machine-specific configuration; keep a stable local installer copy so future refreshes remain easy.
 - [x] Add companion-app installation state and a concise checklist for install, macOS-controlled placement, appearance, seven-day refresh, helper access, and technical troubleshooting disclosed only when requested.
 - [x] Add mocked/dry-run tests for Personal Team parsing, local configuration, stable identifiers, destination safety, build commands, existing installations, idempotent refresh, and failures for missing/uninitialized Xcode, no Personal Team, unavailable capabilities, and provisioning errors.
-- [ ] Update `Scripts/verify-widgets.sh`, README, and focused installation/distribution docs; run shell syntax and focused tests throughout, then the complete verification script and `git diff --check`.
-- [ ] Save cohesive checkpoints and push `codex/feature/easier-personal-installation` without modifying prior feature-branch history.
+- [x] Update `Scripts/verify-widgets.sh`, README, and focused installation/distribution docs; run shell syntax and focused tests throughout, then the complete verification script and `git diff --check`.
+- [x] Save cohesive checkpoints and push `codex/feature/easier-personal-installation` without modifying prior feature-branch history.
 
 ## Open questions
 - None.
