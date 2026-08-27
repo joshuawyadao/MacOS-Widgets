@@ -28,7 +28,7 @@ Each curated theme also resolves a bounded layout profile. Wider or taller faces
 
 Time & Date has one deliberate exception: **Use Each Widget's Fonts** defers to the separate date and time font choices stored in each placed widget's configuration. Weather, Battery, and Calendar overrides apply per widget type because adding font fields to their App Intents would change persisted configuration schemas and create editor complexity.
 
-The host app and extension share theme, coverage, and overrides through a team-ID-prefixed macOS App Group. Preference changes reload every WidgetKit timeline; unknown or unavailable stored values resolve safely to the global theme, Display Text coverage, or System. No fonts are downloaded or bundled.
+The host app and extension share theme, coverage, and overrides through a team-ID-prefixed macOS App Group. The app treats theme, coverage, and override edits as one draft: previews respond immediately, but shared preferences remain unchanged until **Apply Theme** persists the complete selection and makes one `reloadAllTimelines()` request. **Revert** restores the last applied selection locally, and **Use System Style** stages the safe System, Display Text, and Follow Global defaults for review before applying. This workflow does not add polling, retries, or any change to regular widget refresh schedules. WidgetKit still renders each placed widget independently, so macOS may show their transitions a few moments apart. Unknown or unavailable stored values resolve safely to the global theme, Display Text coverage, or System. No fonts are downloaded or bundled.
 
 ## Information density
 
@@ -62,6 +62,6 @@ Do not add per-copy font fields, provider links, permission prompts, timestamps,
 
 ## Verification
 
-The shared test contract covers family-to-density mapping, progressively sized chrome metrics, typography layout-profile bounds, preference persistence and fallback, and every curated theme rendered through all four widgets in Display Text and All Text modes. Rendering smoke tests include every typography combination across Small, Medium, and Large, plus representative stale, unavailable, permission, and long-content states. Widget-specific suites remain responsible for formatters, data normalization, privacy boundaries, refresh policies, and interactions.
+The shared test contract covers family-to-density mapping, progressively sized chrome metrics, typography layout-profile bounds, draft-versus-applied preference behavior, safe reset and fallback, and every curated theme rendered through all four widgets in Display Text and All Text modes. Rendering smoke tests include every typography combination across Small, Medium, and Large, plus representative stale, unavailable, permission, and long-content states. Widget-specific suites remain responsible for formatters, data normalization, privacy boundaries, refresh policies, and interactions.
 
 Run `./Scripts/verify-widgets.sh` before committing or pushing widget changes.

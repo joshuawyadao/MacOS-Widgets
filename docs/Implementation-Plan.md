@@ -1,18 +1,19 @@
 # Plan
 
-Restore the stable Time & Date, Battery, and Calendar WidgetKit kinds so macOS's cached gallery descriptors and existing placements continue to resolve, while retaining all newly added optional configuration fields and widget-specific features. Lock the identity compatibility rule into tests, metadata verification, runtime guidance, and documentation.
+Make appearance customization resource-conscious by separating the companion app's live preview from the settings currently applied to desktop widgets. Theme, font coverage, and widget overrides will be staged together, then persisted with one WidgetKit reload when the user chooses Apply Theme.
 
 ## Scope
-- In: Revert the three unintended `v3` kind changes to their established `v2` values, preserve new intent parameters and defaults, add regression coverage, update migration guidance, rebuild/register, and verify the live descriptor mismatch is gone.
-- Out: New widget kinds, duplicate legacy aliases, editing macOS's private widget database, removing user widgets, or changing Weather's existing identity.
+- In: Draft appearance state, Apply/Revert controls and feedback, one reload per apply action, preference-model tests, and appearance workflow documentation.
+- Out: Changes to periodic Time, Weather, Battery, or Calendar refresh schedules; retries; polling; or attempting an unsupported atomic WidgetKit redraw.
 
 ## Action items
-[x] Add a failing identity regression that requires Time & Date, Battery, and Calendar to retain their established `v2` kinds while their new optional parameters remain exported.
-[x] Restore the three stable identifiers in `Shared/Models/WidgetIdentifier.swift` and align embedded-extension verification.
-[x] Verify old serialized configurations remain safe through documented defaults for the new secondary-clock, battery-diagnostic, and next-event parameters.
-[x] Remove one-time re-add instructions from the app and widget documentation and explain that optional editor additions preserve placed-widget compatibility.
-[x] Run targeted identity/configuration tests, the complete `Scripts/verify-widgets.sh` release gate, and a signed Debug build/runtime refresh.
-[x] Re-run the live kind-mismatch assertion against the registered extension, clean up diagnostic artifacts, then commit and push the fix.
+[x] Add a testable appearance selection model that can load, compare, reset, and persist the complete typography configuration.
+[x] Refactor the companion app controller so menus update draft preview state without writing shared preferences or requesting WidgetKit reloads.
+[x] Add Apply Theme, Revert, pending-change, and update-requested UI states while preserving the existing preview grid and System Style behavior.
+[x] Add regression tests proving preview edits remain uncommitted, apply persists the complete selection, and System Style restores safe defaults.
+[x] Update `README.md` and `docs/Widget-Design-System.md` to describe the preview/apply workflow and its single explicit reload without changing regular refresh cadence.
+[x] Run targeted typography tests, the complete `Scripts/verify-widgets.sh` gate, and review the finished diff for scope and documentation consistency.
+[x] Commit and push the verified implementation on the current feature branch.
 
 ## Open questions
 - None.

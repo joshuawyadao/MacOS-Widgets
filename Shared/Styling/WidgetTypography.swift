@@ -407,3 +407,91 @@ struct WidgetTypographyStore {
         }
     }
 }
+
+struct WidgetTypographySelection: Equatable {
+    var globalTheme: WidgetTypographyTheme
+    var coverage: WidgetTypographyCoverage
+    private var overrides: [WidgetTypographyTarget: WidgetTypographyOverride]
+
+    static let systemDefault = Self(
+        globalTheme: .system,
+        coverage: .displayText,
+        overrides: [:]
+    )
+
+    init(
+        globalTheme: WidgetTypographyTheme,
+        coverage: WidgetTypographyCoverage,
+        overrides: [WidgetTypographyTarget: WidgetTypographyOverride]
+    ) {
+        self.globalTheme = globalTheme
+        self.coverage = coverage
+        self.overrides = overrides.filter { target, override in
+            override != .followGlobal
+                && (override != .widgetFonts || target == .timeAndDate)
+        }
+    }
+
+    init(store: WidgetTypographyStore) {
+        self.init(
+            globalTheme: store.globalTheme,
+            coverage: store.coverage,
+            overrides: Dictionary(
+                uniqueKeysWithValues: WidgetTypographyTarget.allCases.map {
+                    ($0, store.override(for: $0))
+                }
+            )
+        )
+    }
+
+    var usesSystemDefaults: Bool {
+        globalTheme == .system
+            && coverage == .displayText
+            && WidgetTypographyTarget.allCases.allSatisfy {
+                override(for: $0) == .followGlobal
+            }
+    }
+
+    func override(for target: WidgetTypographyTarget) -> WidgetTypographyOverride {
+        overrides[target] ?? .followGlobal
+    }
+
+    mutating func setOverride(
+        _ override: WidgetTypographyOverride,
+        for target: WidgetTypographyTarget
+    ) {
+        guard override != .followGlobal,
+              override != .widgetFonts || target == .timeAndDate
+        else {
+            overrides.removeValue(forKey: target)
+            return
+        }
+        overrides[target] = override
+    }
+
+    func resolution(for target: WidgetTypographyTarget) -> WidgetTypographyResolution {
+        let override = override(for: target)
+        if override == .widgetFonts {
+            return .widgetFonts
+        }
+        return .theme(override.theme ?? globalTheme)
+    }
+
+    func persist(to store: WidgetTypographyStore) {
+        store.globalTheme = globalTheme
+        store.coverage = coverage
+        for target in WidgetTypographyTarget.allCases {
+            store.setOverride(override(for: target), for: target)
+        }
+    }
+}
+
+struct WidgetTypographyApplier {
+    let store: WidgetTypographyStore
+    let requestReload: () -> Void
+
+    func apply(_ selection: WidgetTypographySelection) {
+        selection.persist(to: store)
+        requestReload()
+    }
+}

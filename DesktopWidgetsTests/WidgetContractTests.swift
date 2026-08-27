@@ -65,6 +65,64 @@ final class WidgetContractTests: XCTestCase {
         })
     }
 
+    func testTypographySelectionPreviewsWithoutPersistingAndAppliesAsOneSnapshot() throws {
+        let suiteName = "com.joshuawyadao.DesktopWidgetsTests.typography-selection.\(UUID().uuidString)"
+        let defaults = try XCTUnwrap(UserDefaults(suiteName: suiteName))
+        defer { defaults.removePersistentDomain(forName: suiteName) }
+        defaults.removePersistentDomain(forName: suiteName)
+        let store = WidgetTypographyStore(defaults: defaults)
+
+        let applied = WidgetTypographySelection(store: store)
+        var preview = applied
+        preview.globalTheme = .playful
+        preview.coverage = .allText
+        preview.setOverride(.editorial, for: .weather)
+        preview.setOverride(.widgetFonts, for: .timeAndDate)
+
+        XCTAssertNotEqual(preview, applied)
+        XCTAssertEqual(preview.resolution(for: .weather), .theme(.editorial))
+        XCTAssertEqual(preview.resolution(for: .timeAndDate), .widgetFonts)
+        XCTAssertEqual(store.globalTheme, .system)
+        XCTAssertEqual(store.coverage, .displayText)
+        XCTAssertEqual(store.override(for: .weather), .followGlobal)
+        XCTAssertEqual(store.override(for: .timeAndDate), .followGlobal)
+
+        var reloadRequestCount = 0
+        WidgetTypographyApplier(
+            store: store,
+            requestReload: { reloadRequestCount += 1 }
+        ).apply(preview)
+
+        XCTAssertEqual(reloadRequestCount, 1)
+        XCTAssertEqual(WidgetTypographySelection(store: store), preview)
+        XCTAssertEqual(store.globalTheme, .playful)
+        XCTAssertEqual(store.coverage, .allText)
+        XCTAssertEqual(store.override(for: .weather), .editorial)
+        XCTAssertEqual(store.override(for: .timeAndDate), .widgetFonts)
+    }
+
+    func testSystemDefaultSelectionClearsEveryAppearanceOverrideWhenApplied() throws {
+        let suiteName = "com.joshuawyadao.DesktopWidgetsTests.typography-system-selection.\(UUID().uuidString)"
+        let defaults = try XCTUnwrap(UserDefaults(suiteName: suiteName))
+        defer { defaults.removePersistentDomain(forName: suiteName) }
+        defaults.removePersistentDomain(forName: suiteName)
+        let store = WidgetTypographyStore(defaults: defaults)
+        store.globalTheme = .technical
+        store.coverage = .allText
+        for target in WidgetTypographyTarget.allCases {
+            store.setOverride(.handmade, for: target)
+        }
+
+        WidgetTypographySelection.systemDefault.persist(to: store)
+
+        let restored = WidgetTypographySelection(store: store)
+        XCTAssertTrue(restored.usesSystemDefaults)
+        XCTAssertEqual(restored, .systemDefault)
+        XCTAssertTrue(WidgetTypographyTarget.allCases.allSatisfy {
+            store.override(for: $0) == .followGlobal
+        })
+    }
+
     func testTypographyLayoutProfilesStayConservativeAndPreserveSystemMetrics() {
         XCTAssertEqual(WidgetTypographyLayoutProfile(theme: .system), .neutral)
 

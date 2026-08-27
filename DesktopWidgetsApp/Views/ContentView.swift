@@ -77,7 +77,7 @@ struct ContentView: View {
         VStack(alignment: .leading, spacing: 14) {
             SectionTitle(
                 title: "Appearance theme",
-                subtitle: "Choose one style for all widgets, decide how much text it covers, then add only the exceptions you want."
+                subtitle: "Preview a coordinated style here, then apply the finished appearance to all widgets with one update request."
             )
 
             HStack(spacing: 12) {
@@ -123,7 +123,7 @@ struct ContentView: View {
 
                 Spacer(minLength: 0)
                 Button("Use System Style") {
-                    typography.reset()
+                    typography.previewSystemStyle()
                 }
                 .disabled(typography.usesSystemDefaults)
             }
@@ -162,6 +162,37 @@ struct ContentView: View {
             Text("Time & Date can follow the global theme, use another theme, or preserve the separate date and time fonts configured on each placed copy.")
                 .font(.caption)
                 .foregroundStyle(.secondary)
+
+            HStack(spacing: 12) {
+                Group {
+                    if typography.hasPendingChanges {
+                        Label(
+                            "Preview only — apply when it looks right",
+                            systemImage: "eye"
+                        )
+                    } else if let applicationFeedback = typography.applicationFeedback {
+                        Label(applicationFeedback, systemImage: "checkmark.circle.fill")
+                    } else {
+                        Label("Desktop widgets match this preview", systemImage: "checkmark.circle")
+                    }
+                }
+                .font(.caption)
+                .foregroundStyle(typography.hasPendingChanges ? WidgetTheme.accent : .secondary)
+
+                Spacer(minLength: 0)
+
+                Button("Revert") {
+                    typography.revertPreview()
+                }
+                .disabled(!typography.hasPendingChanges)
+
+                Button("Apply Theme") {
+                    typography.apply()
+                }
+                .buttonStyle(.borderedProminent)
+                .tint(WidgetTheme.accent)
+                .disabled(!typography.hasPendingChanges)
+            }
         }
         .padding(18)
         .background(WidgetTheme.accent.opacity(0.08), in: RoundedRectangle(cornerRadius: 16))
@@ -311,70 +342,84 @@ struct ContentView: View {
 
 @MainActor
 private final class WidgetTypographyController: ObservableObject {
-    @Published private(set) var globalTheme: WidgetTypographyTheme
-    @Published private(set) var coverage: WidgetTypographyCoverage
-    @Published private var overrides: [WidgetTypographyTarget: WidgetTypographyOverride]
+    @Published private var selection: WidgetTypographySelection
+    @Published private(set) var applicationFeedback: String?
 
-    private let store: WidgetTypographyStore
+    private let applier: WidgetTypographyApplier
+    private var appliedSelection: WidgetTypographySelection
 
-    init(store: WidgetTypographyStore = .live) {
-        self.store = store
-        self.globalTheme = store.globalTheme
-        self.coverage = store.coverage
-        self.overrides = Dictionary(
-            uniqueKeysWithValues: WidgetTypographyTarget.allCases.map {
-                ($0, store.override(for: $0))
-            }
+    init(
+        store: WidgetTypographyStore = .live,
+        requestReload: @escaping () -> Void = {
+            WidgetCenter.shared.reloadAllTimelines()
+        }
+    ) {
+        self.applier = WidgetTypographyApplier(
+            store: store,
+            requestReload: requestReload
         )
+        let storedSelection = WidgetTypographySelection(store: store)
+        self.selection = storedSelection
+        self.appliedSelection = storedSelection
+    }
+
+    var globalTheme: WidgetTypographyTheme {
+        selection.globalTheme
+    }
+
+    var coverage: WidgetTypographyCoverage {
+        selection.coverage
     }
 
     var usesSystemDefaults: Bool {
-        globalTheme == .system
-            && coverage == .displayText
-            && overrides.values.allSatisfy { $0 == .followGlobal }
+        selection.usesSystemDefaults
+    }
+
+    var hasPendingChanges: Bool {
+        selection != appliedSelection
     }
 
     func override(for target: WidgetTypographyTarget) -> WidgetTypographyOverride {
-        overrides[target] ?? .followGlobal
+        selection.override(for: target)
     }
 
     func resolution(for target: WidgetTypographyTarget) -> WidgetTypographyResolution {
-        let override = override(for: target)
-        if override == .widgetFonts {
-            return .widgetFonts
-        }
-        return .theme(override.theme ?? globalTheme)
+        selection.resolution(for: target)
     }
 
     func setGlobalTheme(_ theme: WidgetTypographyTheme) {
-        globalTheme = theme
-        store.globalTheme = theme
-        WidgetCenter.shared.reloadAllTimelines()
+        selection.globalTheme = theme
+        applicationFeedback = nil
     }
 
     func setCoverage(_ coverage: WidgetTypographyCoverage) {
-        self.coverage = coverage
-        store.coverage = coverage
-        WidgetCenter.shared.reloadAllTimelines()
+        selection.coverage = coverage
+        applicationFeedback = nil
     }
 
     func setOverride(
         _ override: WidgetTypographyOverride,
         for target: WidgetTypographyTarget
     ) {
-        overrides[target] = override
-        store.setOverride(override, for: target)
-        WidgetCenter.shared.reloadAllTimelines()
+        selection.setOverride(override, for: target)
+        applicationFeedback = nil
     }
 
-    func reset() {
-        store.reset()
-        globalTheme = .system
-        coverage = .displayText
-        overrides = Dictionary(
-            uniqueKeysWithValues: WidgetTypographyTarget.allCases.map { ($0, .followGlobal) }
-        )
-        WidgetCenter.shared.reloadAllTimelines()
+    func previewSystemStyle() {
+        selection = .systemDefault
+        applicationFeedback = nil
+    }
+
+    func revertPreview() {
+        selection = appliedSelection
+        applicationFeedback = nil
+    }
+
+    func apply() {
+        guard hasPendingChanges else { return }
+        applier.apply(selection)
+        appliedSelection = selection
+        applicationFeedback = "Theme applied — macOS is updating the widgets"
     }
 }
 
