@@ -217,8 +217,8 @@ struct WeatherWidgetView: View {
         } else {
             snapshot.current
         }
-        let details = presentation.metricValues(for: current)
         let forecast = snapshot.dailyForecast(for: entry.date)
+        let details = presentation.metricValues(for: current, daily: forecast)
 
         return HStack(
             alignment: .center,
@@ -308,7 +308,7 @@ struct WeatherWidgetView: View {
         forecast: DailyWeather?,
         snapshot: WeatherSnapshot
     ) -> some View {
-        let details = presentation.metricValues(for: current)
+        let details = presentation.metricValues(for: current, daily: forecast)
 
         return HStack(
             alignment: .center,

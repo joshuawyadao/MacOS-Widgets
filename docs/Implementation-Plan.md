@@ -1,18 +1,19 @@
 # Plan
 
-Add shared font-aware layout compensation so every curated typography theme gets enough breathing room without changing widget identities or reducing the information shown. Centralize conservative font scaling, glyph padding, and spacing adjustments in the typography layer, then apply them consistently across all four widget families.
+Add one high-value, domain-specific capability to each widget while preserving the shared visual system: a secondary time zone, richer weather metrics, optional battery health data, and privacy-preserving next-event timing. Treat new editor parameters as intentional widget migrations, keep unavailable data safe, and verify every configuration and family before saving.
 
 ## Scope
-- In: Theme-specific layout profiles, adaptive display/supporting font sizing, text-safe vertical padding, stack/grid spacing adjustments, tighter minimum-scale safeguards, all-widget/family rendering coverage, and typography documentation.
-- Out: User-facing spacing controls, per-widget padding settings, widget family redesigns, App Intent schema changes, font downloads, SF Symbol scaling, and widget identity changes.
+- In: Per-copy secondary clock and label, apparent temperature/UV/sunrise/sunset Weather details, optional battery health and cycle cards, opt-in next-event timing without event text, required WidgetKit identity migrations, tests, privacy and usage documentation.
+- Out: Seconds, alarms or notifications, radar or severe-weather alerts, battery history, accessory batteries, calendar titles/notes/locations, calendar selection, and background behavior beyond WidgetKit’s existing refresh policies.
 
 ## Action items
-[x] Add bounded `WidgetTypographyLayoutProfile` values and reusable font-size, spacing, padding, and minimum-scale helpers to `Shared/Styling/WidgetTypography.swift`.
-[x] Apply the shared typography compensation to Time & Date and shared status chrome while preserving the existing System and per-copy-font layouts.
-[x] Apply adaptive spacing, text padding, and scaling safeguards to Weather, Battery, and Calendar, including dense forecast columns, detail cards, and calendar day markers.
-[x] Extend contract tests for every layout profile and rendering smoke tests for all six themes, both coverage modes, all four widgets, and all three widget families.
-[x] Update `README.md`, `Shared/Styling/README.md`, and `docs/Widget-Design-System.md` with the automatic clipping protection and its deliberate limits.
-[x] Run targeted typography/rendering tests and `./Scripts/verify-widgets.sh`, inspect layout, identity, and accessibility risks, then commit and push the scoped change.
+[x] Add secondary-time-zone configuration, presentation, rendering, accessibility, tests, and a fresh Time & Date widget identity.
+[x] Extend Open-Meteo requests, normalized models, formatters, presets, and layouts for apparent temperature, UV index, sunrise, and sunset while retaining cache compatibility and the Weather identity.
+[x] Read optional AppleSmartBattery diagnostics, expose health and cycle toggles/cards with unavailable fallbacks, extend accessibility, and migrate Battery to a fresh identity.
+[x] Add opt-in Calendar next-event timing, query only timing intervals, prevent indicator leakage when counts are off, fit the label by family/view budget, and migrate Calendar to a fresh identity.
+[x] Update widget, configuration, service, rendering, privacy, identity, and metadata tests for the new behavior and migration contracts.
+[x] Update `README.md`, all four widget guides, and `docs/Widget-Design-System.md` with controls, limitations, privacy, and one-time re-add instructions.
+[x] Run targeted suites and `./Scripts/verify-widgets.sh`, inspect unavailable-data, layout, identity, cache, and accessibility risks, then commit and push the scoped release.
 
 ## Open questions
 - None.

@@ -78,9 +78,11 @@ final class WeatherConfigurationTests: XCTestCase {
             .minimal: [.temperature],
             .simple: [.temperature, .condition],
             .rain: [.temperature, .precipitation],
-            .comfort: [.temperature, .humidity],
-            .detailed: [.temperature, .condition, .humidity],
-            .full: [.temperature, .condition, .humidity, .precipitation, .wind],
+            .comfort: [.temperature, .apparentTemperature, .humidity],
+            .sun: [.temperature, .sunrise, .sunset, .uvIndex],
+            .outdoor: [.temperature, .precipitation, .wind, .uvIndex],
+            .detailed: [.temperature, .condition, .apparentTemperature, .humidity],
+            .full: WeatherDetail.allCases,
         ]
 
         for preset in WeatherDetailPreset.allCases {
@@ -112,18 +114,21 @@ final class WeatherConfigurationTests: XCTestCase {
     func testFullPresetAdaptsVisibleDetailsAndWarningToEveryWidgetFamily() {
         let small = WeatherDetailPresentation(preset: .full, family: .systemSmall)
         XCTAssertEqual(small.visibleDetails, [.temperature, .condition])
-        XCTAssertEqual(small.hiddenCount, 3)
+        XCTAssertEqual(small.hiddenCount, 7)
         XCTAssertEqual(small.limit, 2)
 
         let medium = WeatherDetailPresentation(preset: .full, family: .systemMedium)
-        XCTAssertEqual(medium.visibleDetails, [.temperature, .condition, .humidity])
-        XCTAssertEqual(medium.hiddenCount, 2)
+        XCTAssertEqual(medium.visibleDetails, [.temperature, .condition, .apparentTemperature])
+        XCTAssertEqual(medium.hiddenCount, 6)
         XCTAssertEqual(medium.limit, 3)
 
         let large = WeatherDetailPresentation(preset: .full, family: .systemLarge)
-        XCTAssertEqual(large.visibleDetails, WeatherDetail.allCases)
-        XCTAssertEqual(large.hiddenCount, 0)
-        XCTAssertEqual(large.limit, 5)
+        XCTAssertEqual(
+            large.visibleDetails,
+            [.temperature, .condition, .apparentTemperature, .humidity, .precipitation, .wind]
+        )
+        XCTAssertEqual(large.hiddenCount, 3)
+        XCTAssertEqual(large.limit, 6)
     }
 
     func testWeatherPresentationAdaptsWeekAndHourViewsToEveryWidgetFamily() {
@@ -167,7 +172,7 @@ final class WeatherConfigurationTests: XCTestCase {
         let expectedDayLimits: [WidgetFamily: Int] = [
             .systemSmall: 2,
             .systemMedium: 3,
-            .systemLarge: 5,
+            .systemLarge: 6,
         ]
 
         for family in [WidgetFamily.systemSmall, .systemMedium, .systemLarge] {
@@ -517,6 +522,25 @@ final class WeatherConfigurationTests: XCTestCase {
         XCTAssertEqual(WeatherValueFormatter.wind(8.2, unit: .celsiusWithMPH), "8 mph")
     }
 
+    func testSunTimesRespectTheUsersTwelveOrTwentyFourHourLocale() throws {
+        let date = Date(timeIntervalSince1970: 1_786_291_200)
+        let timeZone = try XCTUnwrap(TimeZone(identifier: "America/Los_Angeles"))
+
+        let us = try XCTUnwrap(WeatherValueFormatter.time(
+            date,
+            timeZone: timeZone,
+            locale: Locale(identifier: "en_US")
+        ))
+        let british = try XCTUnwrap(WeatherValueFormatter.time(
+            date,
+            timeZone: timeZone,
+            locale: Locale(identifier: "en_GB")
+        ))
+
+        XCTAssertTrue(us.contains("AM") || us.contains("PM"))
+        XCTAssertFalse(british.contains("AM") || british.contains("PM"))
+    }
+
     func testWeatherCodesMapToSemanticConditions() {
         let expected: [(Int, WeatherCondition)] = [
             (0, .clear),
@@ -604,11 +628,16 @@ final class WeatherConfigurationTests: XCTestCase {
         let hourly = items.first(where: { $0.name == "hourly" })?.value ?? ""
         let daily = items.first(where: { $0.name == "daily" })?.value ?? ""
 
-        for field in ["temperature_2m", "relative_humidity_2m", "precipitation_probability", "weather_code", "wind_speed_10m"] {
+        for field in ["temperature_2m", "apparent_temperature", "relative_humidity_2m", "precipitation_probability", "weather_code", "wind_speed_10m"] {
             XCTAssertTrue(current.contains(field), "Missing current field \(field)")
             XCTAssertTrue(hourly.contains(field), "Missing hourly field \(field)")
         }
+        XCTAssertTrue(hourly.contains("uv_index"))
         XCTAssertTrue(daily.contains("temperature_2m_max"))
+        XCTAssertTrue(daily.contains("apparent_temperature_max"))
+        XCTAssertTrue(daily.contains("uv_index_max"))
+        XCTAssertTrue(daily.contains("sunrise"))
+        XCTAssertTrue(daily.contains("sunset"))
         XCTAssertTrue(daily.contains("relative_humidity_2m_mean"))
         XCTAssertTrue(daily.contains("precipitation_probability_max"))
         XCTAssertEqual(items.first(where: { $0.name == "temperature_unit" })?.value, "fahrenheit")
@@ -658,6 +687,8 @@ final class WeatherConfigurationTests: XCTestCase {
         XCTAssertEqual(snapshot.locationName, WeatherLocation.portland.displayName)
         XCTAssertEqual(snapshot.unit, .fahrenheit)
         XCTAssertEqual(snapshot.current.temperature, 63)
+        XCTAssertEqual(snapshot.current.apparentTemperature, 62)
+        XCTAssertEqual(snapshot.current.uvIndex, 3.2)
         XCTAssertEqual(WeatherURLProtocolStub.requestCount, 1)
         XCTAssertEqual(WeatherURLProtocolStub.lastRequest?.value(forHTTPHeaderField: "User-Agent"), "MacOS-Widgets/0.1")
     }
@@ -768,9 +799,14 @@ final class WeatherConfigurationTests: XCTestCase {
         XCTAssertEqual(snapshot.current.condition, .clear)
         XCTAssertEqual(snapshot.hourly.count, 3)
         XCTAssertEqual(snapshot.hourly[1].precipitationProbability, 20)
+        XCTAssertEqual(snapshot.hourly[1].apparentTemperature, 64)
         XCTAssertEqual(snapshot.hourly[2].condition, .rain)
         XCTAssertEqual(snapshot.daily.count, 2)
         XCTAssertEqual(snapshot.daily[0].highTemperature, 70)
+        XCTAssertEqual(snapshot.daily[0].apparentHighTemperature, 69)
+        XCTAssertEqual(snapshot.daily[0].uvIndex, 5.4)
+        XCTAssertNotNil(snapshot.daily[0].sunrise)
+        XCTAssertNotNil(snapshot.daily[0].sunset)
         XCTAssertEqual(snapshot.daily[1].humidity, 66)
         XCTAssertEqual(snapshot.daily[1].condition, .partlyCloudy)
     }
@@ -791,6 +827,40 @@ final class WeatherConfigurationTests: XCTestCase {
         let expired = WeatherSnapshot.sample(now: .now.addingTimeInterval(-25 * 60 * 60))
         try cache.save(expired, city: "Expired City")
         XCTAssertNil(cache.load(city: "Expired City", unit: .fahrenheit))
+    }
+
+    func testOlderCachedSnapshotsDecodeWithoutNewOptionalWeatherMetrics() throws {
+        let original = WeatherSnapshot.sample()
+        let encoded = try JSONEncoder().encode(original)
+        var object = try XCTUnwrap(
+            JSONSerialization.jsonObject(with: encoded) as? [String: Any]
+        )
+
+        var current = try XCTUnwrap(object["current"] as? [String: Any])
+        current.removeValue(forKey: "apparentTemperature")
+        current.removeValue(forKey: "uvIndex")
+        object["current"] = current
+        object["hourly"] = try XCTUnwrap(object["hourly"] as? [[String: Any]]).map { value in
+            var oldValue = value
+            oldValue.removeValue(forKey: "apparentTemperature")
+            oldValue.removeValue(forKey: "uvIndex")
+            return oldValue
+        }
+        object["daily"] = try XCTUnwrap(object["daily"] as? [[String: Any]]).map { value in
+            var oldValue = value
+            for key in ["apparentHighTemperature", "uvIndex", "sunrise", "sunset"] {
+                oldValue.removeValue(forKey: key)
+            }
+            return oldValue
+        }
+
+        let oldData = try JSONSerialization.data(withJSONObject: object)
+        let decoded = try JSONDecoder().decode(WeatherSnapshot.self, from: oldData)
+
+        XCTAssertNil(decoded.current.apparentTemperature)
+        XCTAssertNil(decoded.current.uvIndex)
+        XCTAssertNil(decoded.daily.first?.sunrise)
+        XCTAssertEqual(decoded.locationName, original.locationName)
     }
 
     func testLoaderCachesAFreshForecastForTheResolvedCityAndUnit() async throws {
@@ -998,6 +1068,7 @@ final class WeatherConfigurationTests: XCTestCase {
       "current": {
         "time": 1786291200,
         "temperature_2m": 63.0,
+        "apparent_temperature": 62.0,
         "relative_humidity_2m": 61.0,
         "precipitation_probability": 5.0,
         "weather_code": 0,
@@ -1006,6 +1077,8 @@ final class WeatherConfigurationTests: XCTestCase {
       "hourly": {
         "time": [1786291200, 1786294800, 1786298400],
         "temperature_2m": [63.0, 65.0, 66.0],
+        "apparent_temperature": [62.0, 64.0, 65.0],
+        "uv_index": [3.2, 3.8, 4.1],
         "relative_humidity_2m": [61.0, 60.0, 59.0],
         "precipitation_probability": [5.0, 20.0, 45.0],
         "weather_code": [0, 2, 61],
@@ -1015,6 +1088,10 @@ final class WeatherConfigurationTests: XCTestCase {
         "time": [1786258800, 1786345200],
         "temperature_2m_max": [70.0, 72.0],
         "temperature_2m_min": [55.0, 57.0],
+        "apparent_temperature_max": [69.0, 71.0],
+        "uv_index_max": [5.4, 5.9],
+        "sunrise": [1786276800, 1786363200],
+        "sunset": [1786327200, 1786413600],
         "relative_humidity_2m_mean": [64.0, 66.0],
         "precipitation_probability_max": [20.0, 35.0],
         "weather_code": [0, 2],

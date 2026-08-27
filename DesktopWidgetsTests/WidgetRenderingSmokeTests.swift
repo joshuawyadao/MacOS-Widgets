@@ -22,6 +22,8 @@ final class WidgetRenderingSmokeTests: XCTestCase {
         inline24Hour.layout = TimeAndDateLayout.inline.rawValue
         inline24Hour.dateFormat = TimeAndDateDateFormat.iso.rawValue
         inline24Hour.timeFormat = TimeAndDateTimeFormat.twentyFourHour.rawValue
+        inline24Hour.secondaryTimeZone = TimeAndDateSecondaryZone.tokyo.rawValue
+        inline24Hour.secondaryLabel = "Family"
         try assertRenders(
             TimeAndDateWidgetView(
                 entry: TimeAndDateEntry(date: .now, configuration: inline24Hour),
@@ -58,6 +60,7 @@ final class WidgetRenderingSmokeTests: XCTestCase {
             daily: sample.daily
         )
         let configuration = WeatherV8ConfigurationIntent.referencePreview()
+        configuration.detailPreset = WeatherDetailPreset.sun.rawValue
 
         try assertRenders(
             WeatherWidgetView(
@@ -108,13 +111,22 @@ final class WidgetRenderingSmokeTests: XCTestCase {
 
     func testBatteryRendersAvailableAndUnavailableStatesAcrossFamilies() throws {
         let configuration = BatteryConfigurationIntent.referencePreview()
+        configuration.showHealth = true
+        configuration.showCycles = true
+        let diagnosticSnapshot = BatterySnapshot(
+            percentage: 85,
+            state: .discharging,
+            timeRemainingMinutes: 366,
+            healthPercentage: 91,
+            cycleCount: 247
+        )
         for family in [WidgetFamily.systemSmall, .systemMedium, .systemLarge] {
             try assertRenders(
                 BatteryWidgetView(
                     entry: BatteryEntry(
                         date: .now,
                         configuration: configuration,
-                        snapshot: .sample
+                        snapshot: diagnosticSnapshot
                     ),
                     family: family
                 ),
@@ -141,7 +153,10 @@ final class WidgetRenderingSmokeTests: XCTestCase {
         var calendar = Calendar(identifier: .gregorian)
         calendar.timeZone = TimeZone(secondsFromGMT: 0)!
         let referenceDate = CalendarProvider.referenceDate
-        let configuration = CalendarConfigurationIntent.referencePreview(showEvents: true)
+        let configuration = CalendarConfigurationIntent.referencePreview(
+            showEvents: true,
+            showNextEventTime: true
+        )
         let availableEntry = CalendarEntry(
             date: referenceDate,
             configuration: configuration,

@@ -107,7 +107,10 @@ struct BatteryWidgetView: View {
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel(presentation.accessibilityLabel)
+        .accessibilityLabel(
+            ([presentation.accessibilityLabel] + detailItems.map { "\($0.title), \($0.value)" })
+                .joined(separator: ", ")
+        )
         .widgetSurface(renderingMode: renderingMode)
     }
 
@@ -227,6 +230,14 @@ struct BatteryWidgetView: View {
                 BatteryDetailItem(title: "Estimate", value: presentation.estimateDetailText, symbol: "timer")
             case .updated:
                 BatteryDetailItem(title: "Updated", value: presentation.updatedText, symbol: "clock")
+            case .health:
+                BatteryDetailItem(title: "Health", value: presentation.healthText, symbol: "heart.text.square")
+            case .cycles:
+                BatteryDetailItem(
+                    title: "Cycles",
+                    value: presentation.cycleCountText,
+                    symbol: "arrow.triangle.2.circlepath"
+                )
             }
         }
     }
@@ -366,7 +377,7 @@ struct BatteryWidget: Widget {
             BatteryWidgetView(entry: entry)
         }
         .configurationDisplayName("Battery")
-        .description("Battery percentage, current power state, and macOS time estimate at a glance.")
+        .description("Battery status with optional health and cycle details.")
         .supportedFamilies([.systemSmall, .systemMedium, .systemLarge])
         .containerBackgroundRemovable(true)
     }

@@ -53,10 +53,10 @@ Domain-specific editor labels should remain clear. The common order does not req
 
 ## Deliberate widget-specific features
 
-- **Time & Date:** arrangements, date and clock formats, optional per-copy hero fonts, AM/PM behavior, and minute scheduling.
-- **Weather:** searchable city, forecast views, units, detail presets, caching, offline/error handling, and provider attribution.
-- **Battery:** internal battery gauge, power-state details, runtime estimates, no-battery handling, and five-minute local readings.
-- **Calendar:** Day/Week/Month selection, locale-aware grids, optional private event indicators, Calendar permission state, and month navigation.
+- **Time & Date:** arrangements, date and clock formats, optional per-copy hero fonts, an optional labeled secondary time zone, AM/PM behavior, and minute scheduling.
+- **Weather:** searchable city, forecast views, units, comfort/UV/sun detail presets, caching, offline/error handling, and provider attribution.
+- **Battery:** internal battery gauge, power-state details, runtime estimates, optional local health/cycle diagnostics, no-battery handling, and five-minute local readings.
+- **Calendar:** Day/Week/Month selection, locale-aware grids, optional private event indicators and title-free next-event timing, Calendar permission state, and month navigation.
 
 Do not add per-copy font fields, provider links, permission prompts, timestamps, or interactive buttons to every widget solely for symmetry. Consistency comes from the shared display-theme layer plus predictable hierarchy, configuration, state language, accessibility, and rendering behavior.
 

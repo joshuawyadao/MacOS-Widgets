@@ -49,7 +49,7 @@ struct CalendarProvider: AppIntentTimelineProvider {
         let refreshDate = CalendarTimelinePolicy.nextRefresh(
             after: now,
             calendar: .autoupdatingCurrent,
-            eventsEnabled: configuration.showEvents
+            eventsEnabled: configuration.showEvents || configuration.showNextEventTime
         )
         return Timeline(entries: [entry], policy: .after(refreshDate))
     }
@@ -73,9 +73,21 @@ struct CalendarProvider: AppIntentTimelineProvider {
             monthOffset: monthOffset,
             calendar: calendar
         )
+        let upcomingInterval = DateInterval(
+            start: date,
+            end: calendar.date(byAdding: .day, value: 7, to: date)
+                ?? date.addingTimeInterval(7 * 86_400)
+        )
+        let eventsEnabled = configuration.showEvents || configuration.showNextEventTime
         let events = usesSampleEvents
             ? CalendarEventSnapshot.sample(referenceDate: date, calendar: calendar)
-            : eventReader.snapshot(in: interval, calendar: calendar, enabled: configuration.showEvents)
+            : eventReader.snapshot(
+                in: interval,
+                upcomingWithin: configuration.showNextEventTime ? upcomingInterval : nil,
+                calendar: calendar,
+                enabled: eventsEnabled,
+                referenceDate: date
+            )
         return CalendarEntry(
             date: date,
             configuration: configuration,
@@ -242,6 +254,10 @@ struct CalendarWidgetView: View {
                 .padding(.vertical, typography.displayTextVerticalPadding)
 
             dayEventSummary
+
+            if showsNextEventLine {
+                nextEventLine
+            }
         }
         .accessibilityElement(children: .combine)
         .accessibilityLabel(dayAccessibilityLabel)
@@ -250,18 +266,22 @@ struct CalendarWidgetView: View {
     private var dayEventSummary: some View {
         let count = entry.events.count(on: entry.date, calendar: calendar)
         return HStack(spacing: typography.horizontalSpacing(5)) {
-            switch entry.events.accessState {
-            case .disabled:
+            if !entry.configuration.showEvents {
                 Text("TODAY")
-            case .available:
-                Image(systemName: count == 0 ? "calendar" : "calendar.badge.clock")
-                Text(count == 1 ? "1 EVENT" : "\(count) EVENTS")
-            case .requiresPermission:
-                Image(systemName: "calendar.badge.exclamationmark")
-                Text("ENABLE IN APP")
-            case .denied:
-                Image(systemName: "calendar.badge.exclamationmark")
-                Text("ACCESS OFF")
+            } else {
+                switch entry.events.accessState {
+                case .disabled:
+                    Text("TODAY")
+                case .available:
+                    Image(systemName: count == 0 ? "calendar" : "calendar.badge.clock")
+                    Text(count == 1 ? "1 EVENT" : "\(count) EVENTS")
+                case .requiresPermission:
+                    Image(systemName: "calendar.badge.exclamationmark")
+                    Text("ENABLE IN APP")
+                case .denied:
+                    Image(systemName: "calendar.badge.exclamationmark")
+                    Text("ACCESS OFF")
+                }
             }
         }
         .font(
@@ -282,11 +302,13 @@ struct CalendarWidgetView: View {
 
     private var dayAccessibilityLabel: String {
         let count = entry.events.count(on: entry.date, calendar: calendar)
-        return CalendarDayFocusAccessibility.label(
+        let dayLabel = CalendarDayFocusAccessibility.label(
             dateLabel: dayPresentation.accessibilityLabel,
-            accessState: entry.events.accessState,
+            accessState: entry.configuration.showEvents ? entry.events.accessState : .disabled,
             eventCount: count
         )
+        guard entry.configuration.showNextEventTime else { return dayLabel }
+        return "\(dayLabel), \(nextEventAccessibilityText)"
     }
 
     private var weekView: some View {
@@ -315,6 +337,10 @@ struct CalendarWidgetView: View {
                     weekDay(day)
                 }
             }
+
+            if showsNextEventLine {
+                nextEventLine
+            }
         }
     }
 
@@ -323,7 +349,8 @@ struct CalendarWidgetView: View {
         let marker = CalendarDayMarkerPresentation(
             day: day,
             eventCount: eventCount,
-            showsEventIndicators: entry.events.accessState == .available
+            showsEventIndicators: entry.configuration.showEvents
+                && entry.events.accessState == .available
         )
         return VStack(spacing: typography.verticalSpacing(family == .systemLarge ? 8 : 4)) {
             Text(day.weekdayText)
@@ -349,7 +376,9 @@ struct CalendarWidgetView: View {
                 dotSize: family == .systemLarge ? 4 : 3
             )
 
-            if family == .systemLarge, entry.events.accessState == .available {
+            if family == .systemLarge,
+               entry.configuration.showEvents,
+               entry.events.accessState == .available {
                 Text(eventCount == 1 ? "1 event" : "\(eventCount) events")
                     .font(
                         typography.supportingFont(
@@ -374,6 +403,9 @@ struct CalendarWidgetView: View {
             monthHeader
             weekdayHeader
             monthGrid
+            if showsNextEventLine {
+                nextEventLine
+            }
         }
     }
 
@@ -471,7 +503,8 @@ struct CalendarWidgetView: View {
         let marker = CalendarDayMarkerPresentation(
             day: day,
             eventCount: eventCount,
-            showsEventIndicators: entry.events.accessState == .available
+            showsEventIndicators: entry.configuration.showEvents
+                && entry.events.accessState == .available
         )
         return calendarDayMarker(
             marker,
@@ -620,7 +653,7 @@ struct CalendarWidgetView: View {
 
     @ViewBuilder
     private var eventAccessBadge: some View {
-        if entry.configuration.showEvents {
+        if entry.configuration.showEvents || entry.configuration.showNextEventTime {
             switch entry.events.accessState {
             case .requiresPermission, .denied:
                 WidgetStatusBadge(
@@ -635,11 +668,74 @@ struct CalendarWidgetView: View {
         }
     }
 
+    private var showsNextEventLine: Bool {
+        guard entry.configuration.showNextEventTime else { return false }
+        return switch resolvedView {
+        case .day:
+            true
+        case .week:
+            family != .systemSmall
+        case .month:
+            family == .systemLarge
+        }
+    }
+
+    private var nextEventLine: some View {
+        WidgetStatusLine(
+            text: nextEventDisplayText,
+            systemImage: "calendar.badge.clock",
+            accessibilityText: nextEventAccessibilityText,
+            typography: typography
+        )
+    }
+
+    private var nextEventDisplayText: String {
+        switch entry.events.accessState {
+        case .available:
+            guard let nextEvent = entry.events.nextEvent else { return "No timed events soon" }
+            return nextEvent.isOngoing ? "Event now" : "Next \(formattedEventTime(nextEvent.start))"
+        case .requiresPermission:
+            return "Enable Calendar access"
+        case .denied:
+            return "Calendar access off"
+        case .disabled:
+            return "Next event unavailable"
+        }
+    }
+
+    private var nextEventAccessibilityText: String {
+        switch entry.events.accessState {
+        case .available:
+            guard let nextEvent = entry.events.nextEvent else {
+                return "No timed events in the next seven days"
+            }
+            return nextEvent.isOngoing
+                ? "A calendar event is happening now"
+                : "Next calendar event at \(formattedEventTime(nextEvent.start))"
+        case .requiresPermission:
+            return "Enable Calendar access in the Desktop Widgets app"
+        case .denied:
+            return "Calendar access is turned off"
+        case .disabled:
+            return "Next event time is unavailable"
+        }
+    }
+
+    private func formattedEventTime(_ date: Date) -> String {
+        let formatter = DateFormatter()
+        formatter.calendar = calendar
+        formatter.locale = locale
+        formatter.timeZone = timeZone
+        formatter.setLocalizedDateFormatFromTemplate("jm")
+        return formatter.string(from: date)
+    }
+
     private func dayAccessibilityLabel(
         _ day: CalendarDayPresentation,
         eventCount: Int
     ) -> String {
-        guard entry.events.accessState == .available else { return day.accessibilityLabel }
+        guard entry.configuration.showEvents,
+              entry.events.accessState == .available else { return day.accessibilityLabel }
         return "\(day.accessibilityLabel), \(eventCount) \(eventCount == 1 ? "event" : "events")"
     }
 }
@@ -656,7 +752,7 @@ struct CalendarWidget: Widget {
             CalendarWidgetView(entry: entry)
         }
         .configurationDisplayName("Calendar")
-        .description("A configurable day, week, or month calendar with optional event indicators.")
+        .description("A configurable calendar with private event counts and next-event timing.")
         .supportedFamilies([.systemSmall, .systemMedium, .systemLarge])
         .containerBackgroundRemovable(true)
     }

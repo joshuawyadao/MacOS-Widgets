@@ -137,7 +137,7 @@ final class WidgetContractTests: XCTestCase {
     func testReadyWidgetIdentifiersRemainDistinctAndStable() {
         XCTAssertEqual(
             WidgetIdentifier.timeAndDate.rawValue,
-            "com.joshuawyadao.desktop-widgets.time-and-date.configurable-v2-string"
+            "com.joshuawyadao.desktop-widgets.time-and-date.configurable-v3-secondary-clock"
         )
         XCTAssertEqual(
             WidgetIdentifier.weather.rawValue,
@@ -145,11 +145,11 @@ final class WidgetContractTests: XCTestCase {
         )
         XCTAssertEqual(
             WidgetIdentifier.battery.rawValue,
-            "com.joshuawyadao.desktop-widgets.battery.configurable-v2"
+            "com.joshuawyadao.desktop-widgets.battery.configurable-v3-health"
         )
         XCTAssertEqual(
             WidgetIdentifier.calendar.rawValue,
-            "com.joshuawyadao.desktop-widgets.calendar.configurable-v2"
+            "com.joshuawyadao.desktop-widgets.calendar.configurable-v3-next-event"
         )
         XCTAssertEqual(
             Set([

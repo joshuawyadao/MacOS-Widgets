@@ -52,7 +52,7 @@ struct ContentView: View {
                 ReadyWidgetCard(
                     symbol: "clock",
                     title: "Time & Date",
-                    detail: "Arrange and style the date and clock."
+                    detail: "Arrange and style the clock, with an optional second time zone."
                 )
                 ReadyWidgetCard(
                     symbol: "cloud.sun",
@@ -67,7 +67,7 @@ struct ContentView: View {
                 ReadyWidgetCard(
                     symbol: "calendar",
                     title: "Calendar",
-                    detail: "Browse a full month and keep today easy to spot."
+                    detail: "Choose Day, Week, or Month with private event timing options."
                 )
             }
         }
@@ -184,7 +184,7 @@ struct ContentView: View {
             SetupStep(
                 number: 2,
                 title: "Make it yours",
-                detail: "Control-click configurable widgets to edit their options. Calendar can use Automatic, Day, Week, or Month, with optional event indicators after you enable access below."
+                detail: "Control-click configurable widgets to edit their options. Calendar can use Automatic, Day, Week, or Month, with optional event indicators or next-event timing after you enable access below."
             )
         }
     }
@@ -193,11 +193,12 @@ struct ContentView: View {
         VStack(alignment: .leading, spacing: 22) {
             WidgetGuideSection(
                 title: "Time & Date",
-                subtitle: "Local time with independent layouts and formats, plus optional per-copy fonts.",
+                subtitle: "Local time with independent layouts and formats, optional per-copy fonts, and a second world clock.",
                 items: [
                     WidgetGuideItem(symbol: "rectangle.3.group", title: "View", detail: "Classic, compact, centered, time first, or side by side."),
                     WidgetGuideItem(symbol: "calendar", title: "Details", detail: "Choose a word-based, month-first, day-first, or ISO date."),
                     WidgetGuideItem(symbol: "clock", title: "Format", detail: "Use a 12-hour or 24-hour clock; AM/PM adapts automatically."),
+                    WidgetGuideItem(symbol: "globe", title: "Second Clock", detail: "Add a world time zone and optional short label such as Home or Family."),
                     WidgetGuideItem(symbol: "textformat", title: "Appearance", detail: "Follow the app theme, or preserve separate date and time fonts for each copy."),
                 ]
             )
@@ -208,7 +209,7 @@ struct ContentView: View {
                 items: [
                     WidgetGuideItem(symbol: "building.2", title: "Source", detail: "Search for a city and choose the exact region and country."),
                     WidgetGuideItem(symbol: "calendar.day.timeline.leading", title: "View", detail: "Switch between the week, today, and the next six hours."),
-                    WidgetGuideItem(symbol: "square.stack.3d.up", title: "Details", detail: "Apply Minimal, Simple, Rain, Comfort, Detailed, or Full."),
+                    WidgetGuideItem(symbol: "square.stack.3d.up", title: "Details", detail: "Choose presets for comfort, rain, outdoor conditions, UV, sunrise, and sunset."),
                     WidgetGuideItem(symbol: "thermometer.medium", title: "Format", detail: "Follow this Mac or choose Fahrenheit or Celsius."),
                 ]
             )
@@ -219,18 +220,19 @@ struct ContentView: View {
                 items: [
                     WidgetGuideItem(symbol: "battery.75percent", title: "Source", detail: "Reads this Mac's internal battery through the local system API."),
                     WidgetGuideItem(symbol: "rectangle.3.group", title: "View", detail: "Small emphasizes charge; Medium and Large progressively add details."),
-                    WidgetGuideItem(symbol: "timer", title: "Details", detail: "Toggle Power, Status, Estimate, and Updated for each copy."),
+                    WidgetGuideItem(symbol: "timer", title: "Details", detail: "Toggle Power, Status, Estimate, Updated, Health, and Cycles for each copy."),
                     WidgetGuideItem(symbol: "bolt.fill", title: "Status", detail: "Distinguishes charging, discharging, AC power, calculating, and no battery."),
                 ]
             )
 
             WidgetGuideSection(
                 title: "Calendar",
-                subtitle: "Locale-aware Day, Week, and Month views with optional private event indicators.",
+                subtitle: "Locale-aware Day, Week, and Month views with private event indicators and next-event timing.",
                 items: [
                     WidgetGuideItem(symbol: "calendar", title: "Source", detail: "Uses this Mac's calendar, locale, time zone, and first-weekday preference."),
                     WidgetGuideItem(symbol: "rectangle.3.group", title: "View", detail: "Automatic chooses Day, Week, or Month by size; each copy can override it."),
                     WidgetGuideItem(symbol: "circle.grid.2x2.fill", title: "Details", detail: "Optional counts and dots show busy days without revealing event text."),
+                    WidgetGuideItem(symbol: "calendar.badge.clock", title: "Next Event", detail: "Optionally show only the next timed event's start time, never its title."),
                     WidgetGuideItem(symbol: "arrow.left.arrow.right", title: "Interaction", detail: "Month view can move backward, forward, or return to the current month."),
                 ]
             )
@@ -710,7 +712,7 @@ private struct CalendarPermissionCard: View {
 
     private var statusTitle: String {
         switch controller.state {
-        case .notDetermined: "Event indicators are off"
+        case .notDetermined: "Calendar event features are off"
         case .fullAccess: "Calendar access enabled"
         case .denied: "Calendar access is off"
         }
@@ -719,11 +721,11 @@ private struct CalendarPermissionCard: View {
     private var statusDetail: String {
         switch controller.state {
         case .notDetermined:
-            "Enable access only if you want event counts and dots. The widget never displays event titles or notes."
+            "Enable access only if you want event counts, dots, or next-event timing. The widget never displays event titles or notes."
         case .fullAccess:
-            "Calendar widgets with Show Event Indicators enabled can read event timing and display counts."
+            "Calendar widgets can use event timing for private counts, dots, or a title-free next-event time."
         case .denied:
-            "Open Privacy & Security → Calendars to allow optional event indicators."
+            "Open Privacy & Security → Calendars to allow optional event indicators or next-event timing."
         }
     }
 

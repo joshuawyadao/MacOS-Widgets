@@ -80,18 +80,40 @@ struct TimeAndDateWidgetView: View {
     }
 
     var body: some View {
-        Group {
-            switch presentation.arrangement {
-            case .classicWide:
-                referenceLayout
-            case .verticalDateFirst:
-                stackedLayout
-            case .verticalTimeFirst:
-                timeFirstLayout
-            case .centeredDateFirst:
-                centeredLayout
-            case .horizontalDateFirst:
-                inlineLayout
+        VStack(alignment: .leading, spacing: typography.verticalSpacing(3)) {
+            Group {
+                switch presentation.arrangement {
+                case .classicWide:
+                    referenceLayout
+                case .verticalDateFirst:
+                    stackedLayout
+                case .verticalTimeFirst:
+                    timeFirstLayout
+                case .centeredDateFirst:
+                    centeredLayout
+                case .horizontalDateFirst:
+                    inlineLayout
+                }
+            }
+            .frame(maxHeight: .infinity)
+
+            if let secondaryClockText = presentation.secondaryClockText {
+                Text(secondaryClockText)
+                    .font(
+                        typography.displayFont(
+                            size: metrics.secondaryClockSize,
+                            weight: .semibold,
+                            fallback: .system(
+                                size: metrics.secondaryClockSize,
+                                weight: .semibold,
+                                design: .rounded
+                            )
+                        )
+                    )
+                    .lineLimit(1)
+                    .minimumScaleFactor(typography.displayMinimumScaleFactor(0.62))
+                    .padding(.vertical, typography.displayTextVerticalPadding)
+                    .frame(maxWidth: .infinity, alignment: .trailing)
             }
         }
         .accessibilityElement(children: .ignore)
@@ -216,6 +238,7 @@ private struct TimeAndDateMetrics {
     let dateSize: CGFloat
     let timeSize: CGFloat
     let periodSize: CGFloat
+    let secondaryClockSize: CGFloat
     let dateTracking: CGFloat
     let spacing: CGFloat
     let periodSpacing: CGFloat
@@ -228,6 +251,7 @@ private struct TimeAndDateMetrics {
             dateSize = 18
             timeSize = 50
             periodSize = 18
+            secondaryClockSize = 10
             dateTracking = 0.4
             spacing = 6
             periodSpacing = 6
@@ -237,6 +261,7 @@ private struct TimeAndDateMetrics {
             dateSize = 32
             timeSize = 100
             periodSize = 42
+            secondaryClockSize = 16
             dateTracking = 1.2
             spacing = 14
             periodSpacing = 12
@@ -246,6 +271,7 @@ private struct TimeAndDateMetrics {
             dateSize = 26
             timeSize = 76
             periodSize = 34
+            secondaryClockSize = 13
             dateTracking = 0.9
             spacing = 10
             periodSpacing = 10
@@ -267,7 +293,7 @@ struct TimeAndDateWidget: Widget {
             TimeAndDateWidgetView(entry: entry)
         }
         .configurationDisplayName("Time & Date")
-        .description("A customizable date and clock with your choice of layout, formats, and fonts.")
+        .description("A customizable date and clock with optional secondary time zone.")
         .supportedFamilies([.systemSmall, .systemMedium, .systemLarge])
         .containerBackgroundRemovable(true)
     }

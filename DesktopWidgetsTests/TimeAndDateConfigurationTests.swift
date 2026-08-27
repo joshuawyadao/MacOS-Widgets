@@ -75,12 +75,16 @@ final class TimeAndDateConfigurationTests: XCTestCase {
             configuration.timeFormat = value
             configuration.dateFont = value
             configuration.timeFont = value
+            configuration.secondaryTimeZone = value
+            configuration.secondaryLabel = ""
 
             XCTAssertEqual(configuration.resolvedLayout, .reference)
             XCTAssertEqual(configuration.resolvedDateFormat, .reference)
             XCTAssertEqual(configuration.resolvedTimeFormat, .twelveHour)
             XCTAssertEqual(configuration.resolvedDateFont, .systemBold)
             XCTAssertEqual(configuration.resolvedTimeFont, .noteworthy)
+            XCTAssertEqual(configuration.resolvedSecondaryZone, .off)
+            XCTAssertEqual(configuration.resolvedSecondaryLabel, "")
         }
     }
 
@@ -130,6 +134,37 @@ final class TimeAndDateConfigurationTests: XCTestCase {
                 XCTAssertEqual(configuration.resolvedTimeFont, timeFont)
             }
         }
+    }
+
+    func testSecondaryClockUsesItsZoneAndOptionalLabelWithoutChangingPrimaryClock() {
+        let date = makeDate(year: 2026, month: 8, day: 9, hour: 21, minute: 9)
+        let configuration = TimeAndDateStringConfigurationIntent.referencePreview()
+        configuration.secondaryTimeZone = TimeAndDateSecondaryZone.tokyo.rawValue
+        configuration.secondaryLabel = "  Family  "
+
+        let presentation = TimeAndDatePresentation(
+            date: date,
+            configuration: configuration,
+            family: .systemMedium,
+            locale: locale,
+            timeZone: timeZone
+        )
+
+        XCTAssertEqual(presentation.timeText, "09:09")
+        XCTAssertEqual(presentation.periodText, "PM")
+        XCTAssertEqual(presentation.secondaryClockText, "FAMILY 06:09 AM")
+        XCTAssertTrue(presentation.accessibilityLabel.contains("FAMILY 06:09 AM"))
+    }
+
+    func testSecondaryClockUsesZoneNameAsFallbackAndCapsCustomLabels() {
+        let configuration = TimeAndDateStringConfigurationIntent.referencePreview()
+        configuration.secondaryTimeZone = TimeAndDateSecondaryZone.london.rawValue
+        configuration.secondaryLabel = ""
+        XCTAssertEqual(configuration.resolvedSecondaryLabel, "London")
+
+        configuration.secondaryLabel = "A label that is intentionally too long"
+        XCTAssertEqual(configuration.resolvedSecondaryLabel, "A label that is in")
+        XCTAssertEqual(configuration.resolvedSecondaryLabel.count, 18)
     }
 
     func testPresentationAdaptsEveryLayoutToEveryWidgetFamily() {
@@ -210,6 +245,12 @@ final class TimeAndDateConfigurationTests: XCTestCase {
             defaultResult: await TimeAndDateTimeFormatOptionsProvider().defaultResult(),
             expectedDefault: TimeAndDateTimeFormat.twelveHour.rawValue,
             expected: TimeAndDateTimeFormat.allCases.map(\.rawValue)
+        )
+        assertProvider(
+            results: try await TimeAndDateSecondaryZoneOptionsProvider().results(),
+            defaultResult: await TimeAndDateSecondaryZoneOptionsProvider().defaultResult(),
+            expectedDefault: TimeAndDateSecondaryZone.off.rawValue,
+            expected: TimeAndDateSecondaryZone.allCases.map(\.rawValue)
         )
         assertProvider(
             results: try await TimeAndDateDateFontOptionsProvider().results(),

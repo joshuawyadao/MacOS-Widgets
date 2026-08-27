@@ -3,10 +3,12 @@ import WidgetKit
 import XCTest
 
 final class BatteryWidgetTests: XCTestCase {
-    func testConfigurationDefaultsToAllFourDetails() {
+    func testConfigurationDefaultsToTheOriginalFourDetails() {
         let configuration = BatteryConfigurationIntent()
 
-        XCTAssertEqual(configuration.resolvedDetails, Set(BatteryDetail.allCases))
+        XCTAssertEqual(configuration.resolvedDetails, [.power, .status, .estimate, .updated])
+        XCTAssertFalse(configuration.showHealth)
+        XCTAssertFalse(configuration.showCycles)
     }
 
     func testConfigurationTogglesResolveIndependently() {
@@ -15,8 +17,10 @@ final class BatteryWidgetTests: XCTestCase {
         configuration.showStatus = true
         configuration.showEstimate = false
         configuration.showUpdated = true
+        configuration.showHealth = true
+        configuration.showCycles = true
 
-        XCTAssertEqual(configuration.resolvedDetails, [.status, .updated])
+        XCTAssertEqual(configuration.resolvedDetails, [.status, .updated, .health, .cycles])
     }
 
     func testDetailSelectionEnforcesEveryFamilyBudget() {
@@ -34,8 +38,19 @@ final class BatteryWidgetTests: XCTestCase {
 
         let large = BatteryDetailSelection(configuration: configuration, family: .systemLarge)
         XCTAssertEqual(large.visibleDetails, [.power, .status, .estimate, .updated])
-        XCTAssertEqual(large.limit, 4)
+        XCTAssertEqual(large.limit, 6)
         XCTAssertEqual(large.hiddenCount, 0)
+    }
+
+    func testLargeFamilyCanShowAllSixDetails() {
+        let configuration = BatteryConfigurationIntent()
+        configuration.showHealth = true
+        configuration.showCycles = true
+
+        let selection = BatteryDetailSelection(configuration: configuration, family: .systemLarge)
+
+        XCTAssertEqual(selection.visibleDetails, BatteryDetail.allCases)
+        XCTAssertEqual(selection.hiddenCount, 0)
     }
 
     func testMediumUsesTheNextEnabledDetailsAndAllowsAnEmptySelection() {
@@ -133,6 +148,29 @@ final class BatteryWidgetTests: XCTestCase {
         )
     }
 
+    func testHardwareParserNormalizesHealthAndCycleDiagnostics() throws {
+        let metrics = try XCTUnwrap(BatteryHardwareParser.metrics(from: [
+            BatteryHardwareKey.designCapacity: 5_000,
+            BatteryHardwareKey.appleRawMaximumCapacity: 4_250,
+            BatteryHardwareKey.cycleCount: 321,
+        ]))
+
+        XCTAssertEqual(metrics.healthPercentage, 85)
+        XCTAssertEqual(metrics.cycleCount, 321)
+        XCTAssertNil(BatteryHardwareParser.metrics(from: [:]))
+    }
+
+    func testHardwareParserClampsImpossibleHealthAndDropsNegativeCycles() throws {
+        let metrics = try XCTUnwrap(BatteryHardwareParser.metrics(from: [
+            BatteryHardwareKey.designCapacity: 1_000,
+            BatteryHardwareKey.maximumCapacity: 1_400,
+            BatteryHardwareKey.cycleCount: -1,
+        ]))
+
+        XCTAssertEqual(metrics.healthPercentage, 100)
+        XCTAssertNil(metrics.cycleCount)
+    }
+
     func testReferencePresentationMatchesPercentageRuntimeAndFill() {
         let presentation = BatteryWidgetPresentation(snapshot: .sample)
 
@@ -193,6 +231,20 @@ final class BatteryWidgetTests: XCTestCase {
         XCTAssertEqual(charged.stateDetailText, "Fully Charged")
         XCTAssertEqual(charged.estimateDetailText, "Unavailable on AC")
         XCTAssertEqual(charged.accessibilityLabel, "Battery 100 percent, fully charged, using AC power")
+
+        let diagnostics = BatteryWidgetPresentation(snapshot: BatterySnapshot(
+            percentage: 80,
+            state: .discharging,
+            timeRemainingMinutes: nil,
+            healthPercentage: 87,
+            cycleCount: 412
+        ))
+        XCTAssertEqual(diagnostics.healthText, "87% capacity")
+        XCTAssertEqual(diagnostics.cycleCountText, "412 cycles")
+
+        let unavailableDiagnostics = BatteryWidgetPresentation(snapshot: .sample)
+        XCTAssertEqual(unavailableDiagnostics.healthText, "Unavailable")
+        XCTAssertEqual(unavailableDiagnostics.cycleCountText, "Unavailable")
     }
 
     func testPresentationFormatsTheTimelineUpdateTimeForExpandedLayouts() {

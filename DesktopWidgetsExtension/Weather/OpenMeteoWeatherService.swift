@@ -156,9 +156,9 @@ struct OpenMeteoWeatherService: WeatherServing {
         components.queryItems = [
             URLQueryItem(name: "latitude", value: String(location.latitude)),
             URLQueryItem(name: "longitude", value: String(location.longitude)),
-            URLQueryItem(name: "current", value: "temperature_2m,relative_humidity_2m,precipitation_probability,weather_code,wind_speed_10m"),
-            URLQueryItem(name: "hourly", value: "temperature_2m,relative_humidity_2m,precipitation_probability,weather_code,wind_speed_10m"),
-            URLQueryItem(name: "daily", value: "temperature_2m_max,temperature_2m_min,relative_humidity_2m_mean,precipitation_probability_max,weather_code,wind_speed_10m_max"),
+            URLQueryItem(name: "current", value: "temperature_2m,apparent_temperature,relative_humidity_2m,precipitation_probability,weather_code,wind_speed_10m"),
+            URLQueryItem(name: "hourly", value: "temperature_2m,apparent_temperature,relative_humidity_2m,precipitation_probability,weather_code,wind_speed_10m,uv_index"),
+            URLQueryItem(name: "daily", value: "temperature_2m_max,temperature_2m_min,apparent_temperature_max,relative_humidity_2m_mean,precipitation_probability_max,weather_code,wind_speed_10m_max,uv_index_max,sunrise,sunset"),
             URLQueryItem(name: "temperature_unit", value: unit.temperatureAPIValue),
             URLQueryItem(name: "wind_speed_unit", value: unit.windAPIValue),
             URLQueryItem(name: "precipitation_unit", value: unit.precipitationAPIValue),
@@ -189,6 +189,12 @@ struct OpenMeteoWeatherService: WeatherServing {
         let hourlyDates = response.hourly.time.map(Date.init(timeIntervalSince1970:))
         let dailyDates = response.daily.time.map(Date.init(timeIntervalSince1970:))
         let currentDate = Date(timeIntervalSince1970: response.current.time)
+        let currentHourlyIndex = hourlyDates.firstIndex(of: currentDate)
+        let currentUVIndex = currentHourlyIndex.flatMap { index in
+            response.hourly.uvIndex.flatMap { values in
+                values.indices.contains(index) ? values[index] : nil
+            }
+        }
 
         let hourlyCount = [
             hourlyDates.count,
@@ -207,9 +213,15 @@ struct OpenMeteoWeatherService: WeatherServing {
             WeatherPoint(
                 date: hourlyDates[index],
                 temperature: response.hourly.temperature[index],
+                apparentTemperature: response.hourly.apparentTemperature.flatMap { values in
+                    values.indices.contains(index) ? values[index] : nil
+                },
                 humidity: response.hourly.humidity.value(at: index) ?? nil,
                 precipitationProbability: response.hourly.precipitationProbability.value(at: index) ?? nil,
                 windSpeed: response.hourly.windSpeed.value(at: index) ?? nil,
+                uvIndex: response.hourly.uvIndex.flatMap { values in
+                    values.indices.contains(index) ? values[index] : nil
+                },
                 condition: WeatherCondition(wmoCode: response.hourly.weatherCode[index])
             )
         }
@@ -219,9 +231,21 @@ struct OpenMeteoWeatherService: WeatherServing {
                 date: dailyDates[index],
                 highTemperature: response.daily.highTemperature[index],
                 lowTemperature: response.daily.lowTemperature[index],
+                apparentHighTemperature: response.daily.apparentHighTemperature.flatMap { values in
+                    values.indices.contains(index) ? values[index] : nil
+                },
                 humidity: response.daily.humidity.value(at: index) ?? nil,
                 precipitationProbability: response.daily.precipitationProbability.value(at: index) ?? nil,
                 windSpeed: response.daily.windSpeed.value(at: index) ?? nil,
+                uvIndex: response.daily.uvIndex.flatMap { values in
+                    values.indices.contains(index) ? values[index] : nil
+                },
+                sunrise: response.daily.sunrise.flatMap { values in
+                    values.indices.contains(index) ? Date(timeIntervalSince1970: values[index]) : nil
+                },
+                sunset: response.daily.sunset.flatMap { values in
+                    values.indices.contains(index) ? Date(timeIntervalSince1970: values[index]) : nil
+                },
                 condition: WeatherCondition(wmoCode: response.daily.weatherCode[index])
             )
         }
@@ -235,9 +259,11 @@ struct OpenMeteoWeatherService: WeatherServing {
             current: WeatherPoint(
                 date: currentDate,
                 temperature: response.current.temperature,
+                apparentTemperature: response.current.apparentTemperature,
                 humidity: response.current.humidity,
                 precipitationProbability: response.current.precipitationProbability,
                 windSpeed: response.current.windSpeed,
+                uvIndex: currentUVIndex,
                 condition: WeatherCondition(wmoCode: response.current.weatherCode)
             ),
             hourly: hourly,
@@ -383,6 +409,7 @@ private struct ForecastResponse: Decodable {
 private struct CurrentForecast: Decodable {
     let time: TimeInterval
     let temperature: Double
+    let apparentTemperature: Double?
     let humidity: Double?
     let precipitationProbability: Double?
     let weatherCode: Int
@@ -391,6 +418,7 @@ private struct CurrentForecast: Decodable {
     enum CodingKeys: String, CodingKey {
         case time
         case temperature = "temperature_2m"
+        case apparentTemperature = "apparent_temperature"
         case humidity = "relative_humidity_2m"
         case precipitationProbability = "precipitation_probability"
         case weatherCode = "weather_code"
@@ -401,18 +429,22 @@ private struct CurrentForecast: Decodable {
 private struct HourlyForecast: Decodable {
     let time: [TimeInterval]
     let temperature: [Double]
+    let apparentTemperature: [Double?]?
     let humidity: [Double?]
     let precipitationProbability: [Double?]
     let weatherCode: [Int]
     let windSpeed: [Double?]
+    let uvIndex: [Double?]?
 
     enum CodingKeys: String, CodingKey {
         case time
         case temperature = "temperature_2m"
+        case apparentTemperature = "apparent_temperature"
         case humidity = "relative_humidity_2m"
         case precipitationProbability = "precipitation_probability"
         case weatherCode = "weather_code"
         case windSpeed = "wind_speed_10m"
+        case uvIndex = "uv_index"
     }
 }
 
@@ -420,19 +452,27 @@ private struct DailyForecast: Decodable {
     let time: [TimeInterval]
     let highTemperature: [Double]
     let lowTemperature: [Double]
+    let apparentHighTemperature: [Double?]?
     let humidity: [Double?]
     let precipitationProbability: [Double?]
     let weatherCode: [Int]
     let windSpeed: [Double?]
+    let uvIndex: [Double?]?
+    let sunrise: [TimeInterval]?
+    let sunset: [TimeInterval]?
 
     enum CodingKeys: String, CodingKey {
         case time
         case highTemperature = "temperature_2m_max"
         case lowTemperature = "temperature_2m_min"
+        case apparentHighTemperature = "apparent_temperature_max"
         case humidity = "relative_humidity_2m_mean"
         case precipitationProbability = "precipitation_probability_max"
         case weatherCode = "weather_code"
         case windSpeed = "wind_speed_10m_max"
+        case uvIndex = "uv_index_max"
+        case sunrise
+        case sunset
     }
 }
 

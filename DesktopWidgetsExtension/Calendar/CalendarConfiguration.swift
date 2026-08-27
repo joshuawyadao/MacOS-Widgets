@@ -42,7 +42,7 @@ struct CalendarViewModeOptionsProvider: DynamicOptionsProvider {
 struct CalendarConfigurationIntent: WidgetConfigurationIntent {
     static let title: LocalizedStringResource = "Customize Calendar"
     static let description = IntentDescription(
-        "Choose Day, Week, or Month and optionally show private event-count indicators."
+        "Choose Day, Week, or Month and optionally show private event counts or the next event time."
     )
 
     @Parameter(title: "Calendar View", optionsProvider: CalendarViewModeOptionsProvider())
@@ -54,6 +54,13 @@ struct CalendarConfigurationIntent: WidgetConfigurationIntent {
         default: false
     )
     var showEvents: Bool
+
+    @Parameter(
+        title: "Show Next Event Time",
+        description: "Show only when the next timed event starts. Titles and other event details never appear.",
+        default: false
+    )
+    var showNextEventTime: Bool
 
     init() {}
 
@@ -75,10 +82,14 @@ struct CalendarConfigurationIntent: WidgetConfigurationIntent {
         }
     }
 
-    static func referencePreview(showEvents: Bool = true) -> Self {
+    static func referencePreview(
+        showEvents: Bool = true,
+        showNextEventTime: Bool = false
+    ) -> Self {
         let configuration = Self()
         configuration.viewMode = CalendarViewMode.automatic.rawValue
         configuration.showEvents = showEvents
+        configuration.showNextEventTime = showNextEventTime
         return configuration
     }
 }

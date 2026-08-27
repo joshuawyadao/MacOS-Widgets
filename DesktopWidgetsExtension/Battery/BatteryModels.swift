@@ -12,11 +12,31 @@ struct BatterySnapshot: Equatable, Sendable {
     let percentage: Int
     let state: BatteryPowerState
     let timeRemainingMinutes: Int?
+    let healthPercentage: Int?
+    let cycleCount: Int?
 
-    init(percentage: Int, state: BatteryPowerState, timeRemainingMinutes: Int?) {
+    init(
+        percentage: Int,
+        state: BatteryPowerState,
+        timeRemainingMinutes: Int?,
+        healthPercentage: Int? = nil,
+        cycleCount: Int? = nil
+    ) {
         self.percentage = min(max(percentage, 0), 100)
         self.state = state
         self.timeRemainingMinutes = timeRemainingMinutes.flatMap { $0 > 0 ? $0 : nil }
+        self.healthPercentage = healthPercentage.map { min(max($0, 0), 100) }
+        self.cycleCount = cycleCount.flatMap { $0 >= 0 ? $0 : nil }
+    }
+
+    func adding(_ hardware: BatteryHardwareMetrics?) -> Self {
+        Self(
+            percentage: percentage,
+            state: state,
+            timeRemainingMinutes: timeRemainingMinutes,
+            healthPercentage: hardware?.healthPercentage,
+            cycleCount: hardware?.cycleCount
+        )
     }
 
     static let sample = BatterySnapshot(
@@ -24,6 +44,44 @@ struct BatterySnapshot: Equatable, Sendable {
         state: .discharging,
         timeRemainingMinutes: 366
     )
+}
+
+struct BatteryHardwareMetrics: Equatable, Sendable {
+    let healthPercentage: Int?
+    let cycleCount: Int?
+}
+
+enum BatteryHardwareKey {
+    static let cycleCount = "CycleCount"
+    static let designCapacity = "DesignCapacity"
+    static let appleRawMaximumCapacity = "AppleRawMaxCapacity"
+    static let maximumCapacity = "MaxCapacity"
+}
+
+enum BatteryHardwareParser {
+    static func metrics(from properties: [String: Any]) -> BatteryHardwareMetrics? {
+        let designCapacity = number(for: BatteryHardwareKey.designCapacity, in: properties)?.doubleValue
+        let maximumCapacity = (
+            number(for: BatteryHardwareKey.appleRawMaximumCapacity, in: properties)
+                ?? number(for: BatteryHardwareKey.maximumCapacity, in: properties)
+        )?.doubleValue
+        let healthPercentage: Int? = if let designCapacity, designCapacity > 0, let maximumCapacity {
+            Int((maximumCapacity / designCapacity * 100).rounded())
+        } else {
+            nil
+        }
+        let cycleCount = number(for: BatteryHardwareKey.cycleCount, in: properties)?.intValue
+
+        guard healthPercentage != nil || cycleCount != nil else { return nil }
+        return BatteryHardwareMetrics(
+            healthPercentage: healthPercentage.map { min(max($0, 0), 100) },
+            cycleCount: cycleCount.flatMap { $0 >= 0 ? $0 : nil }
+        )
+    }
+
+    private static func number(for key: String, in values: [String: Any]) -> NSNumber? {
+        values[key] as? NSNumber
+    }
 }
 
 enum BatteryPowerSourceKey {

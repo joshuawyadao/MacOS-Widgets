@@ -4,5 +4,5 @@ Host macOS app for widget onboarding, settings, permissions, and shared configur
 
 The initial screen presents all four widgets, explains their setup and interaction patterns, and owns
 Calendar's optional full-access permission request. Calendar permission is requested only after the
-user selects **Enable Access**; the extension then reads event timing for counts and dots without
-displaying titles or notes.
+user selects **Enable Access**; the extension then reads event timing for counts, dots, and an
+optional next-event start time without displaying titles or notes.

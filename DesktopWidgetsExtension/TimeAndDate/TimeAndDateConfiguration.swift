@@ -106,6 +106,84 @@ enum TimeAndDateTimeFormat: String, CaseIterable, Sendable, TimeAndDateStringOpt
     }
 }
 
+enum TimeAndDateSecondaryZone: String, CaseIterable, Sendable, TimeAndDateStringOption {
+    case off
+    case utc
+    case honolulu
+    case losAngeles
+    case denver
+    case chicago
+    case newYork
+    case saoPaulo
+    case london
+    case paris
+    case johannesburg
+    case dubai
+    case kolkata
+    case singapore
+    case shanghai
+    case tokyo
+    case seoul
+    case sydney
+    case auckland
+
+    var displayName: LocalizedStringResource {
+        switch self {
+        case .off: "Off — Show one clock"
+        case .utc: "UTC — Coordinated Universal Time"
+        case .honolulu: "Honolulu"
+        case .losAngeles: "Los Angeles"
+        case .denver: "Denver"
+        case .chicago: "Chicago"
+        case .newYork: "New York"
+        case .saoPaulo: "São Paulo"
+        case .london: "London"
+        case .paris: "Paris"
+        case .johannesburg: "Johannesburg"
+        case .dubai: "Dubai"
+        case .kolkata: "Kolkata"
+        case .singapore: "Singapore"
+        case .shanghai: "Shanghai"
+        case .tokyo: "Tokyo"
+        case .seoul: "Seoul"
+        case .sydney: "Sydney"
+        case .auckland: "Auckland"
+        }
+    }
+
+    var timeZone: TimeZone? {
+        let identifier: String? = switch self {
+        case .off: nil
+        case .utc: "UTC"
+        case .honolulu: "Pacific/Honolulu"
+        case .losAngeles: "America/Los_Angeles"
+        case .denver: "America/Denver"
+        case .chicago: "America/Chicago"
+        case .newYork: "America/New_York"
+        case .saoPaulo: "America/Sao_Paulo"
+        case .london: "Europe/London"
+        case .paris: "Europe/Paris"
+        case .johannesburg: "Africa/Johannesburg"
+        case .dubai: "Asia/Dubai"
+        case .kolkata: "Asia/Kolkata"
+        case .singapore: "Asia/Singapore"
+        case .shanghai: "Asia/Shanghai"
+        case .tokyo: "Asia/Tokyo"
+        case .seoul: "Asia/Seoul"
+        case .sydney: "Australia/Sydney"
+        case .auckland: "Pacific/Auckland"
+        }
+        return identifier.flatMap(TimeZone.init(identifier:))
+    }
+
+    var fallbackLabel: String {
+        switch self {
+        case .off: ""
+        default: String(localized: displayName).components(separatedBy: " — ").first ?? rawValue
+        }
+    }
+}
+
 enum TimeAndDateFont: String, CaseIterable, Sendable, TimeAndDateStringOption {
     case systemBold
     case systemRounded
@@ -263,6 +341,19 @@ struct TimeAndDateTimeFormatOptionsProvider: DynamicOptionsProvider {
     }
 }
 
+struct TimeAndDateSecondaryZoneOptionsProvider: DynamicOptionsProvider {
+    func results() async throws -> IntentItemCollection<String> {
+        TimeAndDateOptionItems.collection(
+            for: TimeAndDateSecondaryZone.self,
+            prompt: "Choose a second time zone"
+        )
+    }
+
+    func defaultResult() async -> String? {
+        TimeAndDateSecondaryZone.off.rawValue
+    }
+}
+
 struct TimeAndDateDateFontOptionsProvider: DynamicOptionsProvider {
     func results() async throws -> IntentItemCollection<String> {
         TimeAndDateOptionItems.fontCollection(prompt: "Choose a date font")
@@ -302,6 +393,20 @@ struct TimeAndDateStringConfigurationIntent: WidgetConfigurationIntent {
     @Parameter(title: "Time Font", optionsProvider: TimeAndDateTimeFontOptionsProvider())
     var timeFont: String?
 
+    @Parameter(
+        title: "Second Time Zone",
+        description: "Optionally show a second clock beneath the primary clock.",
+        optionsProvider: TimeAndDateSecondaryZoneOptionsProvider()
+    )
+    var secondaryTimeZone: String?
+
+    @Parameter(
+        title: "Second Clock Label",
+        description: "Optional short label such as Home, Family, or Tokyo.",
+        default: ""
+    )
+    var secondaryLabel: String
+
     var resolvedLayout: TimeAndDateLayout {
         layout.flatMap(TimeAndDateLayout.init(rawValue:)) ?? .reference
     }
@@ -322,6 +427,15 @@ struct TimeAndDateStringConfigurationIntent: WidgetConfigurationIntent {
         timeFont.flatMap(TimeAndDateFont.init(rawValue:)) ?? .noteworthy
     }
 
+    var resolvedSecondaryZone: TimeAndDateSecondaryZone {
+        secondaryTimeZone.flatMap(TimeAndDateSecondaryZone.init(rawValue:)) ?? .off
+    }
+
+    var resolvedSecondaryLabel: String {
+        let trimmed = secondaryLabel.trimmingCharacters(in: .whitespacesAndNewlines)
+        return trimmed.isEmpty ? resolvedSecondaryZone.fallbackLabel : String(trimmed.prefix(18))
+    }
+
     static func referencePreview() -> Self {
         let configuration = Self()
         configuration.layout = TimeAndDateLayout.reference.rawValue
@@ -329,6 +443,8 @@ struct TimeAndDateStringConfigurationIntent: WidgetConfigurationIntent {
         configuration.timeFormat = TimeAndDateTimeFormat.twelveHour.rawValue
         configuration.dateFont = TimeAndDateFont.systemBold.rawValue
         configuration.timeFont = TimeAndDateFont.noteworthy.rawValue
+        configuration.secondaryTimeZone = TimeAndDateSecondaryZone.off.rawValue
+        configuration.secondaryLabel = ""
         return configuration
     }
 }

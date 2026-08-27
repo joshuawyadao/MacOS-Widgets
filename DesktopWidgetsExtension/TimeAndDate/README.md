@@ -1,7 +1,7 @@
 # Time and Date Widget
 
 Contains the configurable desktop clock: five adaptive layouts, five date formats, 12- and
-24-hour time, independent date and time fonts, font specimen assets, and a removable clear
+24-hour time, an optional labeled secondary time zone, independent date and time fonts, font specimen assets, and a removable clear
 WidgetKit background.
 
 The native editor uses example-based option labels, keeps date and time controls together, and
@@ -14,7 +14,7 @@ This avoids the macOS 26.5 AppEnum default-value regression while retaining nati
 safe fallbacks, and independent settings for each placed widget.
 
 `DesktopWidgetsTests` compiles the configuration source into a focused macOS test bundle and
-checks every date/time formatter, every provider's stable IDs and default, invalid-ID fallbacks,
+checks every date/time formatter, secondary-zone and label behavior, every provider's stable IDs and default, invalid-ID fallbacks,
 and two independently resolved configurations. Deterministic WidgetKit previews cover small,
 medium, and large families plus an alternate side-by-side configuration; desktop editor and
 restart persistence checks are listed in `docs/Time-And-Date-Widget.md`.

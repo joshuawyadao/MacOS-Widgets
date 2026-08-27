@@ -23,7 +23,7 @@
 	<key>LSApplicationCategoryType</key>
 	<string>public.app-category.utilities</string>
 	<key>NSCalendarsFullAccessUsageDescription</key>
-	<string>Desktop Widgets reads event timing to show optional counts and dots. Event titles and notes are never displayed.</string>
+	<string>Desktop Widgets reads event timing to show optional counts, dots, or a next-event start time. Event titles and notes are never displayed.</string>
 	<key>WidgetThemeAppGroupIdentifier</key>
 	<string>$(WIDGET_THEME_APP_GROUP)</string>
 </dict>

@@ -6,7 +6,7 @@ The Time and Date widget is inspired by the supplied desktop reference: white up
 
 1. Run the `DesktopWidgets` app once from Xcode.
 2. Choose an **Appearance theme** in the app. Leave Time & Date on **Follow Global Theme**, choose a different curated theme for every Time & Date widget, or select **Use Each Widget's Fonts** to activate the per-copy font rows described below. Font Coverage does not visibly change Time & Date because its date, clock, and AM/PM are all display roles already.
-3. Remove any Time and Date widget installed from build 3 or earlier. Build 4 intentionally uses a fresh widget and intent identity so macOS does not reuse the old AppEnum configuration cache.
+3. Remove any existing Time & Date widget once. The second-clock fields intentionally use a fresh widget identity, so macOS cannot migrate an older placed copy to this editor schema.
 4. Add **Time & Date** from the macOS widget gallery.
 5. Control-click the widget on the desktop.
 6. Choose **Edit Time and Date**.
@@ -19,8 +19,10 @@ The Time and Date widget is inspired by the supplied desktop reference: white up
 | Clock style | 12-hour — 09:09 AM; 24-hour — 09:09 |
 | Date font | Clean & Classic: System Bold, System Rounded, System Serif, System Monospaced, Avenir Next. Handwritten: Noteworthy, Chalkboard SE, Bradley Hand, Marker Felt, Snell Roundhand. |
 | Time font | The same grouped font choices as the date |
+| Second Time Zone | Off, UTC, or a curated city spanning common world time zones |
+| Second Clock Label | An optional label of up to 18 characters, such as Home or Family; the city name is used when blank |
 
-The 24-hour format automatically hides AM/PM. Each layout adapts to the small, medium, and large widget families; the compact family stacks content when a side-by-side presentation would be too narrow.
+The second clock follows the selected 12- or 24-hour style, uses the resolved display typography, and updates on the same minute timeline as the primary clock. It does not change the main clock's Mac-local time zone. The 24-hour format automatically hides AM/PM. Each layout adapts to the small, medium, and large widget families; the compact family stacks content when a side-by-side presentation would be too narrow.
 
 Each editor row is backed by a stable string identifier supplied by a native App Intents dynamic options provider. The widget validates each identifier and safely falls back to its documented default if macOS supplies an unknown value. This transport preserves independent per-widget choices while avoiding a macOS 26.5 issue where AppEnum selections were stored correctly but rendered as their defaults.
 
@@ -37,11 +39,12 @@ Each font choice includes a square `Aa` specimen rendered with that macOS font. 
 
 ## Desktop acceptance checklist
 
-`./Scripts/verify-widgets.sh` verifies every formatter and dynamic option provider, every size/arrangement combination, every size/date/clock combination, the exact formatted strings and combined accessibility label used by the SwiftUI view, every independent date/time font pair, fallback behavior, minute scheduling, representative Small/Medium/Large 12/24-hour render smoke tests, the Release extension bundle, and its App Intent metadata. Only WidgetKit's system-owned editor, final visual quality, and restart persistence still require a short check:
+`./Scripts/verify-widgets.sh` verifies every formatter and dynamic option provider, secondary-zone fallback and label limits, every size/arrangement combination, every size/date/clock combination, the exact formatted strings and combined accessibility label used by the SwiftUI view, every independent date/time font pair, fallback behavior, minute scheduling, representative Small/Medium/Large 12/24-hour render smoke tests, the Release extension bundle, and its App Intent metadata. Only WidgetKit's system-owned editor, final visual quality, and restart persistence still require a short check:
 
 - [ ] Add small, medium, and large Time & Date widgets and visually confirm no date, time, or AM/PM text is clipped with the chosen fonts.
 - [ ] Switch through every app theme and confirm Small, Medium, and Large remain readable; then choose **Use Each Widget's Fonts**.
 - [ ] Configure one instance with the default Classic/12-hour choices and a second instance with Side by side/ISO/24-hour choices and different fonts; confirm the two instances remain visually different.
+- [ ] Add a second time zone with a custom label, confirm it shows the correct world time without clipping, then turn it Off and confirm the extra line disappears.
 - [ ] Reopen **Edit Time & Date** for both instances and confirm each editor shows its own saved selections.
 - [ ] Restart the Mac (or log out and back in), then confirm both configurations persist and the clocks continue updating.
 - [ ] Use VoiceOver once to confirm macOS announces the combined date and complete time as one element.
