@@ -319,13 +319,19 @@ enum CalendarTimelinePolicy {
     static func nextRefresh(
         after date: Date,
         calendar: Calendar,
-        eventsEnabled: Bool = false
+        eventsEnabled: Bool = false,
+        nextEvent: CalendarNextEventTiming? = nil
     ) -> Date {
         let startOfDay = calendar.startOfDay(for: date)
         let midnight = calendar.date(byAdding: .day, value: 1, to: startOfDay)
             ?? date.addingTimeInterval(86_400)
         guard eventsEnabled else { return midnight }
-        return min(midnight, date.addingTimeInterval(30 * 60))
+
+        let periodicRefresh = min(midnight, date.addingTimeInterval(30 * 60))
+        guard let nextEvent else { return periodicRefresh }
+        let eventBoundary = nextEvent.isOngoing ? nextEvent.end : nextEvent.start
+        guard eventBoundary > date else { return periodicRefresh }
+        return min(periodicRefresh, eventBoundary)
     }
 }
 

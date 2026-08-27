@@ -352,6 +352,7 @@ final class CalendarWidgetTests: XCTestCase {
         ))
 
         XCTAssertEqual(timing.start, upcoming.start)
+        XCTAssertEqual(timing.end, upcoming.end)
         XCTAssertFalse(timing.isOngoing)
     }
 
@@ -374,6 +375,7 @@ final class CalendarWidgetTests: XCTestCase {
         ))
 
         XCTAssertEqual(timing.start, ongoing.start)
+        XCTAssertEqual(timing.end, ongoing.end)
         XCTAssertTrue(timing.isOngoing)
     }
 
@@ -416,6 +418,36 @@ final class CalendarWidgetTests: XCTestCase {
         XCTAssertEqual(
             CalendarTimelinePolicy.nextRefresh(after: date, calendar: calendar, eventsEnabled: true),
             date.addingTimeInterval(30 * 60)
+        )
+
+        let upcoming = CalendarNextEventTiming(
+            start: date.addingTimeInterval(5 * 60),
+            end: date.addingTimeInterval(15 * 60),
+            isOngoing: false
+        )
+        XCTAssertEqual(
+            CalendarTimelinePolicy.nextRefresh(
+                after: date,
+                calendar: calendar,
+                eventsEnabled: true,
+                nextEvent: upcoming
+            ),
+            upcoming.start
+        )
+
+        let ongoing = CalendarNextEventTiming(
+            start: date.addingTimeInterval(-5 * 60),
+            end: date.addingTimeInterval(10 * 60),
+            isOngoing: true
+        )
+        XCTAssertEqual(
+            CalendarTimelinePolicy.nextRefresh(
+                after: date,
+                calendar: calendar,
+                eventsEnabled: true,
+                nextEvent: ongoing
+            ),
+            ongoing.end
         )
     }
 

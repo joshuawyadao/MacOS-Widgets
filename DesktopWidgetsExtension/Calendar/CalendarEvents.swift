@@ -22,6 +22,7 @@ struct CalendarEventInterval: Equatable, Sendable {
 
 struct CalendarNextEventTiming: Equatable, Sendable {
     let start: Date
+    let end: Date
     let isOngoing: Bool
 }
 
@@ -55,6 +56,7 @@ struct CalendarEventSnapshot: Equatable, Sendable {
             countsByDay: [day: 2, tomorrow: 1, later: 3],
             nextEvent: CalendarNextEventTiming(
                 start: calendar.date(byAdding: .hour, value: 3, to: referenceDate) ?? referenceDate,
+                end: calendar.date(byAdding: .hour, value: 4, to: referenceDate) ?? referenceDate,
                 isOngoing: false
             )
         )
@@ -99,6 +101,7 @@ enum CalendarEventCounter {
             .map {
                 CalendarNextEventTiming(
                     start: $0.start,
+                    end: $0.end,
                     isOngoing: $0.start <= referenceDate
                 )
             }

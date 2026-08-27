@@ -49,7 +49,8 @@ struct CalendarProvider: AppIntentTimelineProvider {
         let refreshDate = CalendarTimelinePolicy.nextRefresh(
             after: now,
             calendar: .autoupdatingCurrent,
-            eventsEnabled: configuration.showEvents || configuration.showNextEventTime
+            eventsEnabled: configuration.showEvents || configuration.showNextEventTime,
+            nextEvent: configuration.showNextEventTime ? entry.events.nextEvent : nil
         )
         return Timeline(entries: [entry], policy: .after(refreshDate))
     }
