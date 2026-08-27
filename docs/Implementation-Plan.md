@@ -1,21 +1,20 @@
 # Plan
 
-Create a friendly, repeatable Personal Team installer and refresher that keeps signing data local, installs without administrator access, validates the signed app and widget entitlements, and gives the companion app a plain-language setup path. Preserve widget contracts and use the existing guarded runtime refresh while making every system-changing test run through mocks or dry-run mode.
+Add opt-in automatic Personal Team maintenance without a resident process: a user LaunchAgent will perform a lightweight profile-expiry check at login and daily, then run the existing guarded refresh at low priority only inside a 48-hour renewal window. Keep success silent, make failures actionable, preserve the manual fallback, and expose clear enablement/status guidance in the companion app.
 
 ## Scope
-- In: Double-clickable install/refresh commands, Personal Team discovery and local configuration, stable per-team identifiers, signed build/install/runtime refresh, diagnostic logging, companion-app status and guidance, handoff packaging, non-developer and paid-distribution documentation, shell/UI contract tests, and verification updates.
-- Out: Paid Apple Developer enrollment, Developer ID signing/notarization implementation, automatic desktop widget placement, password/token handling, background refresh services, and removal of required capabilities.
+- In: Enable/disable commands, safe LaunchAgent generation and lifecycle, profile-expiry inspection, near-expiry refresh, redacted bounded logs, failure notification, installer opt-in, companion status, packaging/docs, mocked system-command tests, and complete verification.
+- Out: Password/token automation, a continuously running daemon, changes to WidgetKit refresh budgets, paid signing/notarization, automatic desktop placement, and unrelated app functionality.
 
 ## Action items
-- [x] Document the feasibility result from Apple’s current macOS capability matrix and this project’s App Group, sandbox, network, and calendar entitlements, including the seven-day Personal Team reprovisioning limit and the remaining signed end-to-end manual check.
-- [x] Add shared installer tooling plus `Install Desktop Widgets.command` and `Refresh Desktop Widgets.command` to detect full initialized Xcode, discover a selected Personal Team without exposing account credentials, generate ignored local signing configuration, and explain required Xcode account steps plainly.
-- [x] Generate stable team-derived app, extension, and App Group identifiers; connect them to automatic signing without changing widget kinds or App Intent schemas; and retain legacy identifiers when an existing local configuration requires compatibility.
-- [x] Build with provisioning updates, validate signatures and required entitlements, install atomically to `~/Applications/Desktop Widgets.app`, reuse the guarded widget-runtime refresh, open the app, and produce a redacted diagnostic log with actionable failures and idempotent repeated runs.
-- [x] Add a safe handoff packager that includes tracked source and friendly commands/guides but excludes Git metadata, products, credentials, logs, and machine-specific configuration; keep a stable local installer copy so future refreshes remain easy.
-- [x] Add companion-app installation state and a concise checklist for install, macOS-controlled placement, appearance, seven-day refresh, helper access, and technical troubleshooting disclosed only when requested.
-- [x] Add mocked/dry-run tests for Personal Team parsing, local configuration, stable identifiers, destination safety, build commands, existing installations, idempotent refresh, and failures for missing/uninitialized Xcode, no Personal Team, unavailable capabilities, and provisioning errors.
-- [x] Update `Scripts/verify-widgets.sh`, README, and focused installation/distribution docs; run shell syntax and focused tests throughout, then the complete verification script and `git diff --check`.
-- [x] Save cohesive checkpoints and push `codex/feature/easier-personal-installation` without modifying prior feature-branch history.
+- [ ] Add pure scheduling/profile helpers and a low-priority automatic-refresh runner that exits immediately while profiles have more than 48 hours remaining and invokes the existing refresh noninteractively only near expiry.
+- [ ] Add idempotent Enable and Disable commands that install or remove only Desktop Widgets’ LaunchAgent, run at login and daily without `KeepAlive`, retain bounded redacted logs, and never require administrator access.
+- [ ] Extend the friendly installer to offer automatic maintenance with an explicit default-yes prompt, suppress app opening during scheduled refresh, and keep manual Refresh as a safe fallback.
+- [ ] Persist non-sensitive automatic-refresh state in the signed App Group container and show enabled, healthy, refreshed, or needs-attention guidance in the companion app with helper access and technical details.
+- [ ] Extend handoff packaging, the direct installation guide, README, and Personal Team operations documentation with resource usage, five-day/48-hour behavior, retry semantics, limitations, and uninstall instructions.
+- [ ] Add mocked tests for expiry parsing and thresholds, healthy no-op checks, near-expiry refresh, missing/expired profiles, refresh failure/notification, LaunchAgent construction, idempotent enable/disable, and exact-target safety.
+- [ ] Update `Scripts/verify-widgets.sh`, run shell syntax and focused tests, then complete Xcode verification and `git diff --check`.
+- [ ] Save and push cohesive commits on `codex/feature/easier-personal-installation` without rewriting existing history.
 
 ## Open questions
 - None.
