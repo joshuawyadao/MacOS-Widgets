@@ -166,6 +166,8 @@ desktop_widgets_write_local_configuration() {
         echo "DESKTOP_WIDGETS_EXTENSION_BUNDLE_IDENTIFIER = $extension_identifier"
         echo "WIDGET_THEME_APP_GROUP = $app_group"
         echo 'DESKTOP_WIDGETS_REFRESH_COMMAND_PATH = $(HOME)/Library/Application Support/Desktop Widgets/Installer/Refresh Desktop Widgets.command'
+        echo 'DESKTOP_WIDGETS_ENABLE_AUTOMATIC_REFRESH_COMMAND_PATH = $(HOME)/Library/Application Support/Desktop Widgets/Installer/Enable Automatic Refresh.command'
+        echo 'DESKTOP_WIDGETS_DISABLE_AUTOMATIC_REFRESH_COMMAND_PATH = $(HOME)/Library/Application Support/Desktop Widgets/Installer/Disable Automatic Refresh.command'
     } > "$temporary_path"
 
     if [[ -f "$path" ]] && /usr/bin/cmp -s "$temporary_path" "$path"; then

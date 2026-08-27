@@ -24,6 +24,7 @@ readonly DIAGNOSTIC_LOG="$LOG_DIRECTORY/installation.log"
 readonly INSTALL_DESTINATION="${DESKTOP_WIDGETS_INSTALL_DESTINATION:-$(desktop_widgets_expected_install_destination)}"
 readonly LOCAL_CONFIGURATION="${DESKTOP_WIDGETS_LOCAL_CONFIGURATION:-$SOURCE_ROOT/Local.xcconfig}"
 readonly DRY_RUN="${DESKTOP_WIDGETS_DRY_RUN:-0}"
+readonly SCHEDULED_RUN="${DESKTOP_WIDGETS_SCHEDULED:-0}"
 
 /bin/mkdir -p "$LOG_DIRECTORY"
 
@@ -39,7 +40,42 @@ trap failure_report ERR
 
 step() {
     echo
-    echo "[$1/6] $2"
+    echo "[$1/7] $2"
+}
+
+configure_automatic_refresh() {
+    local choice="${DESKTOP_WIDGETS_AUTOMATIC_REFRESH_CHOICE:-}"
+    local manager="$SOURCE_ROOT/Scripts/manage-automatic-refresh.sh"
+
+    if [[ "$MODE" != "install" ]]; then
+        echo "Automatic maintenance schedule is unchanged."
+        return 0
+    fi
+    if [[ "$DRY_RUN" == "1" ]]; then
+        echo "DRY RUN: offer optional automatic maintenance after installation"
+        return 0
+    fi
+
+    if [[ -z "$choice" && -t 0 ]]; then
+        /usr/bin/printf 'Turn on low-resource automatic maintenance? [Y/n] '
+        IFS= read -r choice
+    fi
+    choice="${choice:-y}"
+
+    case "$choice" in
+    y|Y|yes|YES|Yes)
+        if ! /bin/bash "$manager" enable; then
+            echo "Automatic maintenance could not be enabled, but Desktop Widgets is installed." >&2
+            echo "You can retry with Enable Automatic Refresh.command." >&2
+        fi
+        ;;
+    n|N|no|NO|No)
+        /bin/bash "$manager" disable || true
+        ;;
+    *)
+        echo "Automatic maintenance was left unchanged because the answer was not recognized." >&2
+        ;;
+    esac
 }
 
 sync_installation_source() {
@@ -56,6 +92,8 @@ sync_installation_source() {
         "docs"
         "Install Desktop Widgets.command"
         "Refresh Desktop Widgets.command"
+        "Enable Automatic Refresh.command"
+        "Disable Automatic Refresh.command"
         "Installation Guide.md"
         "README.md"
     )
@@ -78,6 +116,7 @@ sync_installation_source() {
         DESKTOP_WIDGETS_HOME="$USER_HOME" \
         DESKTOP_WIDGETS_SUPPORT_ROOT="$SUPPORT_ROOT" \
         DESKTOP_WIDGETS_LOG_DIRECTORY="$LOG_DIRECTORY" \
+        DESKTOP_WIDGETS_AUTOMATIC_REFRESH_CHOICE="${DESKTOP_WIDGETS_AUTOMATIC_REFRESH_CHOICE:-}" \
         /bin/bash "$STABLE_SOURCE_ROOT/Scripts/personal-installation.sh" "$MODE"
 }
 
@@ -273,19 +312,29 @@ install_built_app "$BUILT_APP" "$INSTALL_DESTINATION"
 step 6 "Refreshing the widget and opening the app"
 if [[ "$DRY_RUN" == "1" ]]; then
     echo "DRY RUN: refresh the installed widget runtime"
-    echo "DRY RUN: open $INSTALL_DESTINATION"
+    if [[ "$SCHEDULED_RUN" != "1" ]]; then
+        echo "DRY RUN: open $INSTALL_DESTINATION"
+    else
+        echo "DRY RUN: scheduled maintenance leaves the app closed"
+    fi
 else
     WIDGET_REFRESH_DERIVED_DATA_ROOT="$DERIVED_DATA_PATH" \
         /bin/bash "$SOURCE_ROOT/Scripts/refresh-widget-runtime.sh" "$INSTALL_DESTINATION"
-    /usr/bin/open "$INSTALL_DESTINATION"
+    if [[ "$SCHEDULED_RUN" != "1" ]]; then
+        /usr/bin/open "$INSTALL_DESTINATION"
+    fi
 fi
+
+step 7 "Setting up easy maintenance"
+configure_automatic_refresh
 
 trap - ERR
 echo
 echo "Desktop Widgets is ready."
 echo "To add one: Control-click the desktop > Edit Widgets > search for Desktop Widgets."
 echo "macOS requires you to place widgets yourself; the app cannot arrange the desktop."
-echo "When free signing expires (normally after 7 days), double-click Refresh Desktop Widgets.command."
+echo "When enabled, automatic maintenance checks briefly each day and refreshes near free-signing expiration."
+echo "Refresh Desktop Widgets.command remains the manual fallback."
 echo "Diagnostic log: $DIAGNOSTIC_LOG"
 }
 

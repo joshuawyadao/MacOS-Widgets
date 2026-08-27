@@ -22,6 +22,10 @@
 	<string>$(CURRENT_PROJECT_VERSION)</string>
 	<key>DesktopWidgetsDevelopmentTeam</key>
 	<string>$(DEVELOPMENT_TEAM)</string>
+	<key>DesktopWidgetsDisableAutomaticRefreshCommandPath</key>
+	<string>$(DESKTOP_WIDGETS_DISABLE_AUTOMATIC_REFRESH_COMMAND_PATH)</string>
+	<key>DesktopWidgetsEnableAutomaticRefreshCommandPath</key>
+	<string>$(DESKTOP_WIDGETS_ENABLE_AUTOMATIC_REFRESH_COMMAND_PATH)</string>
 	<key>DesktopWidgetsRefreshCommandPath</key>
 	<string>$(DESKTOP_WIDGETS_REFRESH_COMMAND_PATH)</string>
 	<key>LSApplicationCategoryType</key>

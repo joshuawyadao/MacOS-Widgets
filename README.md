@@ -29,11 +29,12 @@ For a non-developer, start with [Installation Guide.md](Installation%20Guide.md)
 
 1. Install and open full Xcode once.
 2. Add an Apple Account in **Xcode → Settings → Accounts**.
-3. Double-click **Install Desktop Widgets.command**. It discovers the free Personal Team, writes private ignored settings, builds, installs to `~/Applications/Desktop Widgets.app`, registers the widget, and opens the app.
+3. Double-click **Install Desktop Widgets.command**. It discovers the free Personal Team, writes private ignored settings, builds, installs to `~/Applications/Desktop Widgets.app`, registers the widget, and opens the app. Press Return when it recommends low-resource automatic maintenance.
 4. Control-click the desktop, choose **Edit Widgets**, and place the desired widgets. macOS requires user placement; the app cannot arrange the desktop.
-5. When Apple’s seven-day free provisioning expires, double-click **Refresh Desktop Widgets.command**. Repeated runs reuse stable identifiers and the same safe destination.
+5. Automatic maintenance briefly checks at login and once daily. It normally does nothing until the final 48 hours of Apple’s seven-day free profile, then runs the same guarded refresh at low priority. It has no `KeepAlive` process and successful runs are quiet.
+6. If macOS reports that attention is needed, open Xcode to complete any requested sign-in or 2FA step, then double-click **Refresh Desktop Widgets.command**. Repeated runs reuse stable identifiers and the same safe destination.
 
-The installer never requests, prints, or stores an Apple password or authentication token. It writes a redacted diagnostic log to `~/Library/Logs/Desktop Widgets/installation.log`, keeps its reusable source under `~/Library/Application Support/Desktop Widgets/Installer`, and uses the existing guarded runtime refresh that never unregisters unrelated extensions.
+The installer never requests, prints, or stores an Apple password or authentication token. It writes bounded redacted logs under `~/Library/Logs/Desktop Widgets`, keeps its reusable source under `~/Library/Application Support/Desktop Widgets/Installer`, and uses the existing guarded runtime refresh that never unregisters unrelated extensions. **Enable Automatic Refresh.command** and **Disable Automatic Refresh.command** safely control only Desktop Widgets' own user schedule; the manual refresher always remains available.
 
 Run **Package Desktop Widgets for Another Mac.command** to create a clean handoff ZIP without Git history, build products, local signing settings, certificates, profiles, or logs. A future paid Developer ID/notarization route is documented separately in [Paid distribution path](docs/Paid-Distribution-Path.md); it is not implemented or required here.
 

@@ -25,6 +25,8 @@ DESKTOP_WIDGETS_PACKAGE_NO_REVEAL=1 /bin/bash "$PACKAGE_SCRIPT" "$OUTPUT_PATH" >
 for required in \
     "Desktop Widgets/Install Desktop Widgets.command" \
     "Desktop Widgets/Refresh Desktop Widgets.command" \
+    "Desktop Widgets/Enable Automatic Refresh.command" \
+    "Desktop Widgets/Disable Automatic Refresh.command" \
     "Desktop Widgets/Installation Guide.md" \
     "Desktop Widgets/DesktopWidgets.xcodeproj/project.pbxproj"; do
     /usr/bin/grep -Fq "$required" "$CONTENTS_PATH" || {

@@ -12,6 +12,7 @@ struct HomePage: View {
         ) {
             header
             installationCard
+            automaticMaintenanceCard
             shortcuts
             readyWidgets
             setupGuide
@@ -23,6 +24,59 @@ struct HomePage: View {
                 )
                 CalendarPermissionCard(controller: calendarPermission)
             }
+        }
+    }
+
+    private var automaticMaintenanceCard: some View {
+        let installation = installationStatus
+        let automatic = DesktopWidgetsAutomaticRefreshStatus.current(
+            appGroupIdentifier: installation.appGroupIdentifier
+        )
+        let color: Color = automatic.state == .needsAttention
+            ? .orange
+            : (automatic.isEnabled ? .green : WidgetTheme.accent)
+        let helperURL = automatic.isEnabled
+            ? installation.disableAutomaticRefreshCommandURL
+            : installation.enableAutomaticRefreshCommandURL
+        let helperExists = automatic.isEnabled
+            ? installation.disableAutomaticRefreshCommandExists
+            : installation.enableAutomaticRefreshCommandExists
+
+        return HStack(alignment: .top, spacing: 14) {
+            Image(systemName: automatic.state == .needsAttention
+                  ? "exclamationmark.triangle.fill"
+                  : "clock.arrow.circlepath")
+                .font(.title2)
+                .foregroundStyle(color)
+                .frame(width: 38)
+
+            VStack(alignment: .leading, spacing: 5) {
+                Text(automatic.title)
+                    .font(.headline)
+                Text(automatic.message)
+                    .font(.callout)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+                Text("The check runs briefly at login and daily, then exits. Xcode only rebuilds inside the final 48 hours of free signing.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+
+                if helperExists, let helperURL {
+                    Button(automatic.isEnabled ? "Show Disable Command" : "Show Enable Command") {
+                        NSWorkspace.shared.activateFileViewerSelecting([helperURL])
+                    }
+                    .buttonStyle(.link)
+                }
+            }
+
+            Spacer(minLength: 0)
+        }
+        .padding(16)
+        .background(color.opacity(0.09), in: RoundedRectangle(cornerRadius: 14))
+        .overlay {
+            RoundedRectangle(cornerRadius: 14)
+                .stroke(color.opacity(0.22), lineWidth: 1)
         }
     }
 
@@ -182,8 +236,8 @@ struct HomePage: View {
 
             SetupStep(
                 number: 4,
-                title: "Refresh once a week",
-                detail: "Free Apple signing normally expires after 7 days. Double-click Refresh Desktop Widgets.command; it rebuilds and refreshes the same installation without making you work through Xcode by hand."
+                title: "Let maintenance stay easy",
+                detail: "Choose automatic maintenance during installation. A tiny daily check exits immediately unless free signing has less than 48 hours left. Manual Refresh remains available if Xcode ever needs attention."
             )
         }
     }

@@ -38,6 +38,8 @@ for item in \
     "docs" \
     "Install Desktop Widgets.command" \
     "Refresh Desktop Widgets.command" \
+    "Enable Automatic Refresh.command" \
+    "Disable Automatic Refresh.command" \
     "Installation Guide.md" \
     "README.md"; do
     copy_item "$item"
@@ -47,6 +49,7 @@ done
     'Desktop Widgets personal installation handoff' \
     '' \
     'Start with Installation Guide.md.' \
+    'The installer includes optional low-resource automatic maintenance plus manual enable, disable, and refresh commands.' \
     'No Apple Account, Team ID, certificate, provisioning profile, build product, diagnostic log, or Git history is included.' \
     > "$PAYLOAD_ROOT/Package Contents.txt"
 

@@ -48,10 +48,16 @@ readonly PERSONAL_TEAM_SCRIPT="$PROJECT_ROOT/Scripts/configure-personal-team.sh"
 readonly FRIENDLY_INSTALL_SCRIPT="$PROJECT_ROOT/Scripts/personal-installation.sh"
 readonly FRIENDLY_INSTALL_LIBRARY="$PROJECT_ROOT/Scripts/personal-installation-lib.sh"
 readonly FRIENDLY_INSTALL_TEST="$PROJECT_ROOT/Scripts/test-personal-installation.sh"
+readonly AUTOMATIC_REFRESH_LIBRARY="$PROJECT_ROOT/Scripts/automatic-refresh-lib.sh"
+readonly AUTOMATIC_REFRESH_SCRIPT="$PROJECT_ROOT/Scripts/automatic-refresh.sh"
+readonly AUTOMATIC_REFRESH_MANAGER="$PROJECT_ROOT/Scripts/manage-automatic-refresh.sh"
+readonly AUTOMATIC_REFRESH_TEST="$PROJECT_ROOT/Scripts/test-automatic-refresh.sh"
 readonly PACKAGE_SCRIPT="$PROJECT_ROOT/Scripts/package-personal-installer.sh"
 readonly PACKAGE_TEST="$PROJECT_ROOT/Scripts/test-package-personal-installer.sh"
 readonly INSTALL_COMMAND="$PROJECT_ROOT/Install Desktop Widgets.command"
 readonly REFRESH_COMMAND="$PROJECT_ROOT/Refresh Desktop Widgets.command"
+readonly ENABLE_AUTOMATIC_REFRESH_COMMAND="$PROJECT_ROOT/Enable Automatic Refresh.command"
+readonly DISABLE_AUTOMATIC_REFRESH_COMMAND="$PROJECT_ROOT/Disable Automatic Refresh.command"
 readonly PACKAGE_COMMAND="$PROJECT_ROOT/Package Desktop Widgets for Another Mac.command"
 readonly INSTALL_GUIDE="$PROJECT_ROOT/Installation Guide.md"
 readonly SIGNING_CONFIGURATION="$PROJECT_ROOT/Config/Signing.xcconfig"
@@ -113,10 +119,16 @@ for executable in \
     "$FRIENDLY_INSTALL_SCRIPT" \
     "$FRIENDLY_INSTALL_LIBRARY" \
     "$FRIENDLY_INSTALL_TEST" \
+    "$AUTOMATIC_REFRESH_LIBRARY" \
+    "$AUTOMATIC_REFRESH_SCRIPT" \
+    "$AUTOMATIC_REFRESH_MANAGER" \
+    "$AUTOMATIC_REFRESH_TEST" \
     "$PACKAGE_SCRIPT" \
     "$PACKAGE_TEST" \
     "$INSTALL_COMMAND" \
     "$REFRESH_COMMAND" \
+    "$ENABLE_AUTOMATIC_REFRESH_COMMAND" \
+    "$DISABLE_AUTOMATIC_REFRESH_COMMAND" \
     "$PACKAGE_COMMAND"; do
     require_file "$executable" "personal installation helper"
     if [[ ! -x "$executable" ]]; then
@@ -127,6 +139,7 @@ for executable in \
 done
 require_file "$INSTALL_GUIDE" "non-developer installation guide"
 "$FRIENDLY_INSTALL_TEST"
+"$AUTOMATIC_REFRESH_TEST"
 "$PACKAGE_TEST"
 
 require_file "$PERSONAL_TEAM_SCRIPT" "Personal Team setup script"
@@ -142,6 +155,8 @@ require_contains "$SIGNING_CONFIGURATION" 'DEVELOPMENT_TEAM = $(LOCAL_DEVELOPMEN
 require_contains "$SIGNING_CONFIGURATION" 'DESKTOP_WIDGETS_APP_BUNDLE_IDENTIFIER = com.joshuawyadao.DesktopWidgets' "legacy-compatible app bundle identifier default"
 require_contains "$SIGNING_CONFIGURATION" 'DESKTOP_WIDGETS_EXTENSION_BUNDLE_IDENTIFIER = com.joshuawyadao.DesktopWidgets.Widgets' "legacy-compatible extension bundle identifier default"
 require_contains "$SIGNING_CONFIGURATION" 'WIDGET_THEME_APP_GROUP = $(DEVELOPMENT_TEAM).com.joshuawyadao.desktop-widgets' "team-prefixed typography App Group setting"
+require_contains "$SIGNING_CONFIGURATION" 'DESKTOP_WIDGETS_ENABLE_AUTOMATIC_REFRESH_COMMAND_PATH =' "automatic refresh enable-helper setting"
+require_contains "$SIGNING_CONFIGURATION" 'DESKTOP_WIDGETS_DISABLE_AUTOMATIC_REFRESH_COMMAND_PATH =' "automatic refresh disable-helper setting"
 require_contains "$PROJECT_PATH/project.pbxproj" 'PRODUCT_BUNDLE_IDENTIFIER = "$(DESKTOP_WIDGETS_APP_BUNDLE_IDENTIFIER)";' "locally configurable app bundle identifier"
 require_contains "$PROJECT_PATH/project.pbxproj" 'PRODUCT_BUNDLE_IDENTIFIER = "$(DESKTOP_WIDGETS_EXTENSION_BUNDLE_IDENTIFIER)";' "locally configurable extension bundle identifier"
 require_contains "$PROJECT_ROOT/DesktopWidgetsApp/DesktopWidgetsApp.entitlements" 'com.apple.security.application-groups' "app typography App Group entitlement"
@@ -175,9 +190,15 @@ if ! git -C "$PROJECT_ROOT" check-ignore --quiet Desktop-Widgets-Personal-Instal
 fi
 require_contains "$PROJECT_ROOT/DesktopWidgetsApp/Info.plist" "DesktopWidgetsDevelopmentTeam" "companion-app signing status metadata"
 require_contains "$PROJECT_ROOT/DesktopWidgetsApp/Info.plist" "DesktopWidgetsRefreshCommandPath" "companion-app refresh helper metadata"
+require_contains "$PROJECT_ROOT/DesktopWidgetsApp/Info.plist" "DesktopWidgetsEnableAutomaticRefreshCommandPath" "companion-app automatic refresh enable-helper metadata"
+require_contains "$PROJECT_ROOT/DesktopWidgetsApp/Info.plist" "DesktopWidgetsDisableAutomaticRefreshCommandPath" "companion-app automatic refresh disable-helper metadata"
 require_contains "$PROJECT_ROOT/DesktopWidgetsApp/Views/HomePage.swift" "Apple requires you to place widgets yourself" "macOS-controlled placement guidance"
 require_contains "$PROJECT_ROOT/DesktopWidgetsApp/Views/HomePage.swift" "Refresh Desktop Widgets.command" "free provisioning refresh guidance"
+require_contains "$PROJECT_ROOT/DesktopWidgetsApp/Views/HomePage.swift" "final 48 hours" "automatic maintenance renewal-window guidance"
 require_contains "$PROJECT_ROOT/DesktopWidgetsApp/Views/HelpAndPrivacyPage.swift" "Technical details" "progressively disclosed installation diagnostics"
+require_contains "$PROJECT_ROOT/DesktopWidgetsApp/Views/HelpAndPrivacyPage.swift" "no KeepAlive" "nonresident automatic maintenance guidance"
+require_contains "$INSTALL_GUIDE" "Enable Automatic Refresh.command" "automatic maintenance enable guidance"
+require_contains "$INSTALL_GUIDE" "automatic-refresh.log" "automatic maintenance diagnostics guidance"
 
 echo "[1/3] Running the complete Debug test suite"
 DEVELOPER_DIR="$SELECTED_DEVELOPER_DIR" xcodebuild test -quiet \

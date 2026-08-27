@@ -27,10 +27,13 @@ struct HelpAndPrivacyPage: View {
 
     private var installationHelp: some View {
         let status = DesktopWidgetsInstallationStatus.current()
+        let automatic = DesktopWidgetsAutomaticRefreshStatus.current(
+            appGroupIdentifier: status.appGroupIdentifier
+        )
         return VStack(alignment: .leading, spacing: 12) {
             SectionTitle(
                 title: "Installation & refresh",
-                subtitle: "The normal fix for an expired free build is one manual refresh."
+                subtitle: "Automatic maintenance handles normal expiry; manual Refresh is the fallback."
             )
 
             HStack(alignment: .top, spacing: 12) {
@@ -39,19 +42,42 @@ struct HelpAndPrivacyPage: View {
                     .foregroundStyle(WidgetTheme.accent)
 
                 VStack(alignment: .leading, spacing: 6) {
-                    Text("If widgets disappear or say they need attention")
+                    Text(automatic.title)
                         .font(.headline)
-                    Text("Double-click Refresh Desktop Widgets.command. Keep the installer folder in Application Support; the app can show the command in Finder when it is available.")
+                    Text(automatic.message)
                         .font(.callout)
                         .foregroundStyle(.secondary)
                         .fixedSize(horizontal: false, vertical: true)
 
-                    if status.refreshCommandExists, let refreshURL = status.refreshCommandURL {
-                        Button("Show Refresh Command") {
-                            NSWorkspace.shared.activateFileViewerSelecting([refreshURL])
+                    Text("The scheduled check has no KeepAlive process. It runs at login and 11:00 AM, exits when profiles are healthy, and starts a low-priority build only inside the final 48 hours.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
+
+                    HStack(spacing: 12) {
+                        if status.refreshCommandExists, let refreshURL = status.refreshCommandURL {
+                            Button("Show Manual Refresh") {
+                                NSWorkspace.shared.activateFileViewerSelecting([refreshURL])
+                            }
+                            .buttonStyle(.link)
                         }
-                        .buttonStyle(.link)
-                    } else {
+                        if automatic.isEnabled,
+                           status.disableAutomaticRefreshCommandExists,
+                           let disableURL = status.disableAutomaticRefreshCommandURL {
+                            Button("Show Disable Command") {
+                                NSWorkspace.shared.activateFileViewerSelecting([disableURL])
+                            }
+                            .buttonStyle(.link)
+                        } else if status.enableAutomaticRefreshCommandExists,
+                                  let enableURL = status.enableAutomaticRefreshCommandURL {
+                            Button("Show Enable Command") {
+                                NSWorkspace.shared.activateFileViewerSelecting([enableURL])
+                            }
+                            .buttonStyle(.link)
+                        }
+                    }
+
+                    if !status.refreshCommandExists {
                         Text("If the button is missing, run Install Desktop Widgets.command again from the folder you received.")
                             .font(.caption)
                             .foregroundStyle(.secondary)
@@ -64,6 +90,10 @@ struct HelpAndPrivacyPage: View {
                             Text("Bundle ID: \(status.bundleIdentifier)")
                             Text("Signing team: \(status.teamIdentifier.isEmpty ? "Not detected" : status.teamIdentifier)")
                             Text("App Group: \(status.appGroupIdentifier.isEmpty ? "Not detected" : status.appGroupIdentifier)")
+                            Text("Automatic state: \(automatic.state.rawValue)")
+                            Text("Last check: \(automatic.lastCheck ?? "Not reported")")
+                            Text("Last success: \(automatic.lastSuccess ?? "Not reported")")
+                            Text("Profile expiry: \(automatic.profileExpiration ?? "Not reported")")
                         }
                         .font(.caption.monospaced())
                         .textSelection(.enabled)

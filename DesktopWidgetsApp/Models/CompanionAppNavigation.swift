@@ -53,6 +53,10 @@ struct DesktopWidgetsInstallationStatus: Equatable {
     let appGroupIdentifier: String
     let refreshCommandURL: URL?
     let refreshCommandExists: Bool
+    let enableAutomaticRefreshCommandURL: URL?
+    let enableAutomaticRefreshCommandExists: Bool
+    let disableAutomaticRefreshCommandURL: URL?
+    let disableAutomaticRefreshCommandExists: Bool
 
     init(
         bundleURL: URL,
@@ -69,17 +73,24 @@ struct DesktopWidgetsInstallationStatus: Equatable {
         teamIdentifier = infoDictionary["DesktopWidgetsDevelopmentTeam"] as? String ?? ""
         appGroupIdentifier = infoDictionary["WidgetThemeAppGroupIdentifier"] as? String ?? ""
 
-        let configuredRefreshPath = (infoDictionary["DesktopWidgetsRefreshCommandPath"] as? String ?? "")
-            .replacingOccurrences(of: "$(HOME)", with: homeDirectory.path)
-            .replacingOccurrences(of: "$HOME", with: homeDirectory.path)
-        if configuredRefreshPath.isEmpty {
-            refreshCommandURL = nil
-            refreshCommandExists = false
-        } else {
-            let commandURL = URL(fileURLWithPath: configuredRefreshPath).standardizedFileURL
-            refreshCommandURL = commandURL
-            refreshCommandExists = fileExists(commandURL.path)
+        func command(forKey key: String) -> (URL?, Bool) {
+            let configuredPath = (infoDictionary[key] as? String ?? "")
+                .replacingOccurrences(of: "$(HOME)", with: homeDirectory.path)
+                .replacingOccurrences(of: "$HOME", with: homeDirectory.path)
+            guard !configuredPath.isEmpty else { return (nil, false) }
+            let commandURL = URL(fileURLWithPath: configuredPath).standardizedFileURL
+            return (commandURL, fileExists(commandURL.path))
         }
+
+        let refreshCommand = command(forKey: "DesktopWidgetsRefreshCommandPath")
+        refreshCommandURL = refreshCommand.0
+        refreshCommandExists = refreshCommand.1
+        let enableCommand = command(forKey: "DesktopWidgetsEnableAutomaticRefreshCommandPath")
+        enableAutomaticRefreshCommandURL = enableCommand.0
+        enableAutomaticRefreshCommandExists = enableCommand.1
+        let disableCommand = command(forKey: "DesktopWidgetsDisableAutomaticRefreshCommandPath")
+        disableAutomaticRefreshCommandURL = disableCommand.0
+        disableAutomaticRefreshCommandExists = disableCommand.1
     }
 
     static func current(
@@ -105,5 +116,72 @@ struct DesktopWidgetsInstallationStatus: Equatable {
 
     var isReady: Bool {
         isInPreferredLocation && hasRequiredSigningConfiguration
+    }
+}
+
+enum DesktopWidgetsAutomaticRefreshState: String, Equatable {
+    case unavailable
+    case disabled
+    case enabled
+    case healthy
+    case refreshing
+    case refreshed
+    case needsAttention
+}
+
+struct DesktopWidgetsAutomaticRefreshStatus: Equatable {
+    let isEnabled: Bool
+    let state: DesktopWidgetsAutomaticRefreshState
+    let message: String
+    let lastCheck: String?
+    let lastSuccess: String?
+    let profileExpiration: String?
+
+    init(dictionary: [String: Any]?) {
+        guard let dictionary else {
+            isEnabled = false
+            state = .unavailable
+            message = "Automatic maintenance has not reported status yet."
+            lastCheck = nil
+            lastSuccess = nil
+            profileExpiration = nil
+            return
+        }
+
+        isEnabled = dictionary["Enabled"] as? Bool ?? false
+        state = DesktopWidgetsAutomaticRefreshState(
+            rawValue: dictionary["State"] as? String ?? ""
+        ) ?? .unavailable
+        message = dictionary["Message"] as? String ?? "Automatic maintenance status is unavailable."
+        lastCheck = dictionary["LastCheck"] as? String
+        lastSuccess = dictionary["LastSuccess"] as? String
+        profileExpiration = dictionary["ProfileExpiration"] as? String
+    }
+
+    static func current(
+        appGroupIdentifier: String,
+        fileManager: FileManager = .default
+    ) -> Self {
+        guard !appGroupIdentifier.isEmpty,
+              let containerURL = fileManager.containerURL(
+                forSecurityApplicationGroupIdentifier: appGroupIdentifier
+              ) else {
+            return Self(dictionary: nil)
+        }
+        let statusURL = containerURL.appendingPathComponent("DesktopWidgetsAutomaticRefresh.plist")
+        let dictionary = NSDictionary(contentsOf: statusURL) as? [String: Any]
+        return Self(dictionary: dictionary)
+    }
+
+    var title: String {
+        switch state {
+        case .healthy: "Automatic maintenance is ready"
+        case .refreshing: "Refreshing in the background"
+        case .refreshed: "Automatic refresh succeeded"
+        case .needsAttention: "Automatic refresh needs attention"
+        case .enabled: "Automatic maintenance is on"
+        case .disabled: "Automatic maintenance is off"
+        case .unavailable: "Automatic maintenance is not set up"
+        }
     }
 }

@@ -1,0 +1,196 @@
+#!/bin/bash
+
+set -euo pipefail
+
+readonly SCRIPT_DIRECTORY="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+readonly AUTOMATIC_LIBRARY="$SCRIPT_DIRECTORY/automatic-refresh-lib.sh"
+readonly AUTOMATIC_SCRIPT="$SCRIPT_DIRECTORY/automatic-refresh.sh"
+readonly MANAGER_SCRIPT="$SCRIPT_DIRECTORY/manage-automatic-refresh.sh"
+readonly TEST_ROOT="$(mktemp -d "${TMPDIR:-/tmp}/desktop-widgets-automatic-test.XXXXXX")"
+readonly TEST_HOME="$TEST_ROOT/Home"
+readonly SUPPORT_ROOT="$TEST_ROOT/Support"
+readonly STABLE_ROOT="$SUPPORT_ROOT/Installer"
+readonly LOCAL_CONFIGURATION="$STABLE_ROOT/Local.xcconfig"
+readonly STATUS_PATH="$TEST_ROOT/automatic-status.plist"
+readonly COMMAND_LOG="$TEST_ROOT/commands.log"
+readonly NOTIFICATION_LOG="$TEST_ROOT/notifications.log"
+readonly REFRESH_LOG="$TEST_ROOT/refreshes.log"
+readonly EXPIRATION_FILE="$TEST_ROOT/expiration.txt"
+readonly TEAM_ID="ABC123DE45"
+readonly APP_GROUP="$TEAM_ID.io.desktopwidgets.personal.abc123de45.shared"
+readonly CURRENT_ISO="2026-08-27T12:00:00Z"
+
+cleanup() {
+    if [[ -n "$TEST_ROOT" && "$TEST_ROOT" == *"/desktop-widgets-automatic-test."* ]]; then
+        /bin/rm -rf -- "$TEST_ROOT"
+    fi
+}
+trap cleanup EXIT
+
+# shellcheck source=Scripts/personal-installation-lib.sh
+source "$SCRIPT_DIRECTORY/personal-installation-lib.sh"
+# shellcheck source=Scripts/automatic-refresh-lib.sh
+source "$AUTOMATIC_LIBRARY"
+
+readonly CURRENT_EPOCH="$(desktop_widgets_automatic_expiration_epoch "$CURRENT_ISO")"
+
+fail() {
+    echo "FAIL: $1" >&2
+    exit 1
+}
+
+assert_equal() {
+    local expected="$1"
+    local actual="$2"
+    local description="$3"
+    [[ "$expected" == "$actual" ]] || fail "$description (expected '$expected', got '$actual')"
+}
+
+assert_contains() {
+    local haystack="$1"
+    local needle="$2"
+    local description="$3"
+    [[ "$haystack" == *"$needle"* ]] || fail "$description (missing '$needle')"
+}
+
+/bin/mkdir -p "$STABLE_ROOT/Scripts" "$TEST_HOME/Library/LaunchAgents"
+/usr/bin/printf '%s\n' \
+    "LOCAL_DEVELOPMENT_TEAM = $TEAM_ID" \
+    "WIDGET_THEME_APP_GROUP = $APP_GROUP" > "$LOCAL_CONFIGURATION"
+
+assert_equal "$CURRENT_EPOCH" "$(desktop_widgets_automatic_expiration_epoch '2026-08-27T12:00:00.000Z')" "fractional RFC3339 expiration should parse"
+healthy_epoch="$(desktop_widgets_automatic_expiration_epoch '2026-08-30T12:00:01Z')"
+near_epoch="$(desktop_widgets_automatic_expiration_epoch '2026-08-29T11:59:59Z')"
+if desktop_widgets_automatic_should_refresh "$healthy_epoch" "$CURRENT_EPOCH"; then
+    fail "profile beyond the 48-hour window should not refresh"
+fi
+desktop_widgets_automatic_should_refresh "$near_epoch" "$CURRENT_EPOCH" || fail "profile inside the 48-hour window should refresh"
+desktop_widgets_automatic_should_refresh 1 "$CURRENT_EPOCH" || fail "expired profile should refresh"
+desktop_widgets_automatic_should_refresh invalid "$CURRENT_EPOCH" || fail "unreadable profile should take the safe refresh path"
+
+/usr/bin/printf '%s\n' \
+    '#!/bin/bash' \
+    'set -euo pipefail' \
+    'printf "%s\n" "$*" >> "$DESKTOP_WIDGETS_TEST_COMMAND_LOG"' \
+    'if [[ "${1:-}" == "print" ]]; then exit 1; fi' \
+    'exit 0' > "$TEST_ROOT/fake-launchctl.sh"
+/bin/chmod +x "$TEST_ROOT/fake-launchctl.sh"
+
+/usr/bin/printf '%s\n' \
+    '#!/bin/bash' \
+    'echo 501' > "$TEST_ROOT/fake-id.sh"
+/bin/chmod +x "$TEST_ROOT/fake-id.sh"
+
+/usr/bin/printf '%s\n' \
+    '#!/bin/bash' \
+    'exit 0' > "$STABLE_ROOT/Scripts/automatic-refresh.sh"
+/bin/chmod +x "$STABLE_ROOT/Scripts/automatic-refresh.sh"
+
+run_manager() {
+    env \
+        DESKTOP_WIDGETS_HOME="$TEST_HOME" \
+        DESKTOP_WIDGETS_SUPPORT_ROOT="$SUPPORT_ROOT" \
+        DESKTOP_WIDGETS_STABLE_SOURCE_ROOT="$STABLE_ROOT" \
+        DESKTOP_WIDGETS_LOCAL_CONFIGURATION="$LOCAL_CONFIGURATION" \
+        DESKTOP_WIDGETS_AUTOMATIC_STATUS_PATH="$STATUS_PATH" \
+        DESKTOP_WIDGETS_LAUNCHCTL_COMMAND="$TEST_ROOT/fake-launchctl.sh" \
+        DESKTOP_WIDGETS_ID_COMMAND="$TEST_ROOT/fake-id.sh" \
+        DESKTOP_WIDGETS_TEST_COMMAND_LOG="$COMMAND_LOG" \
+        /bin/bash "$MANAGER_SCRIPT" "$1"
+}
+
+run_manager enable >/dev/null
+run_manager enable >/dev/null
+readonly AGENT_PATH="$TEST_HOME/Library/LaunchAgents/$DESKTOP_WIDGETS_AUTOMATIC_REFRESH_LABEL.plist"
+[[ -f "$AGENT_PATH" ]] || fail "Enable should create the exact Desktop Widgets LaunchAgent"
+assert_equal "$DESKTOP_WIDGETS_AUTOMATIC_REFRESH_LABEL" "$(/usr/bin/plutil -extract Label raw -o - "$AGENT_PATH")" "LaunchAgent label should be stable"
+assert_equal "true" "$(/usr/bin/plutil -extract RunAtLoad raw -o - "$AGENT_PATH")" "LaunchAgent should check at login"
+assert_equal "11" "$(/usr/bin/plutil -extract StartCalendarInterval.Hour raw -o - "$AGENT_PATH")" "LaunchAgent should check daily at 11"
+assert_equal "10" "$(/usr/bin/plutil -extract Nice raw -o - "$AGENT_PATH")" "LaunchAgent should run at low CPU priority"
+assert_equal "true" "$(/usr/bin/plutil -extract LowPriorityIO raw -o - "$AGENT_PATH")" "LaunchAgent should use low-priority IO"
+if /usr/bin/plutil -extract KeepAlive raw -o - "$AGENT_PATH" >/dev/null 2>&1; then
+    fail "LaunchAgent must not remain alive"
+fi
+assert_equal "enabled" "$(desktop_widgets_automatic_status_value "$STATUS_PATH" State)" "Enable should publish status"
+[[ "$(/usr/bin/grep -c 'bootstrap' "$COMMAND_LOG")" == "2" ]] || fail "Repeated enable should safely reload the same agent"
+
+unrelated_agent="$TEST_HOME/Library/LaunchAgents/com.example.unrelated.plist"
+echo 'unrelated' > "$unrelated_agent"
+run_manager disable >/dev/null
+[[ ! -e "$AGENT_PATH" ]] || fail "Disable should remove the Desktop Widgets agent"
+[[ -f "$unrelated_agent" ]] || fail "Disable must not remove unrelated agents"
+assert_equal "disabled" "$(desktop_widgets_automatic_status_value "$STATUS_PATH" State)" "Disable should publish status"
+
+unsafe_output="$(env DESKTOP_WIDGETS_HOME="$TEST_HOME" DESKTOP_WIDGETS_LAUNCH_AGENT_PATH="$unrelated_agent" DESKTOP_WIDGETS_SUPPORT_ROOT="$SUPPORT_ROOT" DESKTOP_WIDGETS_STABLE_SOURCE_ROOT="$STABLE_ROOT" DESKTOP_WIDGETS_LOCAL_CONFIGURATION="$LOCAL_CONFIGURATION" /bin/bash "$MANAGER_SCRIPT" disable 2>&1 || true)"
+assert_contains "$unsafe_output" "Refusing to manage" "manager should reject unexpected LaunchAgent paths"
+[[ -f "$unrelated_agent" ]] || fail "unsafe path rejection must preserve the unrelated agent"
+
+/usr/bin/printf '%s\n' \
+    '#!/bin/bash' \
+    'set -euo pipefail' \
+    'printf "%s\n" "$*" >> "$DESKTOP_WIDGETS_TEST_REFRESH_LOG"' \
+    'if [[ "${DESKTOP_WIDGETS_TEST_REFRESH_RESULT:-success}" == "failure" ]]; then exit 65; fi' \
+    'if [[ -n "${DESKTOP_WIDGETS_REFRESHED_EXPIRATION:-}" ]]; then printf "%s\n" "$DESKTOP_WIDGETS_REFRESHED_EXPIRATION" > "$DESKTOP_WIDGETS_PROFILE_EXPIRATION_FILE"; fi' \
+    'exit 0' > "$TEST_ROOT/fake-refresh.sh"
+/bin/chmod +x "$TEST_ROOT/fake-refresh.sh"
+
+/usr/bin/printf '%s\n' \
+    '#!/bin/bash' \
+    'set -euo pipefail' \
+    'printf "%s\n" "$*" >> "$DESKTOP_WIDGETS_TEST_NOTIFICATION_LOG"' > "$TEST_ROOT/fake-notification.sh"
+/bin/chmod +x "$TEST_ROOT/fake-notification.sh"
+
+run_automatic() {
+    env \
+        DESKTOP_WIDGETS_HOME="$TEST_HOME" \
+        DESKTOP_WIDGETS_SUPPORT_ROOT="$SUPPORT_ROOT" \
+        DESKTOP_WIDGETS_LOCAL_CONFIGURATION="$LOCAL_CONFIGURATION" \
+        DESKTOP_WIDGETS_AUTOMATIC_STATUS_PATH="$STATUS_PATH" \
+        DESKTOP_WIDGETS_LOG_DIRECTORY="$TEST_ROOT/Logs" \
+        DESKTOP_WIDGETS_REFRESH_SCRIPT="$TEST_ROOT/fake-refresh.sh" \
+        DESKTOP_WIDGETS_NOTIFICATION_COMMAND="$TEST_ROOT/fake-notification.sh" \
+        DESKTOP_WIDGETS_PROFILE_EXPIRATION_FILE="$EXPIRATION_FILE" \
+        DESKTOP_WIDGETS_AUTOMATIC_NOW_EPOCH="$CURRENT_EPOCH" \
+        DESKTOP_WIDGETS_AUTOMATIC_NOW_ISO="$CURRENT_ISO" \
+        DESKTOP_WIDGETS_TEST_REFRESH_LOG="$REFRESH_LOG" \
+        DESKTOP_WIDGETS_TEST_NOTIFICATION_LOG="$NOTIFICATION_LOG" \
+        "$@" \
+        /bin/bash "$AUTOMATIC_SCRIPT"
+}
+
+echo '2026-09-01T12:00:00Z' > "$EXPIRATION_FILE"
+: > "$REFRESH_LOG"
+run_automatic >/dev/null
+[[ ! -s "$REFRESH_LOG" ]] || fail "healthy profile check must not start Xcode"
+assert_equal "healthy" "$(desktop_widgets_automatic_status_value "$STATUS_PATH" State)" "healthy no-op should publish status"
+
+echo '2026-08-28T12:00:00Z' > "$EXPIRATION_FILE"
+: > "$REFRESH_LOG"
+run_automatic DESKTOP_WIDGETS_REFRESHED_EXPIRATION='2026-09-03T12:00:00Z' >/dev/null
+[[ "$(/usr/bin/grep -c 'refresh' "$REFRESH_LOG")" == "1" ]] || fail "near-expiry profile should invoke one guarded refresh"
+assert_equal "refreshed" "$(desktop_widgets_automatic_status_value "$STATUS_PATH" State)" "successful refresh should publish status"
+run_automatic >/dev/null
+[[ "$(/usr/bin/grep -c 'refresh' "$REFRESH_LOG")" == "1" ]] || fail "refreshed profile should make the next check idempotent"
+
+echo '2026-08-28T12:00:00Z' > "$EXPIRATION_FILE"
+: > "$NOTIFICATION_LOG"
+run_automatic DESKTOP_WIDGETS_TEST_REFRESH_RESULT=failure >/dev/null
+run_automatic DESKTOP_WIDGETS_TEST_REFRESH_RESULT=failure >/dev/null
+assert_equal "needsAttention" "$(desktop_widgets_automatic_status_value "$STATUS_PATH" State)" "failed refresh should publish attention state"
+[[ "$(/usr/bin/wc -l < "$NOTIFICATION_LOG" | /usr/bin/tr -d ' ')" == "1" ]] || fail "same failure should notify at most once per day"
+
+/bin/rm -f -- "$EXPIRATION_FILE"
+: > "$NOTIFICATION_LOG"
+run_automatic >/dev/null
+assert_equal "needsAttention" "$(desktop_widgets_automatic_status_value "$STATUS_PATH" State)" "missing profile should publish attention state"
+assert_equal "missing-profile" "$(desktop_widgets_automatic_status_value "$STATUS_PATH" LastErrorCode)" "missing profile should record a stable error code"
+[[ -s "$NOTIFICATION_LOG" ]] || fail "missing profile should notify the user"
+
+echo 'not-an-expiration-date' > "$EXPIRATION_FILE"
+: > "$NOTIFICATION_LOG"
+run_automatic >/dev/null
+assert_equal "needsAttention" "$(desktop_widgets_automatic_status_value "$STATUS_PATH" State)" "unreadable profile expiration should publish attention state"
+assert_equal "invalid-expiration" "$(desktop_widgets_automatic_status_value "$STATUS_PATH" LastErrorCode)" "unreadable expiration should record a stable error code"
+[[ -s "$NOTIFICATION_LOG" ]] || fail "unreadable profile expiration should notify the user"
+
+echo "PASS: Automatic refresh thresholds, no-op behavior, low-resource LaunchAgent, idempotency, failures, and exact-target safety are covered."
