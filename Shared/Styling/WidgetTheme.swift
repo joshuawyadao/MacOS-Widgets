@@ -83,6 +83,7 @@ struct WidgetStatusLine: View {
     let text: String
     let systemImage: String
     var accessibilityText: String?
+    var typography: WidgetTypographyStyle = .systemDefault
 
     private var metrics: WidgetChromeMetrics {
         WidgetChromeMetrics(family: family)
@@ -94,7 +95,13 @@ struct WidgetStatusLine: View {
                 .font(.system(size: metrics.statusIconSize, weight: .semibold))
             Text(text)
         }
-        .font(.system(size: metrics.statusFontSize, weight: .semibold, design: .rounded))
+        .font(
+            typography.supportingFont(
+                size: metrics.statusFontSize,
+                weight: .semibold,
+                fallback: .system(size: metrics.statusFontSize, weight: .semibold, design: .rounded)
+            )
+        )
         .lineLimit(1)
         .minimumScaleFactor(0.72)
         .opacity(WidgetTheme.secondaryOpacity)

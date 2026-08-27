@@ -10,7 +10,7 @@ All four widgets share one visual and behavioral shell while keeping the control
 - Keep every placed widget's App Intent configuration independent.
 - Use a clear removable WidgetKit container background.
 - Render white content with one shared contrast shadow in Full Color and system-primary content without that shadow in accented or vibrant modes.
-- Apply the selected shared typography theme to hero values and display headers, while keeping compact labels, status chrome, dense data, and alignment-sensitive digits in the readable shared system style.
+- Apply the selected shared typography theme according to Font Coverage: Display Text themes hero values and headers, while All Text also themes compact labels, status chrome, dense data, and alignment-sensitive values.
 - Present stale, constrained, unavailable, or action-required information with the shared compact status treatment when the layout has room.
 - Combine noninteractive summaries into concise VoiceOver labels and expose real controls as separate accessible elements.
 - Respect the Mac's locale, time zone, calendar, units, and first-weekday conventions wherever they apply.
@@ -21,11 +21,11 @@ The shared primitives live in `Shared/Styling/WidgetTheme.swift` and `Shared/Sty
 
 The companion app owns one global display theme: **System** (system rounded), **Modern** (Avenir Next), **Editorial** (system serif), **Technical** (system monospaced), **Playful** (Noteworthy), or **Handmade** (Marker Felt). System is the safe default. Each widget type may follow that theme or select another curated theme, keeping a coordinated baseline without making every widget identical.
 
-Only display roles adopt the chosen font: Time & Date's date and clock, Weather's location and hero temperature, Battery's percentage, and Calendar's primary date or period headers. Supporting forecast values, detail cards, status messages, calendar grids, and accessibility structure retain the system style so dense information remains legible.
+**Font Coverage** controls where that resolved theme appears. **Display Text** is the default: only Time & Date's date and clock, Weather's location and hero temperature, Battery's percentage, and Calendar's primary date or period headers adopt the font. Supporting forecast values, detail cards, status messages, calendar grids, and attribution retain the system style so dense information remains legible. **All Text** also applies the resolved theme to those textual supporting roles. It does not replace SF Symbols, change layout metrics, or alter accessibility labels.
 
 Time & Date has one deliberate exception: **Use Each Widget's Fonts** defers to the separate date and time font choices stored in each placed widget's configuration. Weather, Battery, and Calendar overrides apply per widget type because adding font fields to their App Intents would change persisted configuration schemas and create editor complexity.
 
-The host app and extension share selections through a team-ID-prefixed macOS App Group. Preference changes reload every WidgetKit timeline; unknown or unavailable stored values resolve safely to the global theme or System. No fonts are downloaded or bundled.
+The host app and extension share theme, coverage, and overrides through a team-ID-prefixed macOS App Group. Preference changes reload every WidgetKit timeline; unknown or unavailable stored values resolve safely to the global theme, Display Text coverage, or System. No fonts are downloaded or bundled.
 
 ## Information density
 
@@ -59,6 +59,6 @@ Do not add per-copy font fields, provider links, permission prompts, timestamps,
 
 ## Verification
 
-The shared test contract covers family-to-density mapping, progressively sized chrome metrics, typography preference persistence and fallback, and every curated theme rendered through all four widgets. Rendering smoke tests must also include all four widgets across Small, Medium, and Large, plus representative stale, unavailable, permission, or long-content states. Widget-specific suites remain responsible for formatters, data normalization, privacy boundaries, refresh policies, and interactions.
+The shared test contract covers family-to-density mapping, progressively sized chrome metrics, typography and coverage preference persistence and fallback, and every curated theme rendered through all four widgets in Display Text and All Text modes. Rendering smoke tests must also include all four widgets across Small, Medium, and Large, plus representative stale, unavailable, permission, or long-content states. Widget-specific suites remain responsible for formatters, data normalization, privacy boundaries, refresh policies, and interactions.
 
 Run `./Scripts/verify-widgets.sh` before committing or pushing widget changes.

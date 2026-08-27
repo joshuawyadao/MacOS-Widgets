@@ -39,7 +39,7 @@ WidgetKit receives several future hourly entries from one forecast response and 
 ## Appearance and accessibility
 
 - Weather uses the shared compact/standard/expanded family density and widget surface. Its city header, forecast symbols, and required provider attribution remain domain-specific.
-- The companion app's global or Weather-specific typography theme styles the city header and hero current temperature. Forecast strips, detail values, status text, and provider attribution stay system-rounded so compact data remains easy to scan.
+- The companion app's global or Weather-specific typography theme styles the city header and hero current temperature in Display Text mode. All Text extends it to forecast strips, detail values, status text, and provider attribution; Display Text remains the safer choice when a decorative font makes compact forecasts harder to scan.
 - The widget declares a clear, removable WidgetKit container exactly like Time & Date. With macOS's Clear icon and widget style, the system may replace that background with Liquid Glass, tint, or blur; WidgetKit does not provide an API to remove the system-owned surface.
 - White text and multicolor SF Symbols follow the reference. Every forecast column combines its day or hour, condition, and selected values into one VoiceOver label so color and symbols are not the only source of meaning.
 - Temperatures render as one compact text run so WidgetKit cannot truncate the degree value and unit independently. Small Today reserves a bounded temperature column and uses a sequence of complete-text fallback sizes instead of an ellipsis-producing scale. High/low values remain stacked, and VoiceOver announces the complete unit.

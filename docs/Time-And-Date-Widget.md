@@ -5,7 +5,7 @@ The Time and Date widget is inspired by the supplied desktop reference: white up
 ## Customize the widget
 
 1. Run the `DesktopWidgets` app once from Xcode.
-2. Choose an **Appearance theme** in the app. Leave Time & Date on **Follow Global Theme**, choose a different curated theme for every Time & Date widget, or select **Use Each Widget's Fonts** to activate the per-copy font rows described below.
+2. Choose an **Appearance theme** in the app. Leave Time & Date on **Follow Global Theme**, choose a different curated theme for every Time & Date widget, or select **Use Each Widget's Fonts** to activate the per-copy font rows described below. Font Coverage does not visibly change Time & Date because its date, clock, and AM/PM are all display roles already.
 3. Remove any Time and Date widget installed from build 3 or earlier. Build 4 intentionally uses a fresh widget and intent identity so macOS does not reuse the old AppEnum configuration cache.
 4. Add **Time & Date** from the macOS widget gallery.
 5. Control-click the widget on the desktop.

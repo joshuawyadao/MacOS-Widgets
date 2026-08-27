@@ -39,15 +39,18 @@ struct TimeAndDateWidgetView: View {
     let entry: TimeAndDateEntry
     private let familyOverride: WidgetFamily?
     private let typographyOverride: WidgetTypographyResolution?
+    private let coverageOverride: WidgetTypographyCoverage?
 
     init(
         entry: TimeAndDateEntry,
         family: WidgetFamily? = nil,
-        typography: WidgetTypographyResolution? = nil
+        typography: WidgetTypographyResolution? = nil,
+        coverage: WidgetTypographyCoverage? = nil
     ) {
         self.entry = entry
         self.familyOverride = family
         self.typographyOverride = typography
+        self.coverageOverride = coverage
     }
 
     private var family: WidgetFamily {
@@ -68,8 +71,12 @@ struct TimeAndDateWidgetView: View {
         )
     }
 
-    private var typography: WidgetTypographyResolution {
-        typographyOverride ?? WidgetTypographyStore.live.resolution(for: .timeAndDate)
+    private var typography: WidgetTypographyStyle {
+        let stored = WidgetTypographyStore.live.style(for: .timeAndDate)
+        return WidgetTypographyStyle(
+            resolution: typographyOverride ?? stored.resolution,
+            coverage: coverageOverride ?? stored.coverage
+        )
     }
 
     var body: some View {

@@ -77,7 +77,7 @@ struct ContentView: View {
         VStack(alignment: .leading, spacing: 14) {
             SectionTitle(
                 title: "Appearance theme",
-                subtitle: "Choose one display style for all widgets, then add only the exceptions you want. Supporting text stays system-rounded for readability."
+                subtitle: "Choose one style for all widgets, decide how much text it covers, then add only the exceptions you want."
             )
 
             HStack(spacing: 12) {
@@ -104,8 +104,24 @@ struct ContentView: View {
                 }
                 .frame(maxWidth: 280, alignment: .leading)
 
-                Spacer(minLength: 0)
+                Menu {
+                    ForEach(WidgetTypographyCoverage.allCases) { coverage in
+                        Button {
+                            typography.setCoverage(coverage)
+                        } label: {
+                            if typography.coverage == coverage {
+                                Label(coverage.displayName, systemImage: "checkmark")
+                            } else {
+                                Text(coverage.displayName)
+                            }
+                        }
+                    }
+                } label: {
+                    Label(typography.coverage.displayName, systemImage: "character.cursor.ibeam")
+                }
+                .help(typography.coverage.detail)
 
+                Spacer(minLength: 0)
                 Button("Use System Style") {
                     typography.reset()
                 }
@@ -117,8 +133,13 @@ struct ContentView: View {
                     uniqueKeysWithValues: WidgetTypographyTarget.allCases.map {
                         ($0, typography.resolution(for: $0))
                     }
-                )
+                ),
+                coverage: typography.coverage
             )
+
+            Text(typography.coverage.detail)
+                .font(.caption)
+                .foregroundStyle(.secondary)
 
             Divider()
 
@@ -289,6 +310,7 @@ struct ContentView: View {
 @MainActor
 private final class WidgetTypographyController: ObservableObject {
     @Published private(set) var globalTheme: WidgetTypographyTheme
+    @Published private(set) var coverage: WidgetTypographyCoverage
     @Published private var overrides: [WidgetTypographyTarget: WidgetTypographyOverride]
 
     private let store: WidgetTypographyStore
@@ -296,6 +318,7 @@ private final class WidgetTypographyController: ObservableObject {
     init(store: WidgetTypographyStore = .live) {
         self.store = store
         self.globalTheme = store.globalTheme
+        self.coverage = store.coverage
         self.overrides = Dictionary(
             uniqueKeysWithValues: WidgetTypographyTarget.allCases.map {
                 ($0, store.override(for: $0))
@@ -304,7 +327,9 @@ private final class WidgetTypographyController: ObservableObject {
     }
 
     var usesSystemDefaults: Bool {
-        globalTheme == .system && overrides.values.allSatisfy { $0 == .followGlobal }
+        globalTheme == .system
+            && coverage == .displayText
+            && overrides.values.allSatisfy { $0 == .followGlobal }
     }
 
     func override(for target: WidgetTypographyTarget) -> WidgetTypographyOverride {
@@ -325,6 +350,12 @@ private final class WidgetTypographyController: ObservableObject {
         WidgetCenter.shared.reloadAllTimelines()
     }
 
+    func setCoverage(_ coverage: WidgetTypographyCoverage) {
+        self.coverage = coverage
+        store.coverage = coverage
+        WidgetCenter.shared.reloadAllTimelines()
+    }
+
     func setOverride(
         _ override: WidgetTypographyOverride,
         for target: WidgetTypographyTarget
@@ -337,6 +368,7 @@ private final class WidgetTypographyController: ObservableObject {
     func reset() {
         store.reset()
         globalTheme = .system
+        coverage = .displayText
         overrides = Dictionary(
             uniqueKeysWithValues: WidgetTypographyTarget.allCases.map { ($0, .followGlobal) }
         )
@@ -346,6 +378,7 @@ private final class WidgetTypographyController: ObservableObject {
 
 private struct TypographyPreviewGrid: View {
     let resolutions: [WidgetTypographyTarget: WidgetTypographyResolution]
+    let coverage: WidgetTypographyCoverage
 
     var body: some View {
         LazyVGrid(
@@ -355,7 +388,13 @@ private struct TypographyPreviewGrid: View {
             ForEach(WidgetTypographyTarget.allCases) { target in
                 VStack(alignment: .leading, spacing: 7) {
                     Label(target.displayName, systemImage: target.symbolName)
-                        .font(.caption.weight(.semibold))
+                        .font(
+                            typographyStyle(for: target).supportingFont(
+                                size: 12,
+                                weight: .semibold,
+                                fallback: .caption.weight(.semibold)
+                            )
+                        )
                         .foregroundStyle(.secondary)
                         .lineLimit(1)
 
@@ -371,7 +410,13 @@ private struct TypographyPreviewGrid: View {
                         .minimumScaleFactor(0.7)
 
                     Text(sampleDetail(for: target))
-                        .font(.caption2.weight(.medium))
+                        .font(
+                            typographyStyle(for: target).supportingFont(
+                                size: 10,
+                                weight: .medium,
+                                fallback: .system(size: 10, weight: .medium, design: .rounded)
+                            )
+                        )
                         .foregroundStyle(.secondary)
                         .lineLimit(1)
                 }
@@ -392,7 +437,17 @@ private struct TypographyPreviewGrid: View {
     }
 
     private func sampleDetail(for target: WidgetTypographyTarget) -> String {
-        resolutions[target] == .widgetFonts ? "Each copy's fonts" : "Display typography"
+        if resolutions[target] == .widgetFonts {
+            return "Each copy's fonts"
+        }
+        return coverage == .allText ? "All text" : "Display text"
+    }
+
+    private func typographyStyle(for target: WidgetTypographyTarget) -> WidgetTypographyStyle {
+        WidgetTypographyStyle(
+            resolution: resolutions[target] ?? .theme(.system),
+            coverage: coverage
+        )
     }
 }
 

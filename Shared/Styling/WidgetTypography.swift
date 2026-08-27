@@ -112,6 +112,27 @@ enum WidgetTypographyOverride: String, CaseIterable, Hashable, Identifiable {
     }
 }
 
+enum WidgetTypographyCoverage: String, CaseIterable, Hashable, Identifiable {
+    case displayText
+    case allText
+
+    var id: String { rawValue }
+
+    var displayName: String {
+        switch self {
+        case .displayText: "Display Text"
+        case .allText: "All Text"
+        }
+    }
+
+    var detail: String {
+        switch self {
+        case .displayText: "Theme heroes and headers; keep dense text system-rounded"
+        case .allText: "Theme every textual label and value"
+        }
+    }
+}
+
 enum WidgetTypographyResolution: Equatable {
     case theme(WidgetTypographyTheme)
     case widgetFonts
@@ -130,9 +151,37 @@ enum WidgetTypographyResolution: Equatable {
     }
 }
 
+struct WidgetTypographyStyle: Equatable {
+    let resolution: WidgetTypographyResolution
+    let coverage: WidgetTypographyCoverage
+
+    static let systemDefault = Self(
+        resolution: .theme(.system),
+        coverage: .displayText
+    )
+
+    func displayFont(
+        size: CGFloat,
+        weight: Font.Weight = .bold,
+        fallback: @autoclosure () -> Font
+    ) -> Font {
+        resolution.displayFont(size: size, weight: weight, fallback: fallback())
+    }
+
+    func supportingFont(
+        size: CGFloat,
+        weight: Font.Weight = .regular,
+        fallback: @autoclosure () -> Font
+    ) -> Font {
+        guard coverage == .allText else { return fallback() }
+        return resolution.displayFont(size: size, weight: weight, fallback: fallback())
+    }
+}
+
 struct WidgetTypographyStore {
     static let appGroupInfoKey = "WidgetThemeAppGroupIdentifier"
     static let globalThemeKey = "widgetTypography.globalTheme"
+    static let coverageKey = "widgetTypography.coverage"
     static let overrideKeyPrefix = "widgetTypography.override."
 
     let defaults: UserDefaults
@@ -161,6 +210,16 @@ struct WidgetTypographyStore {
         }
         nonmutating set {
             defaults.set(newValue.rawValue, forKey: Self.globalThemeKey)
+        }
+    }
+
+    var coverage: WidgetTypographyCoverage {
+        get {
+            defaults.string(forKey: Self.coverageKey)
+                .flatMap(WidgetTypographyCoverage.init(rawValue:)) ?? .displayText
+        }
+        nonmutating set {
+            defaults.set(newValue.rawValue, forKey: Self.coverageKey)
         }
     }
 
@@ -201,8 +260,13 @@ struct WidgetTypographyStore {
         return .theme(override.theme ?? globalTheme)
     }
 
+    func style(for target: WidgetTypographyTarget) -> WidgetTypographyStyle {
+        WidgetTypographyStyle(resolution: resolution(for: target), coverage: coverage)
+    }
+
     func reset() {
         defaults.removeObject(forKey: Self.globalThemeKey)
+        defaults.removeObject(forKey: Self.coverageKey)
         for target in WidgetTypographyTarget.allCases {
             defaults.removeObject(forKey: Self.overrideKeyPrefix + target.rawValue)
         }

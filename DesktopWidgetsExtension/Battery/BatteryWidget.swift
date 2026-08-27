@@ -52,15 +52,18 @@ struct BatteryWidgetView: View {
     let entry: BatteryEntry
     private let familyOverride: WidgetFamily?
     private let typographyOverride: WidgetTypographyResolution?
+    private let coverageOverride: WidgetTypographyCoverage?
 
     init(
         entry: BatteryEntry,
         family: WidgetFamily? = nil,
-        typography: WidgetTypographyResolution? = nil
+        typography: WidgetTypographyResolution? = nil,
+        coverage: WidgetTypographyCoverage? = nil
     ) {
         self.entry = entry
         self.familyOverride = family
         self.typographyOverride = typography
+        self.coverageOverride = coverage
     }
 
     private var family: WidgetFamily {
@@ -84,8 +87,12 @@ struct BatteryWidgetView: View {
         BatteryDetailSelection(configuration: entry.configuration, family: family)
     }
 
-    private var typography: WidgetTypographyResolution {
-        typographyOverride ?? WidgetTypographyStore.live.resolution(for: .battery)
+    private var typography: WidgetTypographyStyle {
+        let stored = WidgetTypographyStore.live.style(for: .battery)
+        return WidgetTypographyStyle(
+            resolution: typographyOverride ?? stored.resolution,
+            coverage: coverageOverride ?? stored.coverage
+        )
     }
 
     var body: some View {
@@ -180,7 +187,13 @@ struct BatteryWidgetView: View {
                 .minimumScaleFactor(0.68)
 
             Text(compact ? presentation.compactStatusText : presentation.statusText)
-                .font(.system(size: metrics.statusFontSize, weight: .medium, design: .rounded))
+                .font(
+                    typography.supportingFont(
+                        size: metrics.statusFontSize,
+                        weight: .medium,
+                        fallback: .system(size: metrics.statusFontSize, weight: .medium, design: .rounded)
+                    )
+                )
                 .lineLimit(1)
                 .minimumScaleFactor(compact ? 0.55 : 0.7)
         }
@@ -219,11 +232,23 @@ struct BatteryWidgetView: View {
 
             VStack(alignment: .leading, spacing: 0) {
                 Text(item.title.uppercased())
-                    .font(.system(size: 8, weight: .bold, design: .rounded))
+                    .font(
+                        typography.supportingFont(
+                            size: 8,
+                            weight: .bold,
+                            fallback: .system(size: 8, weight: .bold, design: .rounded)
+                        )
+                    )
                     .opacity(WidgetTheme.secondaryOpacity)
 
                 Text(item.value)
-                    .font(.system(size: 11, weight: .semibold, design: .rounded))
+                    .font(
+                        typography.supportingFont(
+                            size: 11,
+                            weight: .semibold,
+                            fallback: .system(size: 11, weight: .semibold, design: .rounded)
+                        )
+                    )
                     .lineLimit(1)
                     .minimumScaleFactor(0.7)
             }
@@ -233,11 +258,23 @@ struct BatteryWidgetView: View {
     private func detailCard(_ item: BatteryDetailItem) -> some View {
         VStack(alignment: .leading, spacing: 5) {
             Label(item.title.uppercased(), systemImage: item.symbol)
-                .font(.system(size: 10, weight: .bold, design: .rounded))
+                .font(
+                    typography.supportingFont(
+                        size: 10,
+                        weight: .bold,
+                        fallback: .system(size: 10, weight: .bold, design: .rounded)
+                    )
+                )
                 .opacity(WidgetTheme.secondaryOpacity)
 
             Text(item.value)
-                .font(.system(size: 15, weight: .bold, design: .rounded))
+                .font(
+                    typography.supportingFont(
+                        size: 15,
+                        weight: .bold,
+                        fallback: .system(size: 15, weight: .bold, design: .rounded)
+                    )
+                )
                 .lineLimit(1)
                 .minimumScaleFactor(0.7)
         }

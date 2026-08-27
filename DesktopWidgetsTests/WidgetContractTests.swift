@@ -10,6 +10,10 @@ final class WidgetContractTests: XCTestCase {
         XCTAssertEqual(WidgetTypographyOverride.options(for: .weather).first, .followGlobal)
         XCTAssertFalse(WidgetTypographyOverride.options(for: .weather).contains(.widgetFonts))
         XCTAssertTrue(WidgetTypographyOverride.options(for: .timeAndDate).contains(.widgetFonts))
+        XCTAssertEqual(
+            WidgetTypographyCoverage.allCases.map(\.rawValue),
+            ["displayText", "allText"]
+        )
     }
 
     func testTypographyStorePersistsGlobalThemeAndResolvesSafeOverrides() throws {
@@ -20,15 +24,25 @@ final class WidgetContractTests: XCTestCase {
         let store = WidgetTypographyStore(defaults: defaults)
 
         XCTAssertEqual(store.globalTheme, .system)
+        XCTAssertEqual(store.coverage, .displayText)
         XCTAssertEqual(store.resolution(for: .weather), .theme(.system))
+        XCTAssertEqual(
+            store.style(for: .weather),
+            WidgetTypographyStyle(resolution: .theme(.system), coverage: .displayText)
+        )
 
         store.globalTheme = .editorial
         XCTAssertEqual(store.globalTheme, .editorial)
         XCTAssertEqual(store.resolution(for: .battery), .theme(.editorial))
 
         store.setOverride(.technical, for: .weather)
+        store.coverage = .allText
         XCTAssertEqual(store.override(for: .weather), .technical)
         XCTAssertEqual(store.resolution(for: .weather), .theme(.technical))
+        XCTAssertEqual(
+            store.style(for: .weather),
+            WidgetTypographyStyle(resolution: .theme(.technical), coverage: .allText)
+        )
 
         store.setOverride(.widgetFonts, for: .battery)
         XCTAssertEqual(store.override(for: .battery), .followGlobal)
@@ -38,11 +52,14 @@ final class WidgetContractTests: XCTestCase {
         XCTAssertEqual(store.resolution(for: .timeAndDate), .widgetFonts)
 
         defaults.set("unknown", forKey: WidgetTypographyStore.overrideKeyPrefix + WidgetTypographyTarget.calendar.rawValue)
+        defaults.set("unknown", forKey: WidgetTypographyStore.coverageKey)
         XCTAssertEqual(store.override(for: .calendar), .followGlobal)
         XCTAssertEqual(store.resolution(for: .calendar), .theme(.editorial))
+        XCTAssertEqual(store.coverage, .displayText)
 
         store.reset()
         XCTAssertEqual(store.globalTheme, .system)
+        XCTAssertEqual(store.coverage, .displayText)
         XCTAssertTrue(WidgetTypographyTarget.allCases.allSatisfy {
             store.override(for: $0) == .followGlobal
         })

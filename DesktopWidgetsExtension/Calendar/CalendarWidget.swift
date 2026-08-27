@@ -100,23 +100,30 @@ struct CalendarWidgetView: View {
     let entry: CalendarEntry
     private let familyOverride: WidgetFamily?
     private let typographyOverride: WidgetTypographyResolution?
+    private let coverageOverride: WidgetTypographyCoverage?
 
     init(
         entry: CalendarEntry,
         family: WidgetFamily? = nil,
-        typography: WidgetTypographyResolution? = nil
+        typography: WidgetTypographyResolution? = nil,
+        coverage: WidgetTypographyCoverage? = nil
     ) {
         self.entry = entry
         self.familyOverride = family
         self.typographyOverride = typography
+        self.coverageOverride = coverage
     }
 
     private var family: WidgetFamily {
         familyOverride ?? environmentFamily
     }
 
-    private var typography: WidgetTypographyResolution {
-        typographyOverride ?? WidgetTypographyStore.live.resolution(for: .calendar)
+    private var typography: WidgetTypographyStyle {
+        let stored = WidgetTypographyStore.live.style(for: .calendar)
+        return WidgetTypographyStyle(
+            resolution: typographyOverride ?? stored.resolution,
+            coverage: coverageOverride ?? stored.coverage
+        )
     }
 
     private var calendar: Calendar {
@@ -176,7 +183,6 @@ struct CalendarWidgetView: View {
             case .month: monthView
             }
         }
-        .fontDesign(.rounded)
         .widgetSurface(renderingMode: renderingMode)
     }
 
@@ -200,7 +206,17 @@ struct CalendarWidgetView: View {
             Spacer(minLength: 0)
 
             Text(dayPresentation.weekdayText)
-                .font(.system(size: family == .systemLarge ? 24 : 14, weight: .bold, design: .rounded))
+                .font(
+                    typography.supportingFont(
+                        size: family == .systemLarge ? 24 : 14,
+                        weight: .bold,
+                        fallback: .system(
+                            size: family == .systemLarge ? 24 : 14,
+                            weight: .bold,
+                            design: .rounded
+                        )
+                    )
+                )
                 .lineLimit(1)
                 .minimumScaleFactor(0.7)
 
@@ -242,7 +258,17 @@ struct CalendarWidgetView: View {
                 Text("ACCESS OFF")
             }
         }
-        .font(.system(size: family == .systemLarge ? 15 : 10, weight: .bold, design: .rounded))
+        .font(
+            typography.supportingFont(
+                size: family == .systemLarge ? 15 : 10,
+                weight: .bold,
+                fallback: .system(
+                    size: family == .systemLarge ? 15 : 10,
+                    weight: .bold,
+                    design: .rounded
+                )
+            )
+        )
         .lineLimit(1)
         .minimumScaleFactor(0.7)
     }
@@ -289,7 +315,17 @@ struct CalendarWidgetView: View {
         )
         return VStack(spacing: family == .systemLarge ? 8 : 4) {
             Text(day.weekdayText)
-                .font(.system(size: family == .systemLarge ? 14 : 9, weight: .bold, design: .rounded))
+                .font(
+                    typography.supportingFont(
+                        size: family == .systemLarge ? 14 : 9,
+                        weight: .bold,
+                        fallback: .system(
+                            size: family == .systemLarge ? 14 : 9,
+                            weight: .bold,
+                            design: .rounded
+                        )
+                    )
+                )
                 .lineLimit(1)
 
             calendarDayMarker(
@@ -301,7 +337,13 @@ struct CalendarWidgetView: View {
 
             if family == .systemLarge, entry.events.accessState == .available {
                 Text(eventCount == 1 ? "1 event" : "\(eventCount) events")
-                    .font(.caption2.weight(.semibold))
+                    .font(
+                        typography.supportingFont(
+                            size: 11,
+                            weight: .semibold,
+                            fallback: .caption2.weight(.semibold)
+                        )
+                    )
                     .lineLimit(1)
             }
         }
@@ -373,7 +415,17 @@ struct CalendarWidgetView: View {
         LazyVGrid(columns: columns, spacing: 0) {
             ForEach(Array(monthWeekdayTexts.enumerated()), id: \.offset) { _, weekday in
                 Text(weekday)
-                    .font(.system(size: monthMetrics.weekdayFontSize, weight: .bold, design: .rounded))
+                    .font(
+                        typography.supportingFont(
+                            size: monthMetrics.weekdayFontSize,
+                            weight: .bold,
+                            fallback: .system(
+                                size: monthMetrics.weekdayFontSize,
+                                weight: .bold,
+                                design: .rounded
+                            )
+                        )
+                    )
                     .lineLimit(1)
                     .minimumScaleFactor(0.65)
                     .frame(maxWidth: .infinity)
@@ -449,7 +501,13 @@ struct CalendarWidgetView: View {
         dotSize: CGFloat
     ) -> some View {
         Text(marker.dayText)
-            .font(.system(size: fontSize, weight: .bold, design: .rounded))
+            .font(
+                typography.supportingFont(
+                    size: fontSize,
+                    weight: .bold,
+                    fallback: .system(size: fontSize, weight: .bold, design: .rounded)
+                )
+            )
             .foregroundStyle(renderingMode == .fullColor ? Color.white : Color.primary)
             .offset(y: marker.eventDotCount > 0 ? -(dotSize * 0.55) : 0)
             .frame(width: diameter, height: diameter)
@@ -475,7 +533,13 @@ struct CalendarWidgetView: View {
                 .fill(.white)
                 .overlay {
                     Text(marker.dayText)
-                        .font(.system(size: fontSize, weight: .bold, design: .rounded))
+                        .font(
+                            typography.supportingFont(
+                                size: fontSize,
+                                weight: .bold,
+                                fallback: .system(size: fontSize, weight: .bold, design: .rounded)
+                            )
+                        )
                         .foregroundStyle(.black)
                         .offset(y: marker.eventDotCount > 0 ? -(dotSize * 0.55) : 0)
                 }
@@ -489,7 +553,13 @@ struct CalendarWidgetView: View {
                 .stroke(Color.primary, lineWidth: max(1.5, diameter * 0.07))
                 .overlay {
                     Text(marker.dayText)
-                        .font(.system(size: fontSize, weight: .bold, design: .rounded))
+                        .font(
+                            typography.supportingFont(
+                                size: fontSize,
+                                weight: .bold,
+                                fallback: .system(size: fontSize, weight: .bold, design: .rounded)
+                            )
+                        )
                         .foregroundStyle(Color.primary)
                         .offset(y: marker.eventDotCount > 0 ? -(dotSize * 0.55) : 0)
                 }
