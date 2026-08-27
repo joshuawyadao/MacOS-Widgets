@@ -811,6 +811,23 @@ final class WeatherConfigurationTests: XCTestCase {
         XCTAssertEqual(snapshot.daily[1].condition, .partlyCloudy)
     }
 
+    func testForecastDecodingUsesUVFromTheHourlyIntervalContainingCurrentTime() throws {
+        var payload = try XCTUnwrap(
+            JSONSerialization.jsonObject(with: Data(Self.fixture.utf8)) as? [String: Any]
+        )
+        var current = try XCTUnwrap(payload["current"] as? [String: Any])
+        current["time"] = 1_786_291_200 + 15 * 60
+        payload["current"] = current
+
+        let snapshot = try OpenMeteoWeatherService.decodeForecast(
+            data: JSONSerialization.data(withJSONObject: payload),
+            location: .portland,
+            unit: .fahrenheit
+        )
+
+        XCTAssertEqual(snapshot.current.uvIndex, 3.2)
+    }
+
     func testSnapshotCacheRoundTripsByCity() throws {
         let root = FileManager.default.temporaryDirectory
             .appendingPathComponent(UUID().uuidString, isDirectory: true)

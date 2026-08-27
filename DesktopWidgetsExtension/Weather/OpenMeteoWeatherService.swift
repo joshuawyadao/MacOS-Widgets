@@ -189,7 +189,13 @@ struct OpenMeteoWeatherService: WeatherServing {
         let hourlyDates = response.hourly.time.map(Date.init(timeIntervalSince1970:))
         let dailyDates = response.daily.time.map(Date.init(timeIntervalSince1970:))
         let currentDate = Date(timeIntervalSince1970: response.current.time)
-        let currentHourlyIndex = hourlyDates.firstIndex(of: currentDate)
+        let currentHourlyIndex = hourlyDates.indices.first { index in
+            let intervalStart = hourlyDates[index]
+            let intervalEnd = hourlyDates.indices.contains(index + 1)
+                ? hourlyDates[index + 1]
+                : intervalStart.addingTimeInterval(60 * 60)
+            return intervalStart <= currentDate && currentDate < intervalEnd
+        }
         let currentUVIndex = currentHourlyIndex.flatMap { index in
             response.hourly.uvIndex.flatMap { values in
                 values.indices.contains(index) ? values[index] : nil
