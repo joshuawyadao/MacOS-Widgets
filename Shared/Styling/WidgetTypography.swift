@@ -151,6 +151,101 @@ enum WidgetTypographyResolution: Equatable {
     }
 }
 
+struct WidgetTypographyLayoutProfile: Equatable, Sendable {
+    let displayFontScale: CGFloat
+    let supportingFontScale: CGFloat
+    let horizontalSpacingScale: CGFloat
+    let verticalSpacingScale: CGFloat
+    let glyphVerticalPadding: CGFloat
+    let displayMinimumScaleFactor: CGFloat
+    let supportingMinimumScaleFactor: CGFloat
+
+    static let neutral = Self(
+        displayFontScale: 1,
+        supportingFontScale: 1,
+        horizontalSpacingScale: 1,
+        verticalSpacingScale: 1,
+        glyphVerticalPadding: 0,
+        displayMinimumScaleFactor: 1,
+        supportingMinimumScaleFactor: 1
+    )
+
+    init(theme: WidgetTypographyTheme) {
+        switch theme {
+        case .system:
+            self = .neutral
+        case .modern:
+            self.init(
+                displayFontScale: 0.98,
+                supportingFontScale: 0.97,
+                horizontalSpacingScale: 0.99,
+                verticalSpacingScale: 1.02,
+                glyphVerticalPadding: 0.25,
+                displayMinimumScaleFactor: 0.65,
+                supportingMinimumScaleFactor: 0.65
+            )
+        case .editorial:
+            self.init(
+                displayFontScale: 0.97,
+                supportingFontScale: 0.95,
+                horizontalSpacingScale: 0.985,
+                verticalSpacingScale: 1.025,
+                glyphVerticalPadding: 0.35,
+                displayMinimumScaleFactor: 0.62,
+                supportingMinimumScaleFactor: 0.62
+            )
+        case .technical:
+            self.init(
+                displayFontScale: 0.95,
+                supportingFontScale: 0.93,
+                horizontalSpacingScale: 0.94,
+                verticalSpacingScale: 1.015,
+                glyphVerticalPadding: 0.2,
+                displayMinimumScaleFactor: 0.58,
+                supportingMinimumScaleFactor: 0.58
+            )
+        case .playful:
+            self.init(
+                displayFontScale: 0.94,
+                supportingFontScale: 0.92,
+                horizontalSpacingScale: 0.96,
+                verticalSpacingScale: 1.035,
+                glyphVerticalPadding: 0.5,
+                displayMinimumScaleFactor: 0.58,
+                supportingMinimumScaleFactor: 0.58
+            )
+        case .handmade:
+            self.init(
+                displayFontScale: 0.93,
+                supportingFontScale: 0.91,
+                horizontalSpacingScale: 0.95,
+                verticalSpacingScale: 1.04,
+                glyphVerticalPadding: 0.6,
+                displayMinimumScaleFactor: 0.56,
+                supportingMinimumScaleFactor: 0.56
+            )
+        }
+    }
+
+    private init(
+        displayFontScale: CGFloat,
+        supportingFontScale: CGFloat,
+        horizontalSpacingScale: CGFloat,
+        verticalSpacingScale: CGFloat,
+        glyphVerticalPadding: CGFloat,
+        displayMinimumScaleFactor: CGFloat,
+        supportingMinimumScaleFactor: CGFloat
+    ) {
+        self.displayFontScale = displayFontScale
+        self.supportingFontScale = supportingFontScale
+        self.horizontalSpacingScale = horizontalSpacingScale
+        self.verticalSpacingScale = verticalSpacingScale
+        self.glyphVerticalPadding = glyphVerticalPadding
+        self.displayMinimumScaleFactor = displayMinimumScaleFactor
+        self.supportingMinimumScaleFactor = supportingMinimumScaleFactor
+    }
+}
+
 struct WidgetTypographyStyle: Equatable {
     let resolution: WidgetTypographyResolution
     let coverage: WidgetTypographyCoverage
@@ -160,12 +255,31 @@ struct WidgetTypographyStyle: Equatable {
         coverage: .displayText
     )
 
+    var layoutProfile: WidgetTypographyLayoutProfile {
+        switch resolution {
+        case let .theme(theme): WidgetTypographyLayoutProfile(theme: theme)
+        case .widgetFonts: .neutral
+        }
+    }
+
+    var displayTextVerticalPadding: CGFloat {
+        layoutProfile.glyphVerticalPadding
+    }
+
+    var supportingTextVerticalPadding: CGFloat {
+        coverage == .allText ? layoutProfile.glyphVerticalPadding : 0
+    }
+
     func displayFont(
         size: CGFloat,
         weight: Font.Weight = .bold,
         fallback: @autoclosure () -> Font
     ) -> Font {
-        resolution.displayFont(size: size, weight: weight, fallback: fallback())
+        resolution.displayFont(
+            size: size * layoutProfile.displayFontScale,
+            weight: weight,
+            fallback: fallback()
+        )
     }
 
     func supportingFont(
@@ -174,7 +288,28 @@ struct WidgetTypographyStyle: Equatable {
         fallback: @autoclosure () -> Font
     ) -> Font {
         guard coverage == .allText else { return fallback() }
-        return resolution.displayFont(size: size, weight: weight, fallback: fallback())
+        return resolution.displayFont(
+            size: size * layoutProfile.supportingFontScale,
+            weight: weight,
+            fallback: fallback()
+        )
+    }
+
+    func horizontalSpacing(_ base: CGFloat) -> CGFloat {
+        base * layoutProfile.horizontalSpacingScale
+    }
+
+    func verticalSpacing(_ base: CGFloat) -> CGFloat {
+        base * layoutProfile.verticalSpacingScale
+    }
+
+    func displayMinimumScaleFactor(_ base: CGFloat) -> CGFloat {
+        min(base, layoutProfile.displayMinimumScaleFactor)
+    }
+
+    func supportingMinimumScaleFactor(_ base: CGFloat) -> CGFloat {
+        guard coverage == .allText else { return base }
+        return min(base, layoutProfile.supportingMinimumScaleFactor)
     }
 }
 

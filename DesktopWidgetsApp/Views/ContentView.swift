@@ -386,7 +386,10 @@ private struct TypographyPreviewGrid: View {
             spacing: 8
         ) {
             ForEach(WidgetTypographyTarget.allCases) { target in
-                VStack(alignment: .leading, spacing: 7) {
+                VStack(
+                    alignment: .leading,
+                    spacing: typographyStyle(for: target).verticalSpacing(7)
+                ) {
                     Label(target.displayName, systemImage: target.symbolName)
                         .font(
                             typographyStyle(for: target).supportingFont(
@@ -397,17 +400,30 @@ private struct TypographyPreviewGrid: View {
                         )
                         .foregroundStyle(.secondary)
                         .lineLimit(1)
+                        .minimumScaleFactor(
+                            typographyStyle(for: target).supportingMinimumScaleFactor(0.7)
+                        )
+                        .padding(
+                            .vertical,
+                            typographyStyle(for: target).supportingTextVerticalPadding
+                        )
 
                     Text(sampleText(for: target))
                         .font(
-                            (resolutions[target] ?? .theme(.system)).displayFont(
+                            typographyStyle(for: target).displayFont(
                                 size: 24,
                                 weight: .black,
                                 fallback: .custom("Noteworthy-Bold", size: 24)
                             )
                         )
                         .lineLimit(1)
-                        .minimumScaleFactor(0.7)
+                        .minimumScaleFactor(
+                            typographyStyle(for: target).displayMinimumScaleFactor(0.7)
+                        )
+                        .padding(
+                            .vertical,
+                            typographyStyle(for: target).displayTextVerticalPadding
+                        )
 
                     Text(sampleDetail(for: target))
                         .font(
@@ -419,6 +435,13 @@ private struct TypographyPreviewGrid: View {
                         )
                         .foregroundStyle(.secondary)
                         .lineLimit(1)
+                        .minimumScaleFactor(
+                            typographyStyle(for: target).supportingMinimumScaleFactor(0.7)
+                        )
+                        .padding(
+                            .vertical,
+                            typographyStyle(for: target).supportingTextVerticalPadding
+                        )
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(12)

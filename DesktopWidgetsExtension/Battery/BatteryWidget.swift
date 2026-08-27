@@ -112,7 +112,7 @@ struct BatteryWidgetView: View {
     }
 
     private var compactLayout: some View {
-        HStack(spacing: metrics.contentSpacing) {
+        HStack(spacing: typography.horizontalSpacing(metrics.contentSpacing)) {
             heroText(compact: true)
                 .frame(maxWidth: .infinity, alignment: .leading)
 
@@ -121,7 +121,7 @@ struct BatteryWidgetView: View {
     }
 
     private var mediumLayout: some View {
-        HStack(spacing: metrics.contentSpacing) {
+        HStack(spacing: typography.horizontalSpacing(metrics.contentSpacing)) {
             heroText(compact: false)
                 .frame(minWidth: 78, alignment: .leading)
 
@@ -132,7 +132,7 @@ struct BatteryWidgetView: View {
                     .overlay(Color.primary.opacity(0.35))
                     .frame(height: 76)
 
-                VStack(alignment: .leading, spacing: 12) {
+                VStack(alignment: .leading, spacing: typography.verticalSpacing(12)) {
                     ForEach(detailItems) { item in
                         detailRow(item)
                     }
@@ -143,11 +143,11 @@ struct BatteryWidgetView: View {
     }
 
     private var largeLayout: some View {
-        VStack(spacing: 16) {
-            HStack(spacing: metrics.contentSpacing) {
+        VStack(spacing: typography.verticalSpacing(16)) {
+            HStack(spacing: typography.horizontalSpacing(metrics.contentSpacing)) {
                 heroText(compact: false)
 
-                Spacer(minLength: 12)
+                Spacer(minLength: typography.horizontalSpacing(12))
 
                 gauge
             }
@@ -159,10 +159,10 @@ struct BatteryWidgetView: View {
 
                 LazyVGrid(
                     columns: [
-                        GridItem(.flexible(), spacing: 10),
-                        GridItem(.flexible(), spacing: 10),
+                        GridItem(.flexible(), spacing: typography.horizontalSpacing(10)),
+                        GridItem(.flexible(), spacing: typography.horizontalSpacing(10)),
                     ],
-                    spacing: 10
+                    spacing: typography.verticalSpacing(10)
                 ) {
                     ForEach(detailItems) { item in
                         detailCard(item)
@@ -173,7 +173,10 @@ struct BatteryWidgetView: View {
     }
 
     private func heroText(compact: Bool) -> some View {
-        VStack(alignment: .leading, spacing: compact ? 1 : 3) {
+        VStack(
+            alignment: .leading,
+            spacing: typography.verticalSpacing(compact ? 1 : 3)
+        ) {
             Text(presentation.percentageText)
                 .font(
                     typography.displayFont(
@@ -184,7 +187,8 @@ struct BatteryWidgetView: View {
                 )
                 .monospacedDigit()
                 .lineLimit(1)
-                .minimumScaleFactor(0.68)
+                .minimumScaleFactor(typography.displayMinimumScaleFactor(0.68))
+                .padding(.vertical, typography.displayTextVerticalPadding)
 
             Text(compact ? presentation.compactStatusText : presentation.statusText)
                 .font(
@@ -195,7 +199,10 @@ struct BatteryWidgetView: View {
                     )
                 )
                 .lineLimit(1)
-                .minimumScaleFactor(compact ? 0.55 : 0.7)
+                .minimumScaleFactor(
+                    typography.supportingMinimumScaleFactor(compact ? 0.55 : 0.7)
+                )
+                .padding(.vertical, typography.supportingTextVerticalPadding)
         }
         .layoutPriority(1)
     }
@@ -225,12 +232,12 @@ struct BatteryWidgetView: View {
     }
 
     private func detailRow(_ item: BatteryDetailItem) -> some View {
-        HStack(alignment: .firstTextBaseline, spacing: 6) {
+        HStack(alignment: .firstTextBaseline, spacing: typography.horizontalSpacing(6)) {
             Image(systemName: item.symbol)
                 .font(.system(size: 10, weight: .semibold))
                 .frame(width: 12)
 
-            VStack(alignment: .leading, spacing: 0) {
+            VStack(alignment: .leading, spacing: typography.verticalSpacing(0)) {
                 Text(item.title.uppercased())
                     .font(
                         typography.supportingFont(
@@ -239,6 +246,9 @@ struct BatteryWidgetView: View {
                             fallback: .system(size: 8, weight: .bold, design: .rounded)
                         )
                     )
+                    .lineLimit(1)
+                    .minimumScaleFactor(typography.supportingMinimumScaleFactor(0.65))
+                    .padding(.vertical, typography.supportingTextVerticalPadding)
                     .opacity(WidgetTheme.secondaryOpacity)
 
                 Text(item.value)
@@ -250,13 +260,14 @@ struct BatteryWidgetView: View {
                         )
                     )
                     .lineLimit(1)
-                    .minimumScaleFactor(0.7)
+                    .minimumScaleFactor(typography.supportingMinimumScaleFactor(0.7))
+                    .padding(.vertical, typography.supportingTextVerticalPadding)
             }
         }
     }
 
     private func detailCard(_ item: BatteryDetailItem) -> some View {
-        VStack(alignment: .leading, spacing: 5) {
+        VStack(alignment: .leading, spacing: typography.verticalSpacing(5)) {
             Label(item.title.uppercased(), systemImage: item.symbol)
                 .font(
                     typography.supportingFont(
@@ -265,6 +276,9 @@ struct BatteryWidgetView: View {
                         fallback: .system(size: 10, weight: .bold, design: .rounded)
                     )
                 )
+                .lineLimit(1)
+                .minimumScaleFactor(typography.supportingMinimumScaleFactor(0.65))
+                .padding(.vertical, typography.supportingTextVerticalPadding)
                 .opacity(WidgetTheme.secondaryOpacity)
 
             Text(item.value)
@@ -276,11 +290,12 @@ struct BatteryWidgetView: View {
                     )
                 )
                 .lineLimit(1)
-                .minimumScaleFactor(0.7)
+                .minimumScaleFactor(typography.supportingMinimumScaleFactor(0.7))
+                .padding(.vertical, typography.supportingTextVerticalPadding)
         }
         .frame(maxWidth: .infinity, minHeight: 48, alignment: .leading)
         .padding(.horizontal, 12)
-        .padding(.vertical, 9)
+        .padding(.vertical, typography.verticalSpacing(9))
         .background(
             Color.primary.opacity(WidgetTheme.detailCardOpacity),
             in: RoundedRectangle(cornerRadius: WidgetTheme.detailCardCornerRadius)

@@ -65,6 +65,50 @@ final class WidgetContractTests: XCTestCase {
         })
     }
 
+    func testTypographyLayoutProfilesStayConservativeAndPreserveSystemMetrics() {
+        XCTAssertEqual(WidgetTypographyLayoutProfile(theme: .system), .neutral)
+
+        for theme in WidgetTypographyTheme.allCases where theme != .system {
+            let profile = WidgetTypographyLayoutProfile(theme: theme)
+            XCTAssertGreaterThanOrEqual(profile.displayFontScale, 0.9, theme.rawValue)
+            XCTAssertLessThan(profile.displayFontScale, 1, theme.rawValue)
+            XCTAssertGreaterThanOrEqual(profile.supportingFontScale, 0.9, theme.rawValue)
+            XCTAssertLessThan(profile.supportingFontScale, 1, theme.rawValue)
+            XCTAssertGreaterThanOrEqual(profile.horizontalSpacingScale, 0.94, theme.rawValue)
+            XCTAssertLessThan(profile.horizontalSpacingScale, 1, theme.rawValue)
+            XCTAssertGreaterThan(profile.verticalSpacingScale, 1, theme.rawValue)
+            XCTAssertLessThanOrEqual(profile.verticalSpacingScale, 1.05, theme.rawValue)
+            XCTAssertGreaterThan(profile.glyphVerticalPadding, 0, theme.rawValue)
+            XCTAssertLessThanOrEqual(profile.glyphVerticalPadding, 0.6, theme.rawValue)
+        }
+
+        let handmade = WidgetTypographyStyle(
+            resolution: .theme(.handmade),
+            coverage: .allText
+        )
+        XCTAssertEqual(handmade.horizontalSpacing(10), 9.5, accuracy: 0.001)
+        XCTAssertEqual(handmade.verticalSpacing(10), 10.4, accuracy: 0.001)
+        XCTAssertEqual(handmade.displayMinimumScaleFactor(0.7), 0.56)
+        XCTAssertEqual(handmade.supportingMinimumScaleFactor(0.7), 0.56)
+        XCTAssertEqual(handmade.displayTextVerticalPadding, 0.6)
+        XCTAssertEqual(handmade.supportingTextVerticalPadding, 0.6)
+
+        let displayOnly = WidgetTypographyStyle(
+            resolution: .theme(.handmade),
+            coverage: .displayText
+        )
+        XCTAssertEqual(displayOnly.supportingMinimumScaleFactor(0.7), 0.7)
+        XCTAssertEqual(displayOnly.supportingTextVerticalPadding, 0)
+
+        let widgetFonts = WidgetTypographyStyle(
+            resolution: .widgetFonts,
+            coverage: .allText
+        )
+        XCTAssertEqual(widgetFonts.layoutProfile, .neutral)
+        XCTAssertEqual(widgetFonts.horizontalSpacing(10), 10)
+        XCTAssertEqual(widgetFonts.verticalSpacing(10), 10)
+    }
+
     func testEverySupportedFamilyMapsToOneSharedInformationDensity() {
         XCTAssertEqual(WidgetInformationDensity(family: .systemSmall), .compact)
         XCTAssertEqual(WidgetInformationDensity(family: .systemMedium), .standard)

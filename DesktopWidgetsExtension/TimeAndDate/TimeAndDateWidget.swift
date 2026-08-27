@@ -100,25 +100,25 @@ struct TimeAndDateWidgetView: View {
     }
 
     private var referenceLayout: some View {
-        VStack(alignment: .leading, spacing: metrics.spacing) {
+        VStack(alignment: .leading, spacing: typography.verticalSpacing(metrics.spacing)) {
             dateLabel
             Spacer(minLength: 0)
 
-            HStack(alignment: .top, spacing: 12) {
+            HStack(alignment: .top, spacing: typography.horizontalSpacing(12)) {
                 timeLabel
 
-                Spacer(minLength: 8)
+                Spacer(minLength: typography.horizontalSpacing(8))
 
                 if let periodText = presentation.periodText {
                     periodLabel(periodText)
-                        .padding(.top, metrics.referencePeriodInset)
+                        .padding(.top, typography.verticalSpacing(metrics.referencePeriodInset))
                 }
             }
         }
     }
 
     private var stackedLayout: some View {
-        VStack(alignment: .leading, spacing: metrics.spacing) {
+        VStack(alignment: .leading, spacing: typography.verticalSpacing(metrics.spacing)) {
             dateLabel
             Spacer(minLength: 0)
             compactTimeLabel
@@ -126,7 +126,7 @@ struct TimeAndDateWidgetView: View {
     }
 
     private var timeFirstLayout: some View {
-        VStack(alignment: .leading, spacing: metrics.spacing) {
+        VStack(alignment: .leading, spacing: typography.verticalSpacing(metrics.spacing)) {
             compactTimeLabel
             Spacer(minLength: 0)
             dateLabel
@@ -134,7 +134,7 @@ struct TimeAndDateWidgetView: View {
     }
 
     private var centeredLayout: some View {
-        VStack(alignment: .center, spacing: metrics.spacing) {
+        VStack(alignment: .center, spacing: typography.verticalSpacing(metrics.spacing)) {
             dateLabel
                 .multilineTextAlignment(.center)
             Spacer(minLength: 0)
@@ -144,7 +144,7 @@ struct TimeAndDateWidgetView: View {
     }
 
     private var inlineLayout: some View {
-        HStack(alignment: .center, spacing: metrics.inlineSpacing) {
+        HStack(alignment: .center, spacing: typography.horizontalSpacing(metrics.inlineSpacing)) {
             dateLabel
                 .frame(maxWidth: .infinity, alignment: .leading)
 
@@ -164,7 +164,8 @@ struct TimeAndDateWidgetView: View {
             )
             .tracking(metrics.dateTracking)
             .lineLimit(1)
-            .minimumScaleFactor(0.55)
+            .minimumScaleFactor(typography.displayMinimumScaleFactor(0.55))
+            .padding(.vertical, typography.displayTextVerticalPadding)
     }
 
     private var timeLabel: some View {
@@ -177,12 +178,16 @@ struct TimeAndDateWidgetView: View {
                 )
             )
             .lineLimit(1)
-            .minimumScaleFactor(0.55)
+            .minimumScaleFactor(typography.displayMinimumScaleFactor(0.55))
+            .padding(.vertical, typography.displayTextVerticalPadding)
             .layoutPriority(1)
     }
 
     private var compactTimeLabel: some View {
-        HStack(alignment: .firstTextBaseline, spacing: metrics.periodSpacing) {
+        HStack(
+            alignment: .firstTextBaseline,
+            spacing: typography.horizontalSpacing(metrics.periodSpacing)
+        ) {
             timeLabel
 
             if let periodText = presentation.periodText {
@@ -202,7 +207,8 @@ struct TimeAndDateWidgetView: View {
                 )
             )
             .lineLimit(1)
-            .minimumScaleFactor(0.7)
+            .minimumScaleFactor(typography.displayMinimumScaleFactor(0.7))
+            .padding(.vertical, typography.displayTextVerticalPadding)
     }
 }
 

@@ -187,7 +187,10 @@ struct CalendarWidgetView: View {
     }
 
     private var dayView: some View {
-        VStack(alignment: .leading, spacing: family == .systemLarge ? 10 : 4) {
+        VStack(
+            alignment: .leading,
+            spacing: typography.verticalSpacing(family == .systemLarge ? 10 : 4)
+        ) {
             HStack(alignment: .firstTextBaseline) {
                 Text(dayPresentation.monthYearText)
                     .font(
@@ -198,8 +201,9 @@ struct CalendarWidgetView: View {
                         )
                     )
                     .lineLimit(1)
-                    .minimumScaleFactor(0.7)
-                Spacer(minLength: 4)
+                    .minimumScaleFactor(typography.displayMinimumScaleFactor(0.7))
+                    .padding(.vertical, typography.displayTextVerticalPadding)
+                Spacer(minLength: typography.horizontalSpacing(4))
                 eventAccessBadge
             }
 
@@ -218,7 +222,8 @@ struct CalendarWidgetView: View {
                     )
                 )
                 .lineLimit(1)
-                .minimumScaleFactor(0.7)
+                .minimumScaleFactor(typography.supportingMinimumScaleFactor(0.7))
+                .padding(.vertical, typography.supportingTextVerticalPadding)
 
             Text(dayPresentation.dayText)
                 .font(
@@ -233,7 +238,8 @@ struct CalendarWidgetView: View {
                     )
                 )
                 .lineLimit(1)
-                .minimumScaleFactor(0.65)
+                .minimumScaleFactor(typography.displayMinimumScaleFactor(0.65))
+                .padding(.vertical, typography.displayTextVerticalPadding)
 
             dayEventSummary
         }
@@ -243,7 +249,7 @@ struct CalendarWidgetView: View {
 
     private var dayEventSummary: some View {
         let count = entry.events.count(on: entry.date, calendar: calendar)
-        return HStack(spacing: 5) {
+        return HStack(spacing: typography.horizontalSpacing(5)) {
             switch entry.events.accessState {
             case .disabled:
                 Text("TODAY")
@@ -270,7 +276,8 @@ struct CalendarWidgetView: View {
             )
         )
         .lineLimit(1)
-        .minimumScaleFactor(0.7)
+        .minimumScaleFactor(typography.supportingMinimumScaleFactor(0.7))
+        .padding(.vertical, typography.supportingTextVerticalPadding)
     }
 
     private var dayAccessibilityLabel: String {
@@ -283,7 +290,7 @@ struct CalendarWidgetView: View {
     }
 
     private var weekView: some View {
-        VStack(spacing: family == .systemLarge ? 14 : 8) {
+        VStack(spacing: typography.verticalSpacing(family == .systemLarge ? 14 : 8)) {
             HStack {
                 Text(weekPresentation.headerText)
                     .font(
@@ -294,11 +301,16 @@ struct CalendarWidgetView: View {
                         )
                     )
                     .lineLimit(1)
-                Spacer(minLength: 4)
+                    .minimumScaleFactor(typography.displayMinimumScaleFactor(0.7))
+                    .padding(.vertical, typography.displayTextVerticalPadding)
+                Spacer(minLength: typography.horizontalSpacing(4))
                 eventAccessBadge
             }
 
-            HStack(alignment: .top, spacing: family == .systemLarge ? 8 : 3) {
+            HStack(
+                alignment: .top,
+                spacing: typography.horizontalSpacing(family == .systemLarge ? 8 : 3)
+            ) {
                 ForEach(weekPresentation.days) { day in
                     weekDay(day)
                 }
@@ -313,7 +325,7 @@ struct CalendarWidgetView: View {
             eventCount: eventCount,
             showsEventIndicators: entry.events.accessState == .available
         )
-        return VStack(spacing: family == .systemLarge ? 8 : 4) {
+        return VStack(spacing: typography.verticalSpacing(family == .systemLarge ? 8 : 4)) {
             Text(day.weekdayText)
                 .font(
                     typography.supportingFont(
@@ -327,6 +339,8 @@ struct CalendarWidgetView: View {
                     )
                 )
                 .lineLimit(1)
+                .minimumScaleFactor(typography.supportingMinimumScaleFactor(0.65))
+                .padding(.vertical, typography.supportingTextVerticalPadding)
 
             calendarDayMarker(
                 marker,
@@ -345,6 +359,8 @@ struct CalendarWidgetView: View {
                         )
                     )
                     .lineLimit(1)
+                    .minimumScaleFactor(typography.supportingMinimumScaleFactor(0.65))
+                    .padding(.vertical, typography.supportingTextVerticalPadding)
             }
         }
         .frame(maxWidth: .infinity)
@@ -354,7 +370,7 @@ struct CalendarWidgetView: View {
     }
 
     private var monthView: some View {
-        VStack(spacing: monthMetrics.sectionSpacing) {
+        VStack(spacing: typography.verticalSpacing(monthMetrics.sectionSpacing)) {
             monthHeader
             weekdayHeader
             monthGrid
@@ -362,7 +378,7 @@ struct CalendarWidgetView: View {
     }
 
     private var monthHeader: some View {
-        HStack(spacing: 4) {
+        HStack(spacing: typography.horizontalSpacing(4)) {
             Button(intent: PreviousCalendarMonthIntent()) {
                 Image(systemName: "arrow.left")
                     .font(.system(size: monthMetrics.arrowSize, weight: .medium))
@@ -372,7 +388,7 @@ struct CalendarWidgetView: View {
             .buttonStyle(.plain)
             .accessibilityLabel("Previous month")
 
-            Spacer(minLength: 2)
+            Spacer(minLength: typography.horizontalSpacing(2))
 
             Button(intent: CurrentCalendarMonthIntent()) {
                 Text(monthTitle)
@@ -385,12 +401,13 @@ struct CalendarWidgetView: View {
                     )
                     .tracking(monthMetrics.usesCompactMonth ? 0.2 : 0.7)
                     .lineLimit(1)
-                    .minimumScaleFactor(0.72)
+                    .minimumScaleFactor(typography.displayMinimumScaleFactor(0.72))
+                    .padding(.vertical, typography.displayTextVerticalPadding)
             }
             .buttonStyle(.plain)
             .accessibilityLabel("\(monthPresentation.accessibilityLabel), show current month")
 
-            Spacer(minLength: 2)
+            Spacer(minLength: typography.horizontalSpacing(2))
             eventAccessBadge
 
             Button(intent: NextCalendarMonthIntent()) {
@@ -427,7 +444,8 @@ struct CalendarWidgetView: View {
                         )
                     )
                     .lineLimit(1)
-                    .minimumScaleFactor(0.65)
+                    .minimumScaleFactor(typography.supportingMinimumScaleFactor(0.65))
+                    .padding(.vertical, typography.supportingTextVerticalPadding)
                     .frame(maxWidth: .infinity)
                     .accessibilityHidden(true)
             }
@@ -441,7 +459,7 @@ struct CalendarWidgetView: View {
     }
 
     private var monthGrid: some View {
-        LazyVGrid(columns: columns, spacing: monthMetrics.rowSpacing) {
+        LazyVGrid(columns: columns, spacing: typography.verticalSpacing(monthMetrics.rowSpacing)) {
             ForEach(monthPresentation.days) { day in
                 monthDay(day)
             }
@@ -508,6 +526,8 @@ struct CalendarWidgetView: View {
                     fallback: .system(size: fontSize, weight: .bold, design: .rounded)
                 )
             )
+            .lineLimit(1)
+            .minimumScaleFactor(typography.supportingMinimumScaleFactor(0.65))
             .foregroundStyle(renderingMode == .fullColor ? Color.white : Color.primary)
             .offset(y: marker.eventDotCount > 0 ? -(dotSize * 0.55) : 0)
             .frame(width: diameter, height: diameter)
@@ -540,6 +560,8 @@ struct CalendarWidgetView: View {
                                 fallback: .system(size: fontSize, weight: .bold, design: .rounded)
                             )
                         )
+                        .lineLimit(1)
+                        .minimumScaleFactor(typography.supportingMinimumScaleFactor(0.65))
                         .foregroundStyle(.black)
                         .offset(y: marker.eventDotCount > 0 ? -(dotSize * 0.55) : 0)
                 }
@@ -560,6 +582,8 @@ struct CalendarWidgetView: View {
                                 fallback: .system(size: fontSize, weight: .bold, design: .rounded)
                             )
                         )
+                        .lineLimit(1)
+                        .minimumScaleFactor(typography.supportingMinimumScaleFactor(0.65))
                         .foregroundStyle(Color.primary)
                         .offset(y: marker.eventDotCount > 0 ? -(dotSize * 0.55) : 0)
                 }

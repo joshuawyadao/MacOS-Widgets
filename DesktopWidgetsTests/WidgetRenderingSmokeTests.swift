@@ -67,7 +67,9 @@ final class WidgetRenderingSmokeTests: XCTestCase {
                     snapshot: longLocationSnapshot,
                     state: .loaded
                 ),
-                family: .systemSmall
+                family: .systemSmall,
+                typography: .theme(.handmade),
+                coverage: .allText
             ),
             family: .systemSmall,
             name: "Weather Small long location"
@@ -80,7 +82,9 @@ final class WidgetRenderingSmokeTests: XCTestCase {
                     snapshot: sample,
                     state: .stale("Offline")
                 ),
-                family: .systemMedium
+                family: .systemMedium,
+                typography: .theme(.technical),
+                coverage: .allText
             ),
             family: .systemMedium,
             name: "Weather Medium stale"
@@ -93,7 +97,9 @@ final class WidgetRenderingSmokeTests: XCTestCase {
                     snapshot: nil,
                     state: .failed("No weather location matched the selected city.", retryable: false)
                 ),
-                family: .systemLarge
+                family: .systemLarge,
+                typography: .theme(.playful),
+                coverage: .allText
             ),
             family: .systemLarge,
             name: "Weather Large failure"
@@ -177,55 +183,60 @@ final class WidgetRenderingSmokeTests: XCTestCase {
         for theme in WidgetTypographyTheme.allCases {
             let typography = WidgetTypographyResolution.theme(theme)
             for coverage in WidgetTypographyCoverage.allCases {
-                try assertRenders(
-                    TimeAndDateWidgetView(
-                        entry: TimeAndDateEntry(date: referenceDate, configuration: .referencePreview()),
-                        family: .systemSmall,
-                        typography: typography,
-                        coverage: coverage
-                    ),
-                    family: .systemSmall,
-                    name: "Time & Date \(theme.rawValue) \(coverage.rawValue) typography"
-                )
-                try assertRenders(
-                    WeatherWidgetView(
-                        entry: WeatherEntry(
-                            date: referenceDate,
-                            configuration: .referencePreview(),
-                            snapshot: weather,
-                            state: .loaded
+                for family in [WidgetFamily.systemSmall, .systemMedium, .systemLarge] {
+                    try assertRenders(
+                        TimeAndDateWidgetView(
+                            entry: TimeAndDateEntry(
+                                date: referenceDate,
+                                configuration: .referencePreview()
+                            ),
+                            family: family,
+                            typography: typography,
+                            coverage: coverage
                         ),
-                        family: .systemSmall,
-                        typography: typography,
-                        coverage: coverage
-                    ),
-                    family: .systemSmall,
-                    name: "Weather \(theme.rawValue) \(coverage.rawValue) typography"
-                )
-                try assertRenders(
-                    BatteryWidgetView(
-                        entry: BatteryEntry(
-                            date: referenceDate,
-                            configuration: .referencePreview(),
-                            snapshot: .sample
+                        family: family,
+                        name: "Time & Date \(family) \(theme.rawValue) \(coverage.rawValue) typography"
+                    )
+                    try assertRenders(
+                        WeatherWidgetView(
+                            entry: WeatherEntry(
+                                date: referenceDate,
+                                configuration: .referencePreview(),
+                                snapshot: weather,
+                                state: .loaded
+                            ),
+                            family: family,
+                            typography: typography,
+                            coverage: coverage
                         ),
-                        family: .systemSmall,
-                        typography: typography,
-                        coverage: coverage
-                    ),
-                    family: .systemSmall,
-                    name: "Battery \(theme.rawValue) \(coverage.rawValue) typography"
-                )
-                try assertRenders(
-                    CalendarWidgetView(
-                        entry: calendarEntry,
-                        family: .systemSmall,
-                        typography: typography,
-                        coverage: coverage
-                    ),
-                    family: .systemSmall,
-                    name: "Calendar \(theme.rawValue) \(coverage.rawValue) typography"
-                )
+                        family: family,
+                        name: "Weather \(family) \(theme.rawValue) \(coverage.rawValue) typography"
+                    )
+                    try assertRenders(
+                        BatteryWidgetView(
+                            entry: BatteryEntry(
+                                date: referenceDate,
+                                configuration: .referencePreview(),
+                                snapshot: .sample
+                            ),
+                            family: family,
+                            typography: typography,
+                            coverage: coverage
+                        ),
+                        family: family,
+                        name: "Battery \(family) \(theme.rawValue) \(coverage.rawValue) typography"
+                    )
+                    try assertRenders(
+                        CalendarWidgetView(
+                            entry: calendarEntry,
+                            family: family,
+                            typography: typography,
+                            coverage: coverage
+                        ),
+                        family: family,
+                        name: "Calendar \(family) \(theme.rawValue) \(coverage.rawValue) typography"
+                    )
+                }
             }
         }
     }

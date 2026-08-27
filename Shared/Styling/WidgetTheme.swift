@@ -90,7 +90,7 @@ struct WidgetStatusLine: View {
     }
 
     var body: some View {
-        HStack(spacing: metrics.statusSpacing) {
+        HStack(spacing: typography.horizontalSpacing(metrics.statusSpacing)) {
             Image(systemName: systemImage)
                 .font(.system(size: metrics.statusIconSize, weight: .semibold))
             Text(text)
@@ -103,7 +103,8 @@ struct WidgetStatusLine: View {
             )
         )
         .lineLimit(1)
-        .minimumScaleFactor(0.72)
+        .minimumScaleFactor(typography.supportingMinimumScaleFactor(0.72))
+        .padding(.vertical, typography.supportingTextVerticalPadding)
         .opacity(WidgetTheme.secondaryOpacity)
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(accessibilityText ?? text)
