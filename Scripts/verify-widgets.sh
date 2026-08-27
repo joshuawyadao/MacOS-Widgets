@@ -43,6 +43,7 @@ readonly PROJECT_PATH="$PROJECT_ROOT/DesktopWidgets.xcodeproj"
 readonly SCHEME="DesktopWidgets"
 readonly SHARED_SCHEME="$PROJECT_PATH/xcshareddata/xcschemes/DesktopWidgets.xcscheme"
 readonly RUNTIME_REFRESH_SCRIPT="$PROJECT_ROOT/Scripts/refresh-widget-runtime.sh"
+readonly RUNTIME_REFRESH_TEST="$PROJECT_ROOT/Scripts/test-refresh-widget-runtime.sh"
 readonly PERSONAL_TEAM_SCRIPT="$PROJECT_ROOT/Scripts/configure-personal-team.sh"
 readonly SIGNING_CONFIGURATION="$PROJECT_ROOT/Config/Signing.xcconfig"
 SELECTED_DEVELOPER_DIR="$(resolve_developer_dir)"
@@ -91,6 +92,13 @@ if [[ ! -x "$RUNTIME_REFRESH_SCRIPT" ]]; then
 fi
 DEVELOPER_DIR="$SELECTED_DEVELOPER_DIR" /bin/bash -n "$RUNTIME_REFRESH_SCRIPT"
 require_contains "$SHARED_SCHEME" "refresh-widget-runtime.sh" "Xcode Run widget runtime refresh action"
+require_file "$RUNTIME_REFRESH_TEST" "widget runtime refresh regression test"
+if [[ ! -x "$RUNTIME_REFRESH_TEST" ]]; then
+    echo "FAIL: Widget runtime refresh regression test is not executable" >&2
+    exit 1
+fi
+/bin/bash -n "$RUNTIME_REFRESH_TEST"
+"$RUNTIME_REFRESH_TEST"
 
 require_file "$PERSONAL_TEAM_SCRIPT" "Personal Team setup script"
 if [[ ! -x "$PERSONAL_TEAM_SCRIPT" ]]; then
