@@ -9,7 +9,7 @@ Address the three actionable Codex review findings with narrow behavior fixes an
 ## Action items
 [x] Match Weather current UV to the hourly interval containing `current.time`, add a non-hour-aligned fixture regression, run the Weather suite, commit/push the fix, and acknowledge the review comment.
 [x] Carry a next event's end boundary through the private Calendar timing model, refresh at an earlier start/end boundary, add timeline regressions, run the Calendar suite, commit/push the fix, and acknowledge the review comment.
-[ ] Treat normalized Battery `MaxCapacity` as an already-computed percentage while calculating ratios only from raw compatible capacity, add parser regressions, run the Battery suite, commit/push the fix, and acknowledge the review comment.
+[x] Treat normalized Battery `MaxCapacity` as an already-computed percentage while calculating ratios only from raw compatible capacity, add parser regressions, run the Battery suite, commit/push the fix, and acknowledge the review comment.
 [ ] Run `git diff --check` and the complete `Scripts/verify-widgets.sh` gate after all three fixes.
 [ ] Recheck Codex threads, CI Verify, merge conflicts, and GitHub mergeability; leave PR #8 open and merge-ready.
 

@@ -61,12 +61,21 @@ enum BatteryHardwareKey {
 enum BatteryHardwareParser {
     static func metrics(from properties: [String: Any]) -> BatteryHardwareMetrics? {
         let designCapacity = number(for: BatteryHardwareKey.designCapacity, in: properties)?.doubleValue
-        let maximumCapacity = (
-            number(for: BatteryHardwareKey.appleRawMaximumCapacity, in: properties)
-                ?? number(for: BatteryHardwareKey.maximumCapacity, in: properties)
+        let rawMaximumCapacity = number(
+            for: BatteryHardwareKey.appleRawMaximumCapacity,
+            in: properties
         )?.doubleValue
-        let healthPercentage: Int? = if let designCapacity, designCapacity > 0, let maximumCapacity {
-            Int((maximumCapacity / designCapacity * 100).rounded())
+        let normalizedMaximumCapacity = number(
+            for: BatteryHardwareKey.maximumCapacity,
+            in: properties
+        )?.doubleValue
+        let healthPercentage: Int? = if let designCapacity,
+                                        designCapacity > 0,
+                                        let rawMaximumCapacity {
+            Int((rawMaximumCapacity / designCapacity * 100).rounded())
+        } else if let normalizedMaximumCapacity,
+                  (0...100).contains(normalizedMaximumCapacity) {
+            Int(normalizedMaximumCapacity.rounded())
         } else {
             nil
         }

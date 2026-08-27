@@ -163,12 +163,32 @@ final class BatteryWidgetTests: XCTestCase {
     func testHardwareParserClampsImpossibleHealthAndDropsNegativeCycles() throws {
         let metrics = try XCTUnwrap(BatteryHardwareParser.metrics(from: [
             BatteryHardwareKey.designCapacity: 1_000,
-            BatteryHardwareKey.maximumCapacity: 1_400,
+            BatteryHardwareKey.appleRawMaximumCapacity: 1_400,
             BatteryHardwareKey.cycleCount: -1,
         ]))
 
         XCTAssertEqual(metrics.healthPercentage, 100)
         XCTAssertNil(metrics.cycleCount)
+    }
+
+    func testHardwareParserTreatsNormalizedMaximumCapacityAsHealthPercentage() throws {
+        let metrics = try XCTUnwrap(BatteryHardwareParser.metrics(from: [
+            BatteryHardwareKey.designCapacity: 5_000,
+            BatteryHardwareKey.maximumCapacity: 87,
+        ]))
+
+        XCTAssertEqual(metrics.healthPercentage, 87)
+    }
+
+    func testHardwareParserOmitsAmbiguousMaximumCapacityButKeepsCycles() throws {
+        let metrics = try XCTUnwrap(BatteryHardwareParser.metrics(from: [
+            BatteryHardwareKey.designCapacity: 5_000,
+            BatteryHardwareKey.maximumCapacity: 4_250,
+            BatteryHardwareKey.cycleCount: 321,
+        ]))
+
+        XCTAssertNil(metrics.healthPercentage)
+        XCTAssertEqual(metrics.cycleCount, 321)
     }
 
     func testReferencePresentationMatchesPercentageRuntimeAndFill() {
