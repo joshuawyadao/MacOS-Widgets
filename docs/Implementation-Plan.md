@@ -13,8 +13,15 @@ Add opt-in automatic Personal Team maintenance without a resident process: a use
 - [x] Persist non-sensitive automatic-refresh state in the signed App Group container and show enabled, healthy, refreshed, or needs-attention guidance in the companion app with helper access and technical details.
 - [x] Extend handoff packaging, the direct installation guide, README, and Personal Team operations documentation with resource usage, five-day/48-hour behavior, retry semantics, limitations, and uninstall instructions.
 - [x] Add mocked tests for expiry parsing and thresholds, healthy no-op checks, near-expiry refresh, missing/expired profiles, refresh failure/notification, LaunchAgent construction, idempotent enable/disable, and exact-target safety.
-- [ ] Update `Scripts/verify-widgets.sh`, run shell syntax and focused tests, then complete Xcode verification and `git diff --check`.
-- [ ] Save and push cohesive commits on `codex/feature/easier-personal-installation` without rewriting existing history.
+- [x] Update `Scripts/verify-widgets.sh`, run shell syntax and focused tests, then complete Xcode verification and `git diff --check`.
+- [x] Save and push cohesive commits on `codex/feature/easier-personal-installation` without rewriting existing history.
 
 ## Open questions
 - None.
+
+## Verification result
+
+- Mocked automatic-maintenance, personal-installation, packaging, and guarded runtime-refresh tests pass.
+- The complete Debug Swift test suite and a fresh unsigned Release app/widget build pass through `Scripts/verify-widgets.sh`.
+- Widget embedding, stable identities, App Intent metadata, App Group configuration, helper metadata, and `git diff --check` pass.
+- A signed Personal Team installation and one observed real seven-day renewal cycle still require the target Mac owner's Apple Account interaction; no credentials were automated or accessed during repository verification.

@@ -237,7 +237,7 @@ struct HomePage: View {
             SetupStep(
                 number: 4,
                 title: "Let maintenance stay easy",
-                detail: "Choose automatic maintenance during installation. A tiny daily check exits immediately unless free signing has less than 48 hours left. Manual Refresh remains available if Xcode ever needs attention."
+                detail: "Choose automatic maintenance during installation. A tiny daily check exits immediately unless free signing has less than 48 hours left. Refresh Desktop Widgets.command remains the manual fallback if Xcode ever needs attention."
             )
         }
     }
