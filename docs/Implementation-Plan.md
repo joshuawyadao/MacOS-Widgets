@@ -1,17 +1,17 @@
 # Plan
 
-Address the three actionable Codex review findings with narrow behavior fixes and regression tests, saving each feedback item as an independent commit before rechecking the full PR. Preserve existing widget identities, configuration schemas, and refresh budgets except where an earlier event boundary requires a more accurate Calendar update.
+Preserve the full Xcode verification gate while sharply reducing costly macOS-hosted executions. Run the gate only for merge-ready pull requests or manual requests, cancel superseded work, and remove the duplicate post-merge `main` run.
 
 ## Scope
-- In: Current-hour UV selection, Calendar next-event boundary scheduling, Battery health normalization, focused regression tests, per-comment commits and acknowledgements, and final PR verification.
-- Out: New widget options, unrelated presentation changes, installation work, signing changes, and broader data-source refactors.
+- In: `.github/workflows/ci.yml` trigger, concurrency, draft policy, manual dispatch, and README CI guidance.
+- Out: Xcode tests, coverage behavior, release-build behavior, signing, widget runtime code, branch-protection settings, and self-hosted runners.
 
 ## Action items
-[x] Match Weather current UV to the hourly interval containing `current.time`, add a non-hour-aligned fixture regression, run the Weather suite, commit/push the fix, and acknowledge the review comment.
-[x] Carry a next event's end boundary through the private Calendar timing model, refresh at an earlier start/end boundary, add timeline regressions, run the Calendar suite, commit/push the fix, and acknowledge the review comment.
-[x] Treat normalized Battery `MaxCapacity` as an already-computed percentage while calculating ratios only from raw compatible capacity, add parser regressions, run the Battery suite, commit/push the fix, and acknowledge the review comment.
-[x] Run `git diff --check` and the complete `Scripts/verify-widgets.sh` gate after all three fixes.
-[x] Recheck Codex threads, CI Verify, merge conflicts, and GitHub mergeability; leave PR #8 open and merge-ready.
+[x] Restrict macOS CI to merge-ready pull requests plus manual dispatch, removing the duplicate `main` push trigger.
+[x] Add per-workflow/per-ref concurrency cancellation while preserving the existing 20-minute timeout and read-only permissions.
+[x] Document when hosted macOS verification runs and how to request it manually.
+[x] Validate YAML parsing, workflow-policy invariants, `git diff --check`, and the scoped diff; no Swift test files are needed because executable widget behavior is unchanged.
+[x] Commit and push the isolated `codex/optimize-github-actions` branch while leaving the unrelated `v6` file in the original checkout untouched.
 
 ## Open questions
 - None.
