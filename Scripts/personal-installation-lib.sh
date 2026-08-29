@@ -115,7 +115,7 @@ desktop_widgets_identifier_values() {
     lowercase_team="$(/usr/bin/printf '%s' "$team_id" | /usr/bin/tr '[:upper:]' '[:lower:]')"
     /usr/bin/printf '%s\n' \
         "io.desktopwidgets.personal.${lowercase_team}.app" \
-        "io.desktopwidgets.personal.${lowercase_team}.widgets" \
+        "io.desktopwidgets.personal.${lowercase_team}.app.widgets" \
         "${team_id}.io.desktopwidgets.personal.${lowercase_team}.shared"
 }
 

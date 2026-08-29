@@ -40,6 +40,8 @@ Do not describe Personal Team installation as verified on a release until that c
 
 The installer reads Xcode’s local Personal Team metadata without printing Apple Account addresses. It writes `Local.xcconfig` with mode `0600`; Git ignores that file. New installations derive stable app, extension, and App Group identifiers from the selected Team ID. Repeated runs reuse them. An older `Local.xcconfig` that predates the installer keeps the historic bundle IDs so macOS has the best chance to preserve existing widget placement and preferences.
 
+The generated widget-extension identifier begins with the generated host-app identifier, as required by Xcode’s `ValidateEmbeddedBinary` check. Installer builds created before this correction are migrated automatically on the next run: the app identifier, App Group, preferences, and Team ID stay unchanged while the not-yet-valid extension identifier is repaired.
+
 The stable source copy lives at `~/Library/Application Support/Desktop Widgets/Installer`, build intermediates live beside it, the app installs at `~/Applications/Desktop Widgets.app`, and redacted logs live under `~/Library/Logs/Desktop Widgets`.
 
 The runtime refresh delegates to `Scripts/refresh-widget-runtime.sh`. Its stale-registration guard unregisters only other matching Desktop Widgets development extensions under the selected DerivedData root. It never unregisters unrelated extensions, removes unrelated apps, or deletes placed-widget configuration.

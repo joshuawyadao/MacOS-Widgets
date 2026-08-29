@@ -74,8 +74,11 @@ assert_contains "$parsed_teams" "Friendly Person (Personal Team)" "Personal Team
 [[ "$parsed_teams" != *"PAID123456"* ]] || fail "Personal Team parser included a paid team"
 
 identifier_values="$(desktop_widgets_identifier_values "$TEAM_ID")"
-assert_equal "io.desktopwidgets.personal.abc123de45.app" "$(echo "$identifier_values" | /usr/bin/sed -n '1p')" "app identifier should be stable and team-derived"
-assert_equal "io.desktopwidgets.personal.abc123de45.widgets" "$(echo "$identifier_values" | /usr/bin/sed -n '2p')" "extension identifier should be stable and team-derived"
+generated_app_identifier="$(echo "$identifier_values" | /usr/bin/sed -n '1p')"
+generated_extension_identifier="$(echo "$identifier_values" | /usr/bin/sed -n '2p')"
+assert_equal "io.desktopwidgets.personal.abc123de45.app" "$generated_app_identifier" "app identifier should be stable and team-derived"
+assert_equal "io.desktopwidgets.personal.abc123de45.app.widgets" "$generated_extension_identifier" "extension identifier should be stable, team-derived, and prefixed by its parent app"
+[[ "$generated_extension_identifier" == "$generated_app_identifier".* ]] || fail "embedded extension identifier must begin with the parent app identifier"
 assert_equal "$TEAM_ID.io.desktopwidgets.personal.abc123de45.shared" "$(echo "$identifier_values" | /usr/bin/sed -n '3p')" "App Group should be stable and team-prefixed"
 
 desktop_widgets_write_local_configuration "$LOCAL_CONFIGURATION" "$TEAM_ID" >/dev/null
@@ -95,6 +98,17 @@ desktop_widgets_write_local_configuration "$legacy_configuration" "$TEAM_ID" >/d
 assert_equal "com.joshuawyadao.DesktopWidgets" "$(desktop_widgets_local_value DESKTOP_WIDGETS_APP_BUNDLE_IDENTIFIER "$legacy_configuration")" "legacy configuration should preserve the established app identifier"
 assert_equal "$TEAM_ID.com.joshuawyadao.desktop-widgets" "$(desktop_widgets_local_value WIDGET_THEME_APP_GROUP "$legacy_configuration")" "legacy configuration should preserve the established App Group suffix"
 assert_rejects "configuration must not overwrite another team" desktop_widgets_write_local_configuration "$legacy_configuration" ZYX987WV65
+
+generated_old_configuration="$TEST_ROOT/GeneratedOld.xcconfig"
+/usr/bin/printf '%s\n' \
+    "LOCAL_DEVELOPMENT_TEAM = $TEAM_ID" \
+    "DESKTOP_WIDGETS_APP_BUNDLE_IDENTIFIER = io.desktopwidgets.personal.abc123de45.app" \
+    "DESKTOP_WIDGETS_EXTENSION_BUNDLE_IDENTIFIER = io.desktopwidgets.personal.abc123de45.widgets" \
+    "WIDGET_THEME_APP_GROUP = $TEAM_ID.io.desktopwidgets.personal.abc123de45.shared" > "$generated_old_configuration"
+desktop_widgets_write_local_configuration "$generated_old_configuration" "$TEAM_ID" >/dev/null
+assert_equal "io.desktopwidgets.personal.abc123de45.app" "$(desktop_widgets_local_value DESKTOP_WIDGETS_APP_BUNDLE_IDENTIFIER "$generated_old_configuration")" "generated configuration migration should preserve the app identifier"
+assert_equal "io.desktopwidgets.personal.abc123de45.app.widgets" "$(desktop_widgets_local_value DESKTOP_WIDGETS_EXTENSION_BUNDLE_IDENTIFIER "$generated_old_configuration")" "generated configuration migration should repair the embedded extension prefix"
+assert_equal "$TEAM_ID.io.desktopwidgets.personal.abc123de45.shared" "$(desktop_widgets_local_value WIDGET_THEME_APP_GROUP "$generated_old_configuration")" "generated configuration migration should preserve the App Group"
 
 expected_destination="$TEST_HOME/Applications/Desktop Widgets.app"
 DESKTOP_WIDGETS_HOME="$TEST_HOME" desktop_widgets_is_safe_install_destination "$expected_destination" || fail "user Applications destination should be allowed"
