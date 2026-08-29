@@ -307,9 +307,17 @@ if [[ -z "$PERSONAL_TEAMS" ]]; then
     echo "Xcode handles the sign-in securely; this installer never sees your password." >&2
     exit 1
 fi
-if ! PERSONAL_TEAM_ID="$(desktop_widgets_select_personal_team "$PERSONAL_TEAMS")"; then
-    echo "A Personal Team could not be selected." >&2
-    exit 1
+if [[ "$SCHEDULED_RUN" == "1" ]]; then
+    if ! PERSONAL_TEAM_ID="$(desktop_widgets_saved_personal_team "$PERSONAL_TEAMS" "$LOCAL_CONFIGURATION")"; then
+        echo "The Personal Team saved for automatic maintenance is no longer available in Xcode." >&2
+        echo "Open Xcode, check Settings > Accounts, then run Refresh Desktop Widgets.command." >&2
+        exit 1
+    fi
+else
+    if ! PERSONAL_TEAM_ID="$(desktop_widgets_select_personal_team "$PERSONAL_TEAMS")"; then
+        echo "A Personal Team could not be selected." >&2
+        exit 1
+    fi
 fi
 readonly PERSONAL_TEAM_ID
 echo "Selected Personal Team $PERSONAL_TEAM_ID."

@@ -147,6 +147,17 @@ desktop_widgets_select_personal_team() {
     /usr/bin/printf '%s\n' "$selected"
 }
 
+desktop_widgets_saved_personal_team() {
+    local teams="$1"
+    local configuration_path="$2"
+    local saved_team
+
+    saved_team="$(desktop_widgets_local_value LOCAL_DEVELOPMENT_TEAM "$configuration_path")"
+    [[ "$saved_team" =~ ^[A-Z0-9]{10}$ ]] || return 1
+    /usr/bin/printf '%s\n' "$teams" \
+        | /usr/bin/awk -F '\t' -v team="$saved_team" '$1 == team { print $1; found = 1; exit } END { if (!found) exit 1 }'
+}
+
 desktop_widgets_identifier_values() {
     local team_id="$1"
     local lowercase_team

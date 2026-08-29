@@ -95,6 +95,9 @@ assert_equal "$TEAM_ID.io.desktopwidgets.personal.abc123de45.shared" "$(echo "$i
 
 desktop_widgets_write_local_configuration "$LOCAL_CONFIGURATION" "$TEAM_ID" >/dev/null
 first_configuration="$(/bin/cat "$LOCAL_CONFIGURATION")"
+assert_equal "$TEAM_ID" "$(desktop_widgets_saved_personal_team "$multiple_personal_teams" "$LOCAL_CONFIGURATION")" "unattended refresh should reuse the saved Personal Team"
+/usr/bin/printf '%s\n' 'LOCAL_DEVELOPMENT_TEAM = MISSING1234' > "$TEST_ROOT/missing-team.xcconfig"
+assert_rejects "saved team must still be available in Xcode" desktop_widgets_saved_personal_team "$multiple_personal_teams" "$TEST_ROOT/missing-team.xcconfig"
 desktop_widgets_write_local_configuration "$LOCAL_CONFIGURATION" "$TEAM_ID" >/dev/null
 second_configuration="$(/bin/cat "$LOCAL_CONFIGURATION")"
 assert_equal "$first_configuration" "$second_configuration" "repeated local configuration should be idempotent"
@@ -173,6 +176,7 @@ assert_contains "$build_arguments" "Release" "build command should use Release c
 [[ "$build_arguments" != *"$TEAM_ID"* ]] || fail "build command should obtain the team from ignored configuration"
 assert_contains "$(/bin/cat "$INSTALLATION_SCRIPT")" "desktop_widgets_read_interactive_choice 'Turn on low-resource automatic maintenance? [Y/n] '" "interactive maintenance choice should use the shared visible prompt helper"
 assert_contains "$(/bin/cat "$LIBRARY_SCRIPT")" 'selection="$(desktop_widgets_read_interactive_choice' "Personal Team selection should use the shared visible prompt helper"
+assert_contains "$(/bin/cat "$INSTALLATION_SCRIPT")" 'desktop_widgets_saved_personal_team "$PERSONAL_TEAMS" "$LOCAL_CONFIGURATION"' "scheduled refresh should reuse its saved team without prompting"
 
 capability_log="$TEST_ROOT/capability.log"
 echo "Personal Teams do not support the App Groups capability" > "$capability_log"
