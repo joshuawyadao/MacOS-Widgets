@@ -13,7 +13,7 @@ Support Xcode 26.6’s valid profile-free macOS Personal Team output without wea
 - [x] Extend automatic-maintenance tests for healthy and near-renewal profile-free builds, invalid signatures, normal profiles, failures, idempotency, and notification throttling.
 - [x] Update companion wording, the installation guide, README, and Personal Team documentation to distinguish real profile expiration from the conservative profile-free renewal deadline.
 - [x] Run focused installer/maintenance tests, the exact identifier embedding build, the complete verification gate, and `git diff --check`.
-- [ ] Save and push the fix on `codex/feature/easier-personal-installation`, then generate a clean replacement ZIP for the target Mac.
+- [x] Save and push the fix on `codex/feature/easier-personal-installation`, then generate a clean replacement ZIP for the target Mac.
 
 ## Open questions
 - None.
