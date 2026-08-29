@@ -348,7 +348,7 @@ step 6 "Refreshing the widget"
 if [[ "$DRY_RUN" == "1" ]]; then
     echo "DRY RUN: refresh the installed widget runtime"
 else
-    WIDGET_REFRESH_DERIVED_DATA_ROOT="$DERIVED_DATA_PATH" \
+    WIDGET_REFRESH_DERIVED_DATA_ROOTS="$DERIVED_DATA_PATH:$USER_HOME/Library/Developer/Xcode/DerivedData" \
         /bin/bash "$SOURCE_ROOT/Scripts/refresh-widget-runtime.sh" "$INSTALL_DESTINATION"
 fi
 
