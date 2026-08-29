@@ -180,13 +180,18 @@ if grep -Eq 'DEVELOPMENT_TEAM[[:space:]]*=[[:space:]]*[A-Z0-9]{10}' "$PROJECT_PA
     echo "FAIL: A machine-specific Apple Team ID is present in tracked signing configuration" >&2
     exit 1
 fi
-if ! git -C "$PROJECT_ROOT" check-ignore --quiet Local.xcconfig; then
-    echo "FAIL: Local.xcconfig must remain ignored by Git" >&2
-    exit 1
-fi
-if ! git -C "$PROJECT_ROOT" check-ignore --quiet Desktop-Widgets-Personal-Installer.zip; then
-    echo "FAIL: Generated personal handoff archives must remain ignored by Git" >&2
-    exit 1
+readonly GIT_WORKTREE_ROOT="$(git -C "$PROJECT_ROOT" rev-parse --show-toplevel 2>/dev/null || true)"
+if [[ "$GIT_WORKTREE_ROOT" == "$PROJECT_ROOT" ]]; then
+    if ! git -C "$PROJECT_ROOT" check-ignore --quiet Local.xcconfig; then
+        echo "FAIL: Local.xcconfig must remain ignored by Git" >&2
+        exit 1
+    fi
+    if ! git -C "$PROJECT_ROOT" check-ignore --quiet Desktop-Widgets-Personal-Installer.zip; then
+        echo "FAIL: Generated personal handoff archives must remain ignored by Git" >&2
+        exit 1
+    fi
+else
+    echo "Packaged source: skipping Git-only ignore checks."
 fi
 require_contains "$PROJECT_ROOT/DesktopWidgetsApp/Info.plist" "DesktopWidgetsDevelopmentTeam" "companion-app signing status metadata"
 require_contains "$PROJECT_ROOT/DesktopWidgetsApp/Info.plist" "DesktopWidgetsRefreshCommandPath" "companion-app refresh helper metadata"

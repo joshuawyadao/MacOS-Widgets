@@ -20,6 +20,7 @@ readonly PACKAGE_ITEMS=(
     "Refresh Desktop Widgets.command"
     "Enable Automatic Refresh.command"
     "Disable Automatic Refresh.command"
+    "Package Desktop Widgets for Another Mac.command"
     "Installation Guide.md"
     "README.md"
 )

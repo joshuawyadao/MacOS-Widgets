@@ -50,6 +50,7 @@ for required in \
     "Desktop Widgets/Refresh Desktop Widgets.command" \
     "Desktop Widgets/Enable Automatic Refresh.command" \
     "Desktop Widgets/Disable Automatic Refresh.command" \
+    "Desktop Widgets/Package Desktop Widgets for Another Mac.command" \
     "Desktop Widgets/Installation Guide.md" \
     "Desktop Widgets/DesktopWidgets.xcodeproj/project.pbxproj" \
     "Desktop Widgets/DesktopWidgetsTests/WidgetContractTests.swift"; do
