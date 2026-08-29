@@ -16,11 +16,11 @@ Apple requires you to place widgets yourself. Desktop Widgets cannot automatical
 
 ## Automatic maintenance
 
-Apple says free Personal Team profiles expire after 7 days. Automatic maintenance prevents this from becoming a weekly chore:
+Apple says free Personal Team profiles expire after 7 days when Xcode uses one. Xcode 26.6 can legitimately produce a profile-free macOS build for Desktop Widgets because its App Group, sandbox, network, and Calendar permissions are unrestricted macOS entitlements. Automatic maintenance handles either signing form:
 
 - A tiny check runs when you log in and once a day at 11:00 AM, then exits. It does not stay running.
-- Most days it only reads the app's expiration date and does not open Xcode or rebuild anything.
-- During the final 48 hours—normally around day 5—it refreshes Desktop Widgets at low priority and stays out of the way.
+- Most days it only reads the profile expiration or local signing timestamp and does not open Xcode or rebuild anything.
+- During the final 48 hours—normally around day 5—it refreshes Desktop Widgets at low priority. Profile-free builds use the same conservative seven-day window rather than assuming they never need maintenance.
 - If the Mac is asleep at 11:00 AM, macOS runs the missed check after it wakes.
 - Success is quiet. A notification appears only when you need to open Xcode or use the manual refresh.
 

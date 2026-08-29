@@ -59,6 +59,7 @@ assert_contains() {
     "WIDGET_THEME_APP_GROUP = $APP_GROUP" > "$LOCAL_CONFIGURATION"
 
 assert_equal "$CURRENT_EPOCH" "$(desktop_widgets_automatic_expiration_epoch '2026-08-27T12:00:00.000Z')" "fractional RFC3339 expiration should parse"
+assert_equal "2026-09-03T12:00:00Z" "$(desktop_widgets_automatic_profileless_deadline "$CURRENT_EPOCH")" "profile-free signing should use a conservative seven-day renewal deadline"
 healthy_epoch="$(desktop_widgets_automatic_expiration_epoch '2026-08-30T12:00:01Z')"
 near_epoch="$(desktop_widgets_automatic_expiration_epoch '2026-08-29T11:59:59Z')"
 if desktop_widgets_automatic_should_refresh "$healthy_epoch" "$CURRENT_EPOCH"; then
@@ -158,6 +159,26 @@ run_automatic() {
         /bin/bash "$AUTOMATIC_SCRIPT"
 }
 
+run_profileless_automatic() {
+    local signed_at_epoch="$1"
+    shift
+    env \
+        DESKTOP_WIDGETS_HOME="$TEST_HOME" \
+        DESKTOP_WIDGETS_SUPPORT_ROOT="$SUPPORT_ROOT" \
+        DESKTOP_WIDGETS_LOCAL_CONFIGURATION="$LOCAL_CONFIGURATION" \
+        DESKTOP_WIDGETS_AUTOMATIC_STATUS_PATH="$STATUS_PATH" \
+        DESKTOP_WIDGETS_LOG_DIRECTORY="$TEST_ROOT/Logs" \
+        DESKTOP_WIDGETS_REFRESH_SCRIPT="$TEST_ROOT/fake-refresh.sh" \
+        DESKTOP_WIDGETS_NOTIFICATION_COMMAND="$TEST_ROOT/fake-notification.sh" \
+        DESKTOP_WIDGETS_PROFILELESS_SIGNED_AT_EPOCH="$signed_at_epoch" \
+        DESKTOP_WIDGETS_AUTOMATIC_NOW_EPOCH="$CURRENT_EPOCH" \
+        DESKTOP_WIDGETS_AUTOMATIC_NOW_ISO="$CURRENT_ISO" \
+        DESKTOP_WIDGETS_TEST_REFRESH_LOG="$REFRESH_LOG" \
+        DESKTOP_WIDGETS_TEST_NOTIFICATION_LOG="$NOTIFICATION_LOG" \
+        "$@" \
+        /bin/bash "$AUTOMATIC_SCRIPT"
+}
+
 echo '2026-09-01T12:00:00Z' > "$EXPIRATION_FILE"
 : > "$REFRESH_LOG"
 run_automatic >/dev/null
@@ -183,7 +204,7 @@ assert_equal "needsAttention" "$(desktop_widgets_automatic_status_value "$STATUS
 : > "$NOTIFICATION_LOG"
 run_automatic >/dev/null
 assert_equal "needsAttention" "$(desktop_widgets_automatic_status_value "$STATUS_PATH" State)" "missing profile should publish attention state"
-assert_equal "missing-profile" "$(desktop_widgets_automatic_status_value "$STATUS_PATH" LastErrorCode)" "missing profile should record a stable error code"
+assert_equal "invalid-signing-state" "$(desktop_widgets_automatic_status_value "$STATUS_PATH" LastErrorCode)" "missing signing fixture should record a stable error code"
 [[ -s "$NOTIFICATION_LOG" ]] || fail "missing profile should notify the user"
 
 echo 'not-an-expiration-date' > "$EXPIRATION_FILE"
@@ -192,5 +213,22 @@ run_automatic >/dev/null
 assert_equal "needsAttention" "$(desktop_widgets_automatic_status_value "$STATUS_PATH" State)" "unreadable profile expiration should publish attention state"
 assert_equal "invalid-expiration" "$(desktop_widgets_automatic_status_value "$STATUS_PATH" LastErrorCode)" "unreadable expiration should record a stable error code"
 [[ -s "$NOTIFICATION_LOG" ]] || fail "unreadable profile expiration should notify the user"
+
+profileless_healthy_signed_at="$(desktop_widgets_automatic_expiration_epoch '2026-08-26T12:00:00Z')"
+: > "$REFRESH_LOG"
+run_profileless_automatic "$profileless_healthy_signed_at" >/dev/null
+[[ ! -s "$REFRESH_LOG" ]] || fail "healthy profile-free signature check must not start Xcode"
+assert_equal "healthy" "$(desktop_widgets_automatic_status_value "$STATUS_PATH" State)" "healthy profile-free build should publish status"
+
+profileless_near_signed_at="$(desktop_widgets_automatic_expiration_epoch '2026-08-22T12:00:00Z')"
+: > "$REFRESH_LOG"
+run_profileless_automatic "$profileless_near_signed_at" >/dev/null
+[[ "$(/usr/bin/grep -c 'refresh' "$REFRESH_LOG")" == "1" ]] || fail "profile-free build inside the precautionary renewal window should refresh"
+
+: > "$NOTIFICATION_LOG"
+run_profileless_automatic "$profileless_healthy_signed_at" DESKTOP_WIDGETS_PROFILELESS_SIGNATURE_VALID=0 >/dev/null
+assert_equal "needsAttention" "$(desktop_widgets_automatic_status_value "$STATUS_PATH" State)" "invalid profile-free signature should publish attention state"
+assert_equal "invalid-signing-state" "$(desktop_widgets_automatic_status_value "$STATUS_PATH" LastErrorCode)" "invalid profile-free signature should record a stable error code"
+[[ -s "$NOTIFICATION_LOG" ]] || fail "invalid profile-free signature should notify the user"
 
 echo "PASS: Automatic refresh thresholds, no-op behavior, low-resource LaunchAgent, idempotency, failures, and exact-target safety are covered."

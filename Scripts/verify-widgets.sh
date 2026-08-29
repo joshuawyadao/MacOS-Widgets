@@ -199,6 +199,11 @@ require_contains "$PROJECT_ROOT/DesktopWidgetsApp/Views/HelpAndPrivacyPage.swift
 require_contains "$PROJECT_ROOT/DesktopWidgetsApp/Views/HelpAndPrivacyPage.swift" "no KeepAlive" "nonresident automatic maintenance guidance"
 require_contains "$INSTALL_GUIDE" "Enable Automatic Refresh.command" "automatic maintenance enable guidance"
 require_contains "$INSTALL_GUIDE" "automatic-refresh.log" "automatic maintenance diagnostics guidance"
+require_contains "$INSTALL_GUIDE" "profile-free" "Xcode profile-free Personal Team guidance"
+require_contains "$FRIENDLY_INSTALL_LIBRARY" "desktop_widgets_validate_required_entitlements" "complete signed-entitlement validation"
+require_contains "$FRIENDLY_INSTALL_SCRIPT" "profile-free macOS Apple Development signatures" "profile-free signing acceptance after validation"
+require_contains "$AUTOMATIC_REFRESH_LIBRARY" "DESKTOP_WIDGETS_PROFILELESS_RENEWAL_SECONDS=604800" "conservative profile-free renewal deadline"
+require_contains "$AUTOMATIC_REFRESH_SCRIPT" "profileless_signed_at_epoch" "profile-free automatic-maintenance validation"
 
 echo "[1/3] Running the complete Debug test suite"
 DEVELOPER_DIR="$SELECTED_DEVELOPER_DIR" xcodebuild test -quiet \

@@ -130,13 +130,14 @@ validate_signed_product() {
     local extension_entitlements="$validation_directory/extension-entitlements.plist"
     local app_team
     local extension_team
-    local app_group
-    local extension_group
+    local app_authority
+    local extension_authority
     local bundle_path
     local profile_path
     local decoded_profile
     local profile_team
     local profile_group
+    local embedded_profile_count=0
 
     [[ -d "$extension_path" ]] || {
         echo "The built app is missing its Desktop Widgets extension." >&2
@@ -144,30 +145,37 @@ validate_signed_product() {
     }
 
     /usr/bin/codesign --verify --deep --strict "$app_path"
+    /usr/bin/codesign --verify --strict "$extension_path"
     /bin/mkdir -p "$validation_directory"
     /usr/bin/codesign -d --entitlements :- "$app_path" > "$app_entitlements" 2>/dev/null
     /usr/bin/codesign -d --entitlements :- "$extension_path" > "$extension_entitlements" 2>/dev/null
 
     app_team="$(/usr/bin/codesign -dv --verbose=4 "$app_path" 2>&1 | /usr/bin/sed -n 's/^TeamIdentifier=//p' | /usr/bin/head -n 1)"
     extension_team="$(/usr/bin/codesign -dv --verbose=4 "$extension_path" 2>&1 | /usr/bin/sed -n 's/^TeamIdentifier=//p' | /usr/bin/head -n 1)"
-    app_group="$(/usr/libexec/PlistBuddy -c 'Print :com.apple.security.application-groups:0' "$app_entitlements" 2>/dev/null || true)"
-    extension_group="$(/usr/libexec/PlistBuddy -c 'Print :com.apple.security.application-groups:0' "$extension_entitlements" 2>/dev/null || true)"
+    app_authority="$(/usr/bin/codesign -dv --verbose=4 "$app_path" 2>&1 | /usr/bin/sed -n 's/^Authority=//p' | /usr/bin/head -n 1)"
+    extension_authority="$(/usr/bin/codesign -dv --verbose=4 "$extension_path" 2>&1 | /usr/bin/sed -n 's/^Authority=//p' | /usr/bin/head -n 1)"
 
     if [[ "$app_team" != "$expected_team" || "$extension_team" != "$expected_team" ]]; then
         echo "The app and widget were not signed by the selected Personal Team." >&2
         return 1
     fi
-    if [[ "$app_group" != "$expected_group" || "$extension_group" != "$expected_group" ]]; then
-        echo "The signed app and widget do not both contain the required App Group entitlement." >&2
+    if [[ "$app_authority" != Apple\ Development:* || "$extension_authority" != Apple\ Development:* ]]; then
+        echo "The app and widget do not both have an Apple Development signature." >&2
+        return 1
+    fi
+    if ! desktop_widgets_validate_required_entitlements "$app_entitlements" "$expected_group" app; then
+        echo "The signed app is missing its required sandbox, App Group, or Calendar entitlement." >&2
+        return 1
+    fi
+    if ! desktop_widgets_validate_required_entitlements "$extension_entitlements" "$expected_group" extension; then
+        echo "The signed widget is missing its required sandbox, App Group, Calendar, or network entitlement." >&2
         return 1
     fi
 
     for bundle_path in "$app_path" "$extension_path"; do
         profile_path="$bundle_path/Contents/embedded.provisionprofile"
-        [[ -f "$profile_path" ]] || {
-            echo "The Personal Team provisioning profile is missing from $bundle_path." >&2
-            return 1
-        }
+        [[ -f "$profile_path" ]] || continue
+        embedded_profile_count=$((embedded_profile_count + 1))
         decoded_profile="$validation_directory/$(/usr/bin/basename "$bundle_path").profile.plist"
         /usr/bin/security cms -D -i "$profile_path" -o "$decoded_profile" >/dev/null
         profile_team="$(/usr/libexec/PlistBuddy -c 'Print :TeamIdentifier:0' "$decoded_profile" 2>/dev/null || true)"
@@ -182,7 +190,14 @@ validate_signed_product() {
         fi
     done
 
-    echo "Verified the Personal Team signature, embedded profiles, and shared App Group on the app and widget."
+    if [[ "$embedded_profile_count" -eq 1 ]]; then
+        echo "Xcode embedded a profile in only one product; refusing inconsistent provisioning state." >&2
+        return 1
+    elif [[ "$embedded_profile_count" -eq 2 ]]; then
+        echo "Verified the Apple Development signatures, embedded profiles, and all required entitlements."
+    else
+        echo "Verified Xcode's profile-free macOS Apple Development signatures and all required entitlements."
+    fi
 }
 
 install_built_app() {

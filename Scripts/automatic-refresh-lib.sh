@@ -2,6 +2,7 @@
 
 readonly DESKTOP_WIDGETS_AUTOMATIC_REFRESH_LABEL="io.desktopwidgets.automatic-refresh"
 readonly DESKTOP_WIDGETS_AUTOMATIC_REFRESH_THRESHOLD_SECONDS=172800
+readonly DESKTOP_WIDGETS_PROFILELESS_RENEWAL_SECONDS=604800
 
 desktop_widgets_automatic_expiration_epoch() {
     local expiration="$1"
@@ -20,6 +21,16 @@ desktop_widgets_automatic_should_refresh() {
     [[ "$current_epoch" =~ ^[0-9]+$ ]] || return 0
     [[ "$threshold_seconds" =~ ^[0-9]+$ ]] || return 0
     (( expiration_epoch - current_epoch <= threshold_seconds ))
+}
+
+desktop_widgets_automatic_profileless_deadline() {
+    local signed_at_epoch="$1"
+    local renewal_seconds="${2:-$DESKTOP_WIDGETS_PROFILELESS_RENEWAL_SECONDS}"
+    local deadline_epoch
+
+    [[ "$signed_at_epoch" =~ ^[0-9]+$ && "$renewal_seconds" =~ ^[0-9]+$ ]] || return 1
+    deadline_epoch=$((signed_at_epoch + renewal_seconds))
+    /bin/date -r "$deadline_epoch" -u '+%Y-%m-%dT%H:%M:%SZ' 2>/dev/null
 }
 
 desktop_widgets_automatic_expected_agent_path() {

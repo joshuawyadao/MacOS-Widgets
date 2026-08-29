@@ -126,6 +126,27 @@ desktop_widgets_local_value() {
         | /usr/bin/head -n 1
 }
 
+desktop_widgets_validate_required_entitlements() {
+    local entitlements_path="$1"
+    local expected_group="$2"
+    local product_kind="$3"
+    local sandbox
+    local app_group
+    local calendar
+    local network=""
+
+    [[ "$product_kind" == "app" || "$product_kind" == "extension" ]] || return 1
+    sandbox="$(/usr/libexec/PlistBuddy -c 'Print :com.apple.security.app-sandbox' "$entitlements_path" 2>/dev/null || true)"
+    app_group="$(/usr/libexec/PlistBuddy -c 'Print :com.apple.security.application-groups:0' "$entitlements_path" 2>/dev/null || true)"
+    calendar="$(/usr/libexec/PlistBuddy -c 'Print :com.apple.security.personal-information.calendars' "$entitlements_path" 2>/dev/null || true)"
+
+    [[ "$sandbox" == "true" && "$app_group" == "$expected_group" && "$calendar" == "true" ]] || return 1
+    if [[ "$product_kind" == "extension" ]]; then
+        network="$(/usr/libexec/PlistBuddy -c 'Print :com.apple.security.network.client' "$entitlements_path" 2>/dev/null || true)"
+        [[ "$network" == "true" ]] || return 1
+    fi
+}
+
 desktop_widgets_write_local_configuration() {
     local path="$1"
     local team_id="$2"

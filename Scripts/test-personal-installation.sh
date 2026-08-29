@@ -110,6 +110,37 @@ assert_equal "io.desktopwidgets.personal.abc123de45.app" "$(desktop_widgets_loca
 assert_equal "io.desktopwidgets.personal.abc123de45.app.widgets" "$(desktop_widgets_local_value DESKTOP_WIDGETS_EXTENSION_BUNDLE_IDENTIFIER "$generated_old_configuration")" "generated configuration migration should repair the embedded extension prefix"
 assert_equal "$TEAM_ID.io.desktopwidgets.personal.abc123de45.shared" "$(desktop_widgets_local_value WIDGET_THEME_APP_GROUP "$generated_old_configuration")" "generated configuration migration should preserve the App Group"
 
+app_entitlements_fixture="$TEST_ROOT/app-entitlements.plist"
+extension_entitlements_fixture="$TEST_ROOT/extension-entitlements.plist"
+/usr/bin/plutil -create xml1 "$app_entitlements_fixture"
+/usr/libexec/PlistBuddy -c 'Add :com.apple.security.app-sandbox bool true' "$app_entitlements_fixture"
+/usr/libexec/PlistBuddy -c 'Add :com.apple.security.application-groups array' "$app_entitlements_fixture"
+/usr/libexec/PlistBuddy -c "Add :com.apple.security.application-groups:0 string $TEAM_ID.io.desktopwidgets.personal.abc123de45.shared" "$app_entitlements_fixture"
+/usr/libexec/PlistBuddy -c 'Add :com.apple.security.personal-information.calendars bool true' "$app_entitlements_fixture"
+/bin/cp "$app_entitlements_fixture" "$extension_entitlements_fixture"
+/usr/libexec/PlistBuddy -c 'Add :com.apple.security.network.client bool true' "$extension_entitlements_fixture"
+desktop_widgets_validate_required_entitlements "$app_entitlements_fixture" "$TEAM_ID.io.desktopwidgets.personal.abc123de45.shared" app || fail "profile-free app should accept the complete unrestricted entitlement contract"
+desktop_widgets_validate_required_entitlements "$extension_entitlements_fixture" "$TEAM_ID.io.desktopwidgets.personal.abc123de45.shared" extension || fail "profile-free widget should accept the complete unrestricted entitlement contract"
+
+missing_group_fixture="$TEST_ROOT/missing-group-entitlements.plist"
+/bin/cp "$app_entitlements_fixture" "$missing_group_fixture"
+/usr/libexec/PlistBuddy -c 'Delete :com.apple.security.application-groups' "$missing_group_fixture"
+assert_rejects "profile-free validation must reject a missing App Group" desktop_widgets_validate_required_entitlements "$missing_group_fixture" "$TEAM_ID.io.desktopwidgets.personal.abc123de45.shared" app
+
+missing_sandbox_fixture="$TEST_ROOT/missing-sandbox-entitlements.plist"
+/bin/cp "$app_entitlements_fixture" "$missing_sandbox_fixture"
+/usr/libexec/PlistBuddy -c 'Delete :com.apple.security.app-sandbox' "$missing_sandbox_fixture"
+assert_rejects "profile-free validation must reject a missing sandbox" desktop_widgets_validate_required_entitlements "$missing_sandbox_fixture" "$TEAM_ID.io.desktopwidgets.personal.abc123de45.shared" app
+
+missing_calendar_fixture="$TEST_ROOT/missing-calendar-entitlements.plist"
+/bin/cp "$app_entitlements_fixture" "$missing_calendar_fixture"
+/usr/libexec/PlistBuddy -c 'Delete :com.apple.security.personal-information.calendars' "$missing_calendar_fixture"
+assert_rejects "profile-free validation must reject missing Calendar access" desktop_widgets_validate_required_entitlements "$missing_calendar_fixture" "$TEAM_ID.io.desktopwidgets.personal.abc123de45.shared" app
+
+missing_network_fixture="$TEST_ROOT/missing-network-entitlements.plist"
+/bin/cp "$app_entitlements_fixture" "$missing_network_fixture"
+assert_rejects "profile-free widget validation must reject missing network access" desktop_widgets_validate_required_entitlements "$missing_network_fixture" "$TEAM_ID.io.desktopwidgets.personal.abc123de45.shared" extension
+
 expected_destination="$TEST_HOME/Applications/Desktop Widgets.app"
 DESKTOP_WIDGETS_HOME="$TEST_HOME" desktop_widgets_is_safe_install_destination "$expected_destination" || fail "user Applications destination should be allowed"
 assert_rejects "system Applications destination must be rejected" env DESKTOP_WIDGETS_HOME="$TEST_HOME" bash -c 'source "$1"; desktop_widgets_is_safe_install_destination "/Applications/Desktop Widgets.app"' _ "$LIBRARY_SCRIPT"

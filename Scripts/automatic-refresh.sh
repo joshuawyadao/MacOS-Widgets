@@ -76,8 +76,82 @@ earliest_profile_expiration() {
     fi
 }
 
+profileless_signed_at_epoch() {
+    local extension_path="$INSTALL_DESTINATION/Contents/PlugIns/DesktopWidgetsExtension.appex"
+    local expected_team
+    local expected_group
+    local app_team
+    local extension_team
+    local app_authority
+    local extension_authority
+    local app_entitlements="$AUTOMATIC_ROOT/app-entitlements.plist"
+    local extension_entitlements="$AUTOMATIC_ROOT/extension-entitlements.plist"
+    local app_signature_path="$INSTALL_DESTINATION/Contents/_CodeSignature/CodeResources"
+    local extension_signature_path="$extension_path/Contents/_CodeSignature/CodeResources"
+    local app_epoch
+    local extension_epoch
+
+    if [[ -n "${DESKTOP_WIDGETS_PROFILELESS_SIGNED_AT_EPOCH:-}" ]]; then
+        [[ "${DESKTOP_WIDGETS_PROFILELESS_SIGNATURE_VALID:-1}" == "1" ]] || return 1
+        /usr/bin/printf '%s\n' "$DESKTOP_WIDGETS_PROFILELESS_SIGNED_AT_EPOCH"
+        return 0
+    fi
+
+    [[ -d "$INSTALL_DESTINATION" && -d "$extension_path" ]] || return 1
+    /usr/bin/codesign --verify --deep --strict "$INSTALL_DESTINATION" >/dev/null 2>&1 || return 1
+    /usr/bin/codesign --verify --strict "$extension_path" >/dev/null 2>&1 || return 1
+    expected_team="$(desktop_widgets_local_value LOCAL_DEVELOPMENT_TEAM "$LOCAL_CONFIGURATION")"
+    expected_group="$(desktop_widgets_local_value WIDGET_THEME_APP_GROUP "$LOCAL_CONFIGURATION")"
+    app_team="$(/usr/bin/codesign -dv --verbose=4 "$INSTALL_DESTINATION" 2>&1 | /usr/bin/sed -n 's/^TeamIdentifier=//p' | /usr/bin/head -n 1)"
+    extension_team="$(/usr/bin/codesign -dv --verbose=4 "$extension_path" 2>&1 | /usr/bin/sed -n 's/^TeamIdentifier=//p' | /usr/bin/head -n 1)"
+    [[ "$app_team" == "$expected_team" && "$extension_team" == "$expected_team" ]] || return 1
+    app_authority="$(/usr/bin/codesign -dv --verbose=4 "$INSTALL_DESTINATION" 2>&1 | /usr/bin/sed -n 's/^Authority=//p' | /usr/bin/head -n 1)"
+    extension_authority="$(/usr/bin/codesign -dv --verbose=4 "$extension_path" 2>&1 | /usr/bin/sed -n 's/^Authority=//p' | /usr/bin/head -n 1)"
+    [[ "$app_authority" == Apple\ Development:* && "$extension_authority" == Apple\ Development:* ]] || return 1
+
+    /usr/bin/codesign -d --entitlements :- "$INSTALL_DESTINATION" > "$app_entitlements" 2>/dev/null || return 1
+    /usr/bin/codesign -d --entitlements :- "$extension_path" > "$extension_entitlements" 2>/dev/null || return 1
+    desktop_widgets_validate_required_entitlements "$app_entitlements" "$expected_group" app || return 1
+    desktop_widgets_validate_required_entitlements "$extension_entitlements" "$expected_group" extension || return 1
+
+    [[ -f "$app_signature_path" && -f "$extension_signature_path" ]] || return 1
+    app_epoch="$(/usr/bin/stat -f '%m' "$app_signature_path" 2>/dev/null)" || return 1
+    extension_epoch="$(/usr/bin/stat -f '%m' "$extension_signature_path" 2>/dev/null)" || return 1
+    if (( app_epoch <= extension_epoch )); then
+        echo "$app_epoch"
+    else
+        echo "$extension_epoch"
+    fi
+}
+
+maintenance_deadline() {
+    local app_profile="$INSTALL_DESTINATION/Contents/embedded.provisionprofile"
+    local extension_profile="$INSTALL_DESTINATION/Contents/PlugIns/DesktopWidgetsExtension.appex/Contents/embedded.provisionprofile"
+    local profile_deadline
+    local signed_at_epoch
+    local signature_deadline
+
+    if [[ -n "${DESKTOP_WIDGETS_PROFILE_EXPIRATION_FILE:-}" || -n "${DESKTOP_WIDGETS_PROFILE_EXPIRATION_FIXTURE:-}" ]]; then
+        profile_deadline="$(earliest_profile_expiration)" || return 1
+        /usr/bin/printf 'profile|%s\n' "$profile_deadline"
+        return 0
+    fi
+
+    if [[ -f "$app_profile" && -f "$extension_profile" ]]; then
+        profile_deadline="$(earliest_profile_expiration)" || return 1
+        /usr/bin/printf 'profile|%s\n' "$profile_deadline"
+        return 0
+    fi
+    [[ ! -f "$app_profile" && ! -f "$extension_profile" ]] || return 1
+    signed_at_epoch="$(profileless_signed_at_epoch)" || return 1
+    signature_deadline="$(desktop_widgets_automatic_profileless_deadline "$signed_at_epoch")" || return 1
+    /usr/bin/printf 'signature|%s\n' "$signature_deadline"
+}
+
 automatic_refresh_run() {
     local status_path
+    local deadline
+    local deadline_kind
     local expiration
     local expiration_epoch
     local previous_error
@@ -93,42 +167,53 @@ automatic_refresh_run() {
     fi
     status_path="${DESKTOP_WIDGETS_AUTOMATIC_STATUS_PATH:-$(desktop_widgets_automatic_status_path "$LOCAL_CONFIGURATION" "$USER_HOME")}" || return 1
 
-    if ! expiration="$(earliest_profile_expiration)"; then
-        previous_error="$(desktop_widgets_automatic_status_value "$status_path" LastErrorCode)"
-        if desktop_widgets_automatic_should_notify "$status_path" "missing-profile" "$CURRENT_EPOCH"; then
+    if ! deadline="$(maintenance_deadline)"; then
+        if desktop_widgets_automatic_should_notify "$status_path" "invalid-signing-state" "$CURRENT_EPOCH"; then
             should_notify=1
         fi
         desktop_widgets_automatic_write_status "$status_path" true needsAttention \
-            "The installed Personal Team profile is missing or unreadable. Run the manual Refresh command." \
-            "" "" "missing-profile" "$([[ "$should_notify" == 1 ]] && echo "$CURRENT_EPOCH" || echo 0)"
+            "The installed signing state is missing, inconsistent, or unreadable. Run the manual Refresh command." \
+            "" "" "invalid-signing-state" "$([[ "$should_notify" == 1 ]] && echo "$CURRENT_EPOCH" || echo 0)"
         [[ "$should_notify" == 1 ]] && notify_attention
-        echo "Automatic refresh stopped: installed provisioning profile is missing or unreadable."
+        echo "Automatic refresh stopped: installed signing state is missing, inconsistent, or unreadable."
         return 0
     fi
+    deadline_kind="${deadline%%|*}"
+    expiration="${deadline#*|}"
 
     if ! expiration_epoch="$(desktop_widgets_automatic_expiration_epoch "$expiration")"; then
         if desktop_widgets_automatic_should_notify "$status_path" "invalid-expiration" "$CURRENT_EPOCH"; then
             should_notify=1
         fi
         desktop_widgets_automatic_write_status "$status_path" true needsAttention \
-            "The installed Personal Team profile has an unreadable expiration date. Run the manual Refresh command." \
+            "The installed signing renewal deadline is unreadable. Run the manual Refresh command." \
             "" "" "invalid-expiration" "$([[ "$should_notify" == 1 ]] && echo "$CURRENT_EPOCH" || echo 0)"
         [[ "$should_notify" == 1 ]] && notify_attention
-        echo "Automatic refresh stopped: provisioning profile expiration is unreadable."
+        echo "Automatic refresh stopped: the signing renewal deadline is unreadable."
         return 0
     fi
 
     if ! desktop_widgets_automatic_should_refresh "$expiration_epoch" "$CURRENT_EPOCH"; then
-        desktop_widgets_automatic_write_status "$status_path" true healthy \
-            "Automatic maintenance is on. No rebuild is needed yet." "$expiration"
-        echo "Profiles remain valid beyond the 48-hour renewal window; no build was started."
+        if [[ "$deadline_kind" == "signature" ]]; then
+            desktop_widgets_automatic_write_status "$status_path" true healthy \
+                "Automatic maintenance is on. Xcode used valid profile-free macOS signing; no precautionary rebuild is needed yet." "$expiration"
+            echo "The profile-free signature remains outside the precautionary 48-hour renewal window; no build was started."
+        else
+            desktop_widgets_automatic_write_status "$status_path" true healthy \
+                "Automatic maintenance is on. No rebuild is needed yet." "$expiration"
+            echo "Profiles remain valid beyond the 48-hour renewal window; no build was started."
+        fi
         return 0
     fi
 
     previous_error="$(desktop_widgets_automatic_status_value "$status_path" LastErrorCode)"
     desktop_widgets_automatic_write_status "$status_path" true refreshing \
         "Refreshing the free Personal Team build at low priority." "$expiration" "" "$previous_error"
-    echo "Profiles are inside the 48-hour renewal window; starting a guarded refresh."
+    if [[ "$deadline_kind" == "signature" ]]; then
+        echo "The profile-free signature is inside the precautionary 48-hour renewal window; starting a guarded refresh."
+    else
+        echo "Profiles are inside the 48-hour renewal window; starting a guarded refresh."
+    fi
 
     set +e
     /usr/bin/nice -n 10 /usr/bin/env \
@@ -142,7 +227,9 @@ automatic_refresh_run() {
 
     if [[ "$refresh_status" -eq 0 ]]; then
         refreshed_at="$(/bin/date -u '+%Y-%m-%dT%H:%M:%SZ')"
-        refreshed_expiration="$(earliest_profile_expiration 2>/dev/null || echo "$expiration")"
+        refreshed_expiration="$(maintenance_deadline 2>/dev/null || true)"
+        refreshed_expiration="${refreshed_expiration#*|}"
+        refreshed_expiration="${refreshed_expiration:-$expiration}"
         desktop_widgets_automatic_write_status "$status_path" true refreshed \
             "Automatic maintenance refreshed Desktop Widgets successfully." "$refreshed_expiration" "$refreshed_at"
         echo "Automatic refresh completed successfully."

@@ -49,7 +49,7 @@ struct HelpAndPrivacyPage: View {
                         .foregroundStyle(.secondary)
                         .fixedSize(horizontal: false, vertical: true)
 
-                    Text("The scheduled check has no KeepAlive process. It runs at login and 11:00 AM, exits when profiles are healthy, and starts a low-priority build only inside the final 48 hours.")
+                    Text("The scheduled check has no KeepAlive process. It runs at login and 11:00 AM, exits when signing is healthy, and starts a low-priority build only inside the final 48 hours of a profile or conservative profile-free renewal window.")
                         .font(.caption)
                         .foregroundStyle(.secondary)
                         .fixedSize(horizontal: false, vertical: true)
@@ -93,7 +93,7 @@ struct HelpAndPrivacyPage: View {
                             Text("Automatic state: \(automatic.state.rawValue)")
                             Text("Last check: \(automatic.lastCheck ?? "Not reported")")
                             Text("Last success: \(automatic.lastSuccess ?? "Not reported")")
-                            Text("Profile expiry: \(automatic.profileExpiration ?? "Not reported")")
+                            Text("Renewal deadline: \(automatic.profileExpiration ?? "Not reported")")
                         }
                         .font(.caption.monospaced())
                         .textSelection(.enabled)
