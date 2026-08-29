@@ -22,6 +22,16 @@ readonly USER_ID_COMMAND="${DESKTOP_WIDGETS_ID_COMMAND:-/usr/bin/id}"
 readonly USER_DOMAIN="gui/$($USER_ID_COMMAND -u)"
 readonly AGENT_SERVICE="$USER_DOMAIN/$DESKTOP_WIDGETS_AUTOMATIC_REFRESH_LABEL"
 readonly DRY_RUN="${DESKTOP_WIDGETS_AUTOMATIC_DRY_RUN:-0}"
+readonly MANAGEMENT_LOCK="$SUPPORT_ROOT/AutomaticRefresh/manage.lock"
+
+acquire_management_lock() {
+    /bin/mkdir -p "$SUPPORT_ROOT/AutomaticRefresh"
+    if ! desktop_widgets_acquire_install_lock "$MANAGEMENT_LOCK"; then
+        echo "Another Desktop Widgets maintenance settings command is running. Try again when it finishes." >&2
+        return 1
+    fi
+    trap 'desktop_widgets_release_install_lock "$MANAGEMENT_LOCK" "$$"' EXIT
+}
 
 validate_agent_path() {
     [[ "$AGENT_PATH" == "$(desktop_widgets_automatic_expected_agent_path "$USER_HOME")" ]] || {
@@ -52,7 +62,7 @@ configured_status_path() {
 
 write_agent() {
     local state_path="$1"
-    local temporary_path="${AGENT_PATH}.new"
+    local temporary_path="${AGENT_PATH}.new.$$"
 
     /bin/mkdir -p "$(/usr/bin/dirname "$AGENT_PATH")"
     /usr/bin/plutil -create xml1 "$temporary_path"
@@ -84,6 +94,7 @@ write_agent() {
 enable_agent() {
     local state_path
     validate_agent_path
+    acquire_management_lock
     [[ -f "$LOCAL_CONFIGURATION" ]] || {
         echo "Run Install Desktop Widgets.command before enabling automatic refresh." >&2
         return 1
@@ -111,6 +122,7 @@ enable_agent() {
 disable_agent() {
     local state_path=""
     validate_agent_path
+    acquire_management_lock
     state_path="$(configured_status_path || true)"
 
     if [[ "$DRY_RUN" == "1" ]]; then

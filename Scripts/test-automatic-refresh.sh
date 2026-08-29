@@ -73,6 +73,8 @@ first_status_temporary="$(desktop_widgets_automatic_status_temporary_path "$STAT
 second_status_temporary="$(desktop_widgets_automatic_status_temporary_path "$STATUS_PATH" 202)"
 [[ "$first_status_temporary" != "$second_status_temporary" ]] || fail "concurrent status writers should use distinct temporary files"
 assert_equal "$STATUS_PATH.new.101" "$first_status_temporary" "status temporary files should remain beside the atomic destination"
+[[ "$(/bin/cat "$MANAGER_SCRIPT")" == *'local temporary_path="${AGENT_PATH}.new.$$"'* ]] \
+    || fail "LaunchAgent staging should be unique to each writer"
 [[ "$(/bin/cat "$AUTOMATIC_SCRIPT")" == *'DESKTOP_WIDGETS_INSTALL_LOCK_HELD_BY_PID="$$"'* ]] \
     || fail "automatic refresh should hand its common installer lock to the scheduled child"
 
@@ -119,6 +121,12 @@ run_manager() {
 
 run_manager enable >/dev/null
 run_manager enable >/dev/null
+/bin/mkdir -p "$SUPPORT_ROOT/AutomaticRefresh/manage.lock"
+/usr/bin/printf '%s\n' "$$" > "$SUPPORT_ROOT/AutomaticRefresh/manage.lock/owner.pid"
+busy_manager_output="$(run_manager enable 2>&1 || true)"
+assert_contains "$busy_manager_output" "maintenance settings command is running" "concurrent maintenance managers should not race bootstrap or status writes"
+/bin/rm -f -- "$SUPPORT_ROOT/AutomaticRefresh/manage.lock/owner.pid"
+/bin/rmdir "$SUPPORT_ROOT/AutomaticRefresh/manage.lock"
 readonly AGENT_PATH="$TEST_HOME/Library/LaunchAgents/$DESKTOP_WIDGETS_AUTOMATIC_REFRESH_LABEL.plist"
 [[ -f "$AGENT_PATH" ]] || fail "Enable should create the exact Desktop Widgets LaunchAgent"
 assert_equal "$DESKTOP_WIDGETS_AUTOMATIC_REFRESH_LABEL" "$(/usr/bin/plutil -extract Label raw -o - "$AGENT_PATH")" "LaunchAgent label should be stable"
