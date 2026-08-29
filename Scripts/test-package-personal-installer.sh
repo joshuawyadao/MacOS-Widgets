@@ -9,6 +9,7 @@ readonly OUTPUT_PATH="$TEST_ROOT/Desktop-Widgets-Personal-Installer.zip"
 readonly CONTENTS_PATH="$TEST_ROOT/contents.txt"
 readonly TEST_XCUSERDATA_ROOT="$SCRIPT_DIRECTORY/../DesktopWidgets.xcodeproj/xcuserdata"
 readonly TEST_XCUSERDATA="$TEST_XCUSERDATA_ROOT/codex-package-test.xcuserdatad"
+readonly TEST_SOURCE_OUTPUT="$SCRIPT_DIRECTORY/codex-package-output-test.zip"
 readonly SECRET_TEST_ROOT="$SCRIPT_DIRECTORY/../Config"
 readonly SECRET_FIXTURES=(
     "$SECRET_TEST_ROOT/Secrets.xcconfig"
@@ -22,6 +23,7 @@ cleanup() {
     /bin/rm -rf -- "$TEST_XCUSERDATA"
     /bin/rmdir "$TEST_XCUSERDATA_ROOT" 2>/dev/null || true
     /bin/rm -f -- "${SECRET_FIXTURES[@]}"
+    /bin/rm -f -- "$TEST_SOURCE_OUTPUT"
     if [[ -n "$TEST_ROOT" && "$TEST_ROOT" == *"/desktop-widgets-package-test."* ]]; then
         /bin/rm -rf -- "$TEST_ROOT"
     fi
@@ -66,5 +68,16 @@ for secret_fixture in "${SECRET_FIXTURES[@]}"; do
     }
     /bin/rm -f -- "$secret_fixture"
 done
+
+/usr/bin/printf '%s\n' 'previous archive marker' > "$TEST_SOURCE_OUTPUT"
+rejected_output="$(DESKTOP_WIDGETS_PACKAGE_NO_REVEAL=1 /bin/bash "$PACKAGE_SCRIPT" "$TEST_SOURCE_OUTPUT" 2>&1 || true)"
+[[ "$rejected_output" == *"Refusing an output path inside packaged source"* ]] || {
+    echo "FAIL: package accepted an output path inside Scripts" >&2
+    exit 1
+}
+[[ "$(/bin/cat "$TEST_SOURCE_OUTPUT")" == "previous archive marker" ]] || {
+    echo "FAIL: rejected output path changed the existing archive" >&2
+    exit 1
+}
 
 echo "PASS: Handoff package contains the guided source installer and excludes local/private artifacts."

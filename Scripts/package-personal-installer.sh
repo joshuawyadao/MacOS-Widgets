@@ -3,8 +3,36 @@
 set -euo pipefail
 
 readonly SCRIPT_DIRECTORY="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-readonly PROJECT_ROOT="$(cd "$SCRIPT_DIRECTORY/.." && pwd)"
-readonly OUTPUT_PATH="${1:-$PROJECT_ROOT/Desktop-Widgets-Personal-Installer.zip}"
+readonly PROJECT_ROOT="$(cd "$SCRIPT_DIRECTORY/.." && pwd -P)"
+readonly REQUESTED_OUTPUT_PATH="${1:-$PROJECT_ROOT/Desktop-Widgets-Personal-Installer.zip}"
+/bin/mkdir -p "$(/usr/bin/dirname "$REQUESTED_OUTPUT_PATH")"
+readonly OUTPUT_PATH="$(cd "$(/usr/bin/dirname "$REQUESTED_OUTPUT_PATH")" && pwd -P)/$(/usr/bin/basename "$REQUESTED_OUTPUT_PATH")"
+readonly PACKAGE_ITEMS=(
+    "Config"
+    "DesktopWidgets.xcodeproj"
+    "DesktopWidgetsApp"
+    "DesktopWidgetsExtension"
+    "DesktopWidgetsTests"
+    "Shared"
+    "Scripts"
+    "docs"
+    "Install Desktop Widgets.command"
+    "Refresh Desktop Widgets.command"
+    "Enable Automatic Refresh.command"
+    "Disable Automatic Refresh.command"
+    "Installation Guide.md"
+    "README.md"
+)
+
+for item in "${PACKAGE_ITEMS[@]}"; do
+    case "$OUTPUT_PATH" in
+    "$PROJECT_ROOT/$item"|"$PROJECT_ROOT/$item"/*)
+        echo "Refusing an output path inside packaged source: $OUTPUT_PATH" >&2
+        exit 1
+        ;;
+    esac
+done
+
 readonly TEMPORARY_ROOT="$(mktemp -d "${TMPDIR:-/tmp}/desktop-widgets-package.XXXXXX")"
 readonly PAYLOAD_ROOT="$TEMPORARY_ROOT/Desktop Widgets"
 
@@ -28,21 +56,7 @@ copy_item() {
 }
 
 /bin/mkdir -p "$PAYLOAD_ROOT"
-for item in \
-    "Config" \
-    "DesktopWidgets.xcodeproj" \
-    "DesktopWidgetsApp" \
-    "DesktopWidgetsExtension" \
-    "DesktopWidgetsTests" \
-    "Shared" \
-    "Scripts" \
-    "docs" \
-    "Install Desktop Widgets.command" \
-    "Refresh Desktop Widgets.command" \
-    "Enable Automatic Refresh.command" \
-    "Disable Automatic Refresh.command" \
-    "Installation Guide.md" \
-    "README.md"; do
+for item in "${PACKAGE_ITEMS[@]}"; do
     copy_item "$item"
 done
 
