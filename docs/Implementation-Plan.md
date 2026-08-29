@@ -22,8 +22,17 @@ Address every actionable Codex review finding on PR #13 with test-backed, separa
 - [x] Serialize scheduled and interactive installer runs through one stale-safe lock.
 - [x] Include project test sources in both the handoff and reusable installer copy.
 - [x] Reload automatic-maintenance status when the companion app becomes active.
+- [x] Reject all ignored secret patterns and output destinations inside packaged source trees.
+- [x] Force manual and scheduled refreshes to clean their old products before re-signing.
+- [x] Keep attention status accurate when local configuration disappears, after manual refresh, and during agent startup.
+- [x] Protect the lock-owner publication gap and validate profiled products before reporting healthy signing.
+- [x] Resolve the real account home outside the app sandbox and reveal configured helper locations without sandboxed file probing.
+- [x] Recover interrupted app replacements and allow maintenance to be disabled with damaged signing settings.
 - [x] Run focused checks after each fix, then the complete verifier and `git diff --check`.
-- [ ] Push every feedback checkpoint, acknowledge each addressed Codex comment, and confirm fresh Codex review, CI, and mergeability.
+- [x] Push every feedback checkpoint and acknowledge each addressed Codex comment.
+
+## Final handoff gate
+Confirm the complete verifier, fresh Codex review, CI, and mergeability on the final pushed head. Report those operational results in the PR handoff without editing this plan again and invalidating the reviewed commit.
 
 ## Evidence
 - The target-Mac Personal Team install and widget-gallery acceptance succeeded: the companion app launched and Desktop Widgets appeared in the macOS widget gallery.
