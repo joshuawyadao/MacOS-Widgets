@@ -373,8 +373,15 @@ echo "Diagnostic log: $DIAGNOSTIC_LOG"
 }
 
 desktop_widgets_automatic_rotate_log "$DIAGNOSTIC_LOG"
+# The coordinator must survive a failing logging pipeline long enough to read
+# PIPESTATUS, while the installer itself keeps fail-fast behavior in its own
+# subshell. Reinstall the ERR trap explicitly inside that subshell.
 set +e
-desktop_widgets_run 2>&1 | desktop_widgets_redact | /usr/bin/tee -a "$DIAGNOSTIC_LOG"
+(
+    set -e
+    trap failure_report ERR
+    desktop_widgets_run
+) 2>&1 | desktop_widgets_redact | /usr/bin/tee -a "$DIAGNOSTIC_LOG"
 readonly INSTALLATION_STATUS="${PIPESTATUS[0]}"
 set -e
 exit "$INSTALLATION_STATUS"

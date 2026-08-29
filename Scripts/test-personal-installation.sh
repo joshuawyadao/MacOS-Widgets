@@ -178,6 +178,7 @@ assert_contains "$(/bin/cat "$INSTALLATION_SCRIPT")" "desktop_widgets_read_inter
 assert_contains "$(/bin/cat "$LIBRARY_SCRIPT")" 'selection="$(desktop_widgets_read_interactive_choice' "Personal Team selection should use the shared visible prompt helper"
 assert_contains "$(/bin/cat "$INSTALLATION_SCRIPT")" 'desktop_widgets_saved_personal_team "$PERSONAL_TEAMS" "$LOCAL_CONFIGURATION"' "scheduled refresh should reuse its saved team without prompting"
 assert_contains "$(/bin/cat "$INSTALLATION_SCRIPT")" 'WIDGET_REFRESH_DERIVED_DATA_ROOTS="$DERIVED_DATA_PATH:$USER_HOME/Library/Developer/Xcode/DerivedData"' "friendly install should clean private and legacy default DerivedData registrations"
+[[ "$(/bin/cat "$INSTALLATION_SCRIPT")" != *$'set +e\ndesktop_widgets_run'* ]] || fail "installer logging must not disable errexit inside the installation function"
 
 capability_log="$TEST_ROOT/capability.log"
 echo "Personal Teams do not support the App Groups capability" > "$capability_log"
@@ -246,6 +247,8 @@ assert_contains "$unsupported_output" "required App Group capability" "unavailab
 write_fake_xcodebuild provisioning-failure
 failed_provisioning_output="$(run_installer install || true)"
 assert_contains "$failed_provisioning_output" "free provisioning" "failed provisioning should be classified"
+[[ "$failed_provisioning_output" != *"Xcode reported success but the built app was not found"* ]] \
+    || fail "installer must stop immediately after an Xcode build failure"
 
 write_fake_xcodebuild ready
 /bin/mkdir -p "$TEST_ROOT/Logs"
