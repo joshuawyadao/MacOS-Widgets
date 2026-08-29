@@ -105,6 +105,21 @@ configure_automatic_refresh() {
     esac
 }
 
+publish_manual_refresh_status() {
+    local status_path
+    local enabled
+
+    [[ "$MODE" == "refresh" && "$SCHEDULED_RUN" != "1" ]] || return 0
+    if [[ "$DRY_RUN" == "1" ]]; then
+        echo "DRY RUN: clear any previous automatic-maintenance warning after manual refresh"
+        return 0
+    fi
+
+    status_path="${DESKTOP_WIDGETS_AUTOMATIC_STATUS_PATH:-$(desktop_widgets_automatic_status_path "$LOCAL_CONFIGURATION" "$USER_HOME")}" || return 0
+    enabled="$(desktop_widgets_automatic_status_value "$status_path" Enabled)"
+    desktop_widgets_automatic_publish_manual_refresh "$status_path" "$enabled"
+}
+
 sync_installation_source() {
     local item
     local source_path
@@ -378,6 +393,7 @@ fi
 
 step 7 "Setting up easy maintenance"
 configure_automatic_refresh
+publish_manual_refresh_status
 if [[ "$SCHEDULED_RUN" == "1" ]]; then
     [[ "$DRY_RUN" != "1" ]] || echo "DRY RUN: scheduled maintenance leaves the app closed"
 elif [[ "$DRY_RUN" == "1" ]]; then

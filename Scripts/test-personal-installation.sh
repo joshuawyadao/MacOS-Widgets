@@ -270,6 +270,7 @@ after_refresh="$(/bin/cat "$LOCAL_CONFIGURATION")"
 assert_equal "$before_refresh" "$after_refresh" "repeated refresh should not churn signing configuration"
 assert_contains "$first_refresh_output" "DRY RUN: install" "existing installation refresh should use the safe dry-run install path"
 assert_contains "$second_refresh_output" "Desktop Widgets is ready" "a repeated refresh should remain successful"
+assert_contains "$second_refresh_output" "clear any previous automatic-maintenance warning" "manual refresh should clear stale maintenance attention after success"
 
 /bin/mkdir -p "$TEST_ROOT/Support/AutomaticRefresh/run.lock"
 /usr/bin/printf '%s\n' "$$" > "$TEST_ROOT/Support/AutomaticRefresh/run.lock/owner.pid"

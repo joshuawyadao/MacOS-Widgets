@@ -76,6 +76,12 @@ assert_equal "$STATUS_PATH.new.101" "$first_status_temporary" "status temporary 
 [[ "$(/bin/cat "$AUTOMATIC_SCRIPT")" == *'DESKTOP_WIDGETS_INSTALL_LOCK_HELD_BY_PID="$$"'* ]] \
     || fail "automatic refresh should hand its common installer lock to the scheduled child"
 
+desktop_widgets_automatic_write_status "$STATUS_PATH" true needsAttention "Open Xcode." "" "" "refresh-failed"
+desktop_widgets_automatic_publish_manual_refresh "$STATUS_PATH" true
+assert_equal "refreshed" "$(desktop_widgets_automatic_status_value "$STATUS_PATH" State)" "manual refresh should clear stale attention while maintenance stays enabled"
+desktop_widgets_automatic_publish_manual_refresh "$STATUS_PATH" false
+assert_equal "disabled" "$(desktop_widgets_automatic_status_value "$STATUS_PATH" State)" "manual refresh should preserve disabled maintenance"
+
 /usr/bin/printf '%s\n' \
     '#!/bin/bash' \
     'set -euo pipefail' \

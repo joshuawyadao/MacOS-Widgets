@@ -136,6 +136,20 @@ desktop_widgets_automatic_write_status() {
     /bin/mv -f -- "$temporary_path" "$path"
 }
 
+desktop_widgets_automatic_publish_manual_refresh() {
+    local path="$1"
+    local enabled="$2"
+    local refreshed_at="${DESKTOP_WIDGETS_AUTOMATIC_NOW_ISO:-$(/bin/date -u '+%Y-%m-%dT%H:%M:%SZ')}"
+
+    if [[ "$enabled" == "true" ]]; then
+        desktop_widgets_automatic_write_status "$path" true refreshed \
+            "Manual refresh succeeded. Automatic maintenance remains on." "" "$refreshed_at"
+    else
+        desktop_widgets_automatic_write_status "$path" false disabled \
+            "Manual refresh succeeded. Automatic maintenance remains off." "" "$refreshed_at"
+    fi
+}
+
 desktop_widgets_automatic_should_notify() {
     local status_path="$1"
     local error_code="$2"
