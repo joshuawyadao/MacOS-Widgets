@@ -2,12 +2,48 @@
 
 set -euo pipefail
 
+resolve_developer_dir() {
+  if [[ -n "${XCODE_DEVELOPER_DIR:-}" ]]; then
+    if [[ -x "$XCODE_DEVELOPER_DIR/usr/bin/xcodebuild" ]]; then
+      echo "$XCODE_DEVELOPER_DIR"
+      return
+    fi
+    echo "FAIL: XCODE_DEVELOPER_DIR does not point to a full Xcode installation." >&2
+    return 1
+  fi
+
+  if [[ -n "${DEVELOPER_DIR:-}" ]]; then
+    if [[ -x "$DEVELOPER_DIR/usr/bin/xcodebuild" ]]; then
+      echo "$DEVELOPER_DIR"
+      return
+    fi
+    echo "FAIL: DEVELOPER_DIR does not point to a full Xcode installation." >&2
+    return 1
+  fi
+
+  local system_selected
+  system_selected="$(xcode-select --print-path 2>/dev/null || true)"
+  if [[ -x "$system_selected/usr/bin/xcodebuild" ]]; then
+    echo "$system_selected"
+    return
+  fi
+
+  if [[ -x "/Applications/Xcode.app/Contents/Developer/usr/bin/xcodebuild" ]]; then
+    echo "/Applications/Xcode.app/Contents/Developer"
+    return
+  fi
+
+  echo "FAIL: Select a full Xcode installation or set DEVELOPER_DIR." >&2
+  return 1
+}
+
 script_dir="${0:A:h}"
 repository_root="${script_dir:h}"
 preview_source="/private/tmp/DesktopWidgetsPortfolioPreview.png"
 preview_request="/private/tmp/DesktopWidgetsPortfolioPreview.request"
 preview_destination="$repository_root/docs/images/widgets-preview.png"
 derived_data="$(mktemp -d /private/tmp/DesktopWidgetsPortfolioDerived.XXXXXX)"
+selected_developer_dir="$(resolve_developer_dir)"
 
 cleanup() {
   rm -rf "$derived_data"
@@ -20,7 +56,7 @@ cd "$repository_root"
 mkdir -p "${preview_destination:h}"
 touch "$preview_request"
 
-DEVELOPER_DIR="${DEVELOPER_DIR:-/Applications/Xcode.app/Contents/Developer}" \
+DEVELOPER_DIR="$selected_developer_dir" \
   xcodebuild test \
   -project DesktopWidgets.xcodeproj \
   -scheme DesktopWidgets \

@@ -258,7 +258,13 @@ final class WidgetRenderingSmokeTests: XCTestCase {
 
     func testPortfolioPreviewRendersWithSyntheticData() throws {
         let size = CGSize(width: 740, height: 448)
-        let renderer = ImageRenderer(content: PortfolioPreview())
+        let utc = try XCTUnwrap(TimeZone(secondsFromGMT: 0))
+        let renderer = ImageRenderer(
+            content: PortfolioPreview()
+                .environment(\.locale, Locale(identifier: "en_US_POSIX"))
+                .environment(\.timeZone, utc)
+                .environment(\.colorScheme, .light)
+        )
         renderer.proposedSize = ProposedViewSize(width: size.width, height: size.height)
         renderer.scale = 2
 
