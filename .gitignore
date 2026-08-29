@@ -37,6 +37,7 @@ AuthKey_*.p8
 # Local tooling and editor settings
 .vscode/
 .idea/
+.brooks-lint-history.json
 *.swp
 *.swo
 

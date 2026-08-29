@@ -256,6 +256,58 @@ final class WidgetRenderingSmokeTests: XCTestCase {
         }
     }
 
+    func testPortfolioPreviewRendersWithSyntheticData() throws {
+        let size = CGSize(width: 740, height: 448)
+        let utc = try XCTUnwrap(TimeZone(secondsFromGMT: 0))
+        let renderer = ImageRenderer(
+            content: PortfolioPreview()
+                .environment(\.locale, Locale(identifier: "en_US_POSIX"))
+                .environment(\.timeZone, utc)
+                .environment(\.colorScheme, .dark)
+        )
+        renderer.proposedSize = ProposedViewSize(width: size.width, height: size.height)
+        renderer.scale = 2
+
+        let image: NSImage = try XCTUnwrap(renderer.nsImage, "Failed to render the portfolio preview")
+        let tiffData: Data = try XCTUnwrap(image.tiffRepresentation, "Portfolio preview had no pixels")
+        let bitmap: NSBitmapImageRep = try XCTUnwrap(
+            NSBitmapImageRep(data: tiffData),
+            "Portfolio preview could not be decoded"
+        )
+        XCTAssertTrue(containsVisibleContent(bitmap), "Portfolio preview contained no visible content")
+        let backdropLuminance = averageLuminance(
+            bitmap,
+            xRange: 12..<44,
+            yRange: 12..<44
+        )
+        let cardLuminance = averageLuminance(
+            bitmap,
+            xRange: 560..<640,
+            yRange: 80..<150
+        )
+        XCTAssertGreaterThan(
+            cardLuminance - backdropLuminance,
+            0.06,
+            "Portfolio widget cards must remain visually distinct from the backdrop"
+        )
+
+        let requestURL = URL(fileURLWithPath: "/private/tmp/DesktopWidgetsPortfolioPreview.request")
+        guard FileManager.default.fileExists(atPath: requestURL.path) else {
+            return
+        }
+
+        let outputURL = URL(fileURLWithPath: "/private/tmp/DesktopWidgetsPortfolioPreview.png")
+        try FileManager.default.createDirectory(
+            at: outputURL.deletingLastPathComponent(),
+            withIntermediateDirectories: true
+        )
+        let pngData: Data = try XCTUnwrap(
+            bitmap.representation(using: .png, properties: [:]),
+            "Portfolio preview could not be encoded as PNG"
+        )
+        try pngData.write(to: outputURL, options: .atomic)
+    }
+
     private func assertRenders<Content: View>(
         _ content: Content,
         family: WidgetFamily,
@@ -321,6 +373,27 @@ final class WidgetRenderingSmokeTests: XCTestCase {
             || abs(lhs.alphaComponent - rhs.alphaComponent) > 0.01
     }
 
+    private func averageLuminance(
+        _ bitmap: NSBitmapImageRep,
+        xRange: Range<Int>,
+        yRange: Range<Int>
+    ) -> CGFloat {
+        var total: CGFloat = 0
+        var count: CGFloat = 0
+        for y in yRange where y < bitmap.pixelsHigh {
+            for x in xRange where x < bitmap.pixelsWide {
+                guard let color = bitmap.colorAt(x: x, y: y)?.usingColorSpace(.deviceRGB) else {
+                    continue
+                }
+                total += (0.2126 * color.redComponent)
+                    + (0.7152 * color.greenComponent)
+                    + (0.0722 * color.blueComponent)
+                count += 1
+            }
+        }
+        return count > 0 ? total / count : 0
+    }
+
     private func renderSize(for family: WidgetFamily) -> CGSize {
         switch family {
         case .systemSmall:
@@ -330,5 +403,137 @@ final class WidgetRenderingSmokeTests: XCTestCase {
         default:
             CGSize(width: 338, height: 158)
         }
+    }
+}
+
+@MainActor
+private struct PortfolioPreview: View {
+    private let referenceDate = CalendarProvider.referenceDate
+    private let widgetSize = CGSize(width: 338, height: 158)
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 18) {
+            VStack(alignment: .leading, spacing: 3) {
+                Text("macOS Widgets")
+                    .font(.system(size: 28, weight: .bold, design: .rounded))
+                    .foregroundStyle(.white)
+                Text("Native WidgetKit views rendered with synthetic data")
+                    .font(.system(size: 13, weight: .medium, design: .rounded))
+                    .foregroundStyle(.white.opacity(0.68))
+            }
+
+            VStack(spacing: 16) {
+                HStack(spacing: 16) {
+                    widgetCard {
+                        TimeAndDateWidgetView(
+                            entry: TimeAndDateEntry(
+                                date: referenceDate,
+                                configuration: timeConfiguration
+                            ),
+                            family: .systemMedium,
+                            typography: .theme(.editorial),
+                            coverage: .allText
+                        )
+                    }
+                    widgetCard {
+                        WeatherWidgetView(
+                            entry: WeatherEntry(
+                                date: referenceDate,
+                                configuration: .referencePreview(),
+                                snapshot: .sample(now: referenceDate),
+                                state: .loaded
+                            ),
+                            family: .systemMedium,
+                            typography: .theme(.technical),
+                            coverage: .allText
+                        )
+                        .environment(\.openURL, OpenURLAction { _ in .handled })
+                        .overlay(alignment: .topTrailing) {
+                            // ImageRenderer cannot host an interactive Link, so replace its
+                            // disabled-control artifact with the same visible attribution.
+                            Text("Open-Meteo")
+                                .font(.system(size: 8, weight: .medium, design: .monospaced))
+                                .underline()
+                                .foregroundStyle(.white.opacity(0.88))
+                                .frame(width: 58, height: 16)
+                                .background(Color(red: 0.08, green: 0.13, blue: 0.22))
+                        }
+                    }
+                }
+
+                HStack(spacing: 16) {
+                    widgetCard {
+                        BatteryWidgetView(
+                            entry: BatteryEntry(
+                                date: referenceDate,
+                                configuration: .referencePreview(),
+                                snapshot: .sample
+                            ),
+                            family: .systemMedium,
+                            typography: .theme(.playful),
+                            coverage: .allText
+                        )
+                    }
+                    widgetCard {
+                        CalendarWidgetView(
+                            entry: calendarEntry,
+                            family: .systemMedium,
+                            typography: .theme(.handmade),
+                            coverage: .allText
+                        )
+                    }
+                }
+            }
+        }
+        .padding(24)
+        .frame(width: 740, height: 448, alignment: .topLeading)
+        .background(
+            LinearGradient(
+                colors: [
+                    Color(red: 0.035, green: 0.055, blue: 0.11),
+                    Color(red: 0.075, green: 0.13, blue: 0.23)
+                ],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+        )
+    }
+
+    private var calendarEntry: CalendarEntry {
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.timeZone = TimeZone(secondsFromGMT: 0)!
+        return CalendarEntry(
+            date: referenceDate,
+            configuration: .referencePreview(showEvents: true, showNextEventTime: true),
+            monthOffset: 0,
+            events: .sample(referenceDate: referenceDate, calendar: calendar)
+        )
+    }
+
+    private var timeConfiguration: TimeAndDateStringConfigurationIntent {
+        let configuration = TimeAndDateStringConfigurationIntent.referencePreview()
+        configuration.timeFormat = TimeAndDateTimeFormat.twentyFourHour.rawValue
+        return configuration
+    }
+
+    private func widgetCard<Content: View>(@ViewBuilder content: () -> Content) -> some View {
+        content()
+            .frame(width: widgetSize.width, height: widgetSize.height)
+            .background(
+                LinearGradient(
+                    colors: [
+                        Color(red: 0.18, green: 0.25, blue: 0.38),
+                        Color(red: 0.10, green: 0.16, blue: 0.27)
+                    ],
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                )
+            )
+            .clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
+            .overlay {
+                RoundedRectangle(cornerRadius: 22, style: .continuous)
+                    .stroke(.white.opacity(0.30), lineWidth: 1)
+            }
+            .shadow(color: .black.opacity(0.48), radius: 14, y: 7)
     }
 }
