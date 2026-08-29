@@ -290,6 +290,7 @@ final class WidgetRenderingSmokeTests: XCTestCase {
             0.06,
             "Portfolio widget cards must remain visually distinct from the backdrop"
         )
+        assertPortfolioCardEdgesAreClear(bitmap)
 
         let requestURL = URL(fileURLWithPath: "/private/tmp/DesktopWidgetsPortfolioPreview.request")
         guard FileManager.default.fileExists(atPath: requestURL.path) else {
@@ -394,6 +395,69 @@ final class WidgetRenderingSmokeTests: XCTestCase {
         return count > 0 ? total / count : 0
     }
 
+    private func assertPortfolioCardEdgesAreClear(
+        _ bitmap: NSBitmapImageRep,
+        file: StaticString = #filePath,
+        line: UInt = #line
+    ) {
+        let cardWidth = 676
+        let cardHeight = 316
+        let cardOrigins = [
+            CGPoint(x: 48, y: 188),
+            CGPoint(x: 756, y: 188),
+            CGPoint(x: 48, y: 536),
+            CGPoint(x: 756, y: 536)
+        ]
+        let innerEdge = 4
+        let safeMargin = 12
+        let cornerClearance = 24
+
+        for (index, origin) in cardOrigins.enumerated() {
+            let minX = Int(origin.x)
+            let minY = Int(origin.y)
+            let maxX = minX + cardWidth
+            let maxY = minY + cardHeight
+            let edgeRanges = [
+                (minX + innerEdge..<minX + safeMargin, minY + cornerClearance..<maxY - cornerClearance),
+                (maxX - safeMargin..<maxX - innerEdge, minY + cornerClearance..<maxY - cornerClearance),
+                (minX + cornerClearance..<maxX - cornerClearance, minY + innerEdge..<minY + safeMargin),
+                (minX + cornerClearance..<maxX - cornerClearance, maxY - safeMargin..<maxY - innerEdge)
+            ]
+
+            for (edgeIndex, ranges) in edgeRanges.enumerated() {
+                XCTAssertEqual(
+                    brightPixelCount(bitmap, xRange: ranges.0, yRange: ranges.1),
+                    0,
+                    "Portfolio card \(index + 1) has bright widget content inside safe edge \(edgeIndex + 1)",
+                    file: file,
+                    line: line
+                )
+            }
+        }
+    }
+
+    private func brightPixelCount(
+        _ bitmap: NSBitmapImageRep,
+        xRange: Range<Int>,
+        yRange: Range<Int>
+    ) -> Int {
+        var count = 0
+        for y in yRange where y < bitmap.pixelsHigh {
+            for x in xRange where x < bitmap.pixelsWide {
+                guard let color = bitmap.colorAt(x: x, y: y)?.usingColorSpace(.deviceRGB) else {
+                    continue
+                }
+                let luminance = (0.2126 * color.redComponent)
+                    + (0.7152 * color.greenComponent)
+                    + (0.0722 * color.blueComponent)
+                if color.alphaComponent > 0.9 && luminance > 0.72 {
+                    count += 1
+                }
+            }
+        }
+        return count
+    }
+
     private func renderSize(for family: WidgetFamily) -> CGSize {
         switch family {
         case .systemSmall:
@@ -410,6 +474,7 @@ final class WidgetRenderingSmokeTests: XCTestCase {
 private struct PortfolioPreview: View {
     private let referenceDate = CalendarProvider.referenceDate
     private let widgetSize = CGSize(width: 338, height: 158)
+    private let widgetContentInset: CGFloat = 8
 
     var body: some View {
         VStack(alignment: .leading, spacing: 18) {
@@ -518,6 +583,11 @@ private struct PortfolioPreview: View {
 
     private func widgetCard<Content: View>(@ViewBuilder content: () -> Content) -> some View {
         content()
+            .frame(
+                width: widgetSize.width - (widgetContentInset * 2),
+                height: widgetSize.height - (widgetContentInset * 2)
+            )
+            .padding(widgetContentInset)
             .frame(width: widgetSize.width, height: widgetSize.height)
             .background(
                 LinearGradient(

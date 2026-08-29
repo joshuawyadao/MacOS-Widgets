@@ -1,18 +1,18 @@
 # Plan
 
-Increase visual separation between the transparent widget views and their public showcase background without changing the widgets' production appearance. Use a dark, code-generated presentation surface for both the README preview and GitHub social card, then validate contrast, dimensions, privacy, and the full project gate before protected publication.
+Keep every synthetic widget's text inside the rounded showcase cards by adding presentation-only content insets and a deterministic edge-clearance regression check. Regenerate both public image assets on `codex/fix-preview-text-clipping`, validate them, and stop for user review without opening a pull request or merging to `main`.
 
 ## Scope
-- In: Dark showcase backdrop and card treatment, deterministic contrast coverage, automatic social-preview generation, regenerated README/social images, documentation, validation, and protected publication.
-- Out: Production widget themes or behavior, user-specific screenshots, signed distribution, repository security settings, and GitHub's manual social-preview upload.
+- In: Showcase-only card insets, edge-clearance rendering coverage, regenerated README and social-preview images, focused/full validation, and a reviewable feature branch.
+- Out: Production WidgetKit layouts, typography choices, widget behavior, a pull request, and any merge to `main` before explicit user approval.
 
 ## Action items
-[x] Update `PortfolioPreview` in `DesktopWidgetsTests/WidgetRenderingSmokeTests.swift` with a dark backdrop, stronger card surfaces, readable title/attribution styling, and a focused contrast assertion.
-[x] Extend `Scripts/generate-portfolio-preview.sh` to regenerate both `docs/images/widgets-preview.png` and a 1280 × 640, sub-1 MB `docs/images/widgets-social-preview.jpg` from the same synthetic render.
-[x] Update `README.md` so the documented generator accurately names both public assets without duplicating design-system documentation.
-[x] Generate and visually inspect both images for card separation, legibility, complete widget framing, deterministic synthetic data, dimensions, size, and absence of private text.
-[x] Run the focused generator test, shell/Markdown checks, `git diff --check`, and the complete `./Scripts/verify-widgets.sh` gate.
-[x] Commit and push the scoped changes on `codex/darker-showcase`, open pull request #11, complete automated review with no findings, confirm public CI passes, and prepare the change for protected squash merge.
+[x] Add a consistent content inset inside `PortfolioPreview` cards while preserving their dimensions and dark presentation styling.
+[x] Extend `WidgetRenderingSmokeTests` with a pixel-level safe-edge assertion that catches bright widget content touching any card boundary.
+[x] Regenerate `docs/images/widgets-preview.png` and `docs/images/widgets-social-preview.jpg` from the real synthetic widget views.
+[x] Visually inspect both assets for unclipped text, balanced spacing, complete widget framing, and unchanged privacy-safe sample data.
+[x] Run the focused generator, `git diff --check`, and the complete `./Scripts/verify-widgets.sh` gate; no README prose change is expected because the generation workflow is unchanged.
+[x] Prepare the validated implementation on `codex/fix-preview-text-clipping` for user review, then stop without opening a pull request or merging.
 
 ## Open questions
-- None. The existing synthetic data, widget layouts, and manual GitHub upload workflow remain unchanged.
+- None. The requested review checkpoint is the end of this pass; publication remains a separate, explicitly approved step.
