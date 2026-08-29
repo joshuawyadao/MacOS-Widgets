@@ -1,17 +1,18 @@
 # Plan
 
-Preserve the full Xcode verification gate while sharply reducing costly macOS-hosted executions. Run the gate only for merge-ready pull requests or manual requests, cancel superseded work, and remove the duplicate post-merge `main` run.
+Address the Brooks review warning on pull request #12 by giving the showcase layout one source of truth for dimensions, spacing, and card pixel rectangles. Preserve the approved visual output while making the clipping regression resistant to future layout changes, then validate and push the focused review fix.
 
 ## Scope
-- In: `.github/workflows/ci.yml` trigger, concurrency, draft policy, manual dispatch, and README CI guidance.
-- Out: Xcode tests, coverage behavior, release-build behavior, signing, widget runtime code, branch-protection settings, and self-hosted runners.
+- In: Shared showcase layout metrics, derived card-edge scan rectangles, explicit render-size coverage, Brooks review history, regenerated assets if needed, validation, and a follow-up commit on `codex/fix-preview-text-clipping`.
+- Out: Production WidgetKit layouts, approved showcase styling or content, unrelated refactors, and merging pull request #12.
 
 ## Action items
-[x] Restrict macOS CI to merge-ready pull requests plus manual dispatch, removing the duplicate `main` push trigger.
-[x] Add per-workflow/per-ref concurrency cancellation while preserving the existing 20-minute timeout and read-only permissions.
-[x] Document when hosted macOS verification runs and how to request it manually.
-[x] Validate YAML parsing, workflow-policy invariants, `git diff --check`, and the scoped diff; no Swift test files are needed because executable widget behavior is unchanged.
-[x] Commit and push the isolated `codex/optimize-github-actions` branch while leaving the unrelated `v6` file in the original checkout untouched.
+[x] Extract the preview canvas, padding, header, row, card, inset, and pixel-scan metrics into a shared `PortfolioPreviewLayout` definition.
+[x] Update `PortfolioPreview` to consume the shared metrics and give the header an explicit layout height so card origins are deterministic.
+[x] Derive all card rectangles and edge-clearance ranges from the same point-based metrics and renderer scale; assert the expected bitmap dimensions before scanning.
+[x] Record the Brooks PR review result and verify the approved README/social assets remain visually unchanged apart from any deterministic re-encoding.
+[x] Run the focused generator, `git diff --check`, and complete `./Scripts/verify-widgets.sh` gate.
+[x] Prepare the Brooks review fix for pull request #12 and re-check Codex review, CI Verify, and mergeability without merging.
 
 ## Open questions
-- None.
+- None. The shared metrics remain private test/showcase infrastructure and do not affect production widget behavior.
