@@ -284,8 +284,16 @@ desktop_widgets_is_safe_install_destination() {
 desktop_widgets_print_build_arguments() {
     local project_path="$1"
     local derived_data_path="$2"
+    local mode="${3:-install}"
+    local actions=(build)
+
+    if [[ "$mode" == "refresh" ]]; then
+        # Remove the prior products so Xcode must rerun CodeSign and renew the
+        # Personal Team signing material even when source inputs are unchanged.
+        actions=(clean build)
+    fi
     /usr/bin/printf '%s\n' \
-        build \
+        "${actions[@]}" \
         -project "$project_path" \
         -scheme DesktopWidgets \
         -configuration Release \

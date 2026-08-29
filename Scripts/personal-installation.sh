@@ -273,7 +273,7 @@ run_xcode_build() {
 
     while IFS= read -r argument; do
         arguments+=("$argument")
-    done < <(desktop_widgets_print_build_arguments "$project_path" "$derived_data_path")
+    done < <(desktop_widgets_print_build_arguments "$project_path" "$derived_data_path" "$MODE")
 
     if [[ "$DRY_RUN" == "1" ]]; then
         echo "DRY RUN: DEVELOPER_DIR=$developer_dir xcodebuild ${arguments[*]}"
