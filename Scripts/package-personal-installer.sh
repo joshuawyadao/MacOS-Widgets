@@ -60,17 +60,26 @@ for item in "${PACKAGE_ITEMS[@]}"; do
     copy_item "$item"
 done
 
-while IFS= read -r xcode_user_data; do
-    case "$xcode_user_data" in
-    "$PAYLOAD_ROOT"/*/xcuserdata)
-        /bin/rm -rf -- "$xcode_user_data"
+while IFS= read -r local_artifact; do
+    case "$local_artifact" in
+    "$PAYLOAD_ROOT"/*)
+        /bin/rm -rf -- "$local_artifact"
         ;;
     *)
-        echo "Refusing unexpected Xcode user-data path: $xcode_user_data" >&2
+        echo "Refusing unexpected local-artifact path: $local_artifact" >&2
         exit 1
         ;;
     esac
-done < <(/usr/bin/find "$PAYLOAD_ROOT" -type d -name xcuserdata -print)
+done < <(/usr/bin/find "$PAYLOAD_ROOT" \( \
+    -name '.DS_Store' -o -name '.AppleDouble' -o -name '.LSOverride' -o \
+    -name 'build' -o -name 'DerivedData' -o -name '.build' -o \
+    -name '*.xcarchive' -o -name '*.ipa' -o -name '*.dSYM' -o -name '*.dSYM.zip' -o \
+    -name 'xcuserdata' -o -name '*.xcuserstate' -o -name '*.xccheckout' -o -name '*.xcscmblueprint' -o \
+    -name '.vscode' -o -name '.idea' -o -name '.brooks-lint-history.json' -o \
+    -name '*.swp' -o -name '*.swo' -o -name '*.dmg' -o -name '*.pkg' -o \
+    -name 'Desktop-Widgets-Personal-Installer*.zip' -o \
+    -name '*.tmp' -o -name '*.temp' -o -name '*.log' -o -name '*~' \
+\) -prune -print)
 
 /usr/bin/printf '%s\n' \
     'Desktop Widgets personal installation handoff' \
