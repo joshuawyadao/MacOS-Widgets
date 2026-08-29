@@ -262,12 +262,16 @@ run_xcode_build() {
 
     /bin/mkdir -p "$BUILD_ROOT"
     : > "$build_log"
+    # This failure is handled below so Xcode's diagnostic can be classified
+    # before the outer installer failure report runs.
+    trap - ERR
     set +e
     DEVELOPER_DIR="$developer_dir" "$developer_dir/usr/bin/xcodebuild" "${arguments[@]}" 2>&1 \
         | desktop_widgets_redact \
         | /usr/bin/tee "$build_log"
     status="${PIPESTATUS[0]}"
-    set -e
+    set -eE
+    trap failure_report ERR
 
     if [[ "$status" -ne 0 ]]; then
         desktop_widgets_classify_build_failure "$build_log" >&2
@@ -378,7 +382,9 @@ desktop_widgets_automatic_rotate_log "$DIAGNOSTIC_LOG"
 # subshell. Reinstall the ERR trap explicitly inside that subshell.
 set +e
 (
-    set -e
+    # ERR traps are not inherited by shell functions unless errtrace is on.
+    # Keep failure_report active for failures anywhere inside desktop_widgets_run.
+    set -eE
     trap failure_report ERR
     desktop_widgets_run
 ) 2>&1 | desktop_widgets_redact | /usr/bin/tee -a "$DIAGNOSTIC_LOG"
