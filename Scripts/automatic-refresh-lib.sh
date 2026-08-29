@@ -12,6 +12,8 @@ desktop_widgets_lock_owner_pid() {
 desktop_widgets_acquire_install_lock() {
     local lock_directory="$1"
     local owner_pid=""
+    local lock_modified_epoch=""
+    local current_epoch=""
 
     if /bin/mkdir "$lock_directory" 2>/dev/null; then
         /usr/bin/printf '%s\n' "$$" > "$lock_directory/owner.pid"
@@ -21,6 +23,16 @@ desktop_widgets_acquire_install_lock() {
     owner_pid="$(desktop_widgets_lock_owner_pid "$lock_directory")"
     if [[ "$owner_pid" =~ ^[0-9]+$ ]] && kill -0 "$owner_pid" 2>/dev/null; then
         return 1
+    fi
+    if [[ -z "$owner_pid" ]]; then
+        lock_modified_epoch="$(/usr/bin/stat -f '%m' "$lock_directory" 2>/dev/null || true)"
+        current_epoch="$(/bin/date '+%s')"
+        if [[ "$lock_modified_epoch" =~ ^[0-9]+$ && "$current_epoch" =~ ^[0-9]+$ ]] \
+            && (( current_epoch - lock_modified_epoch < 60 )); then
+            # Another process may have won mkdir and not yet published owner.pid.
+            # Treat a fresh ownerless directory as active to close that race.
+            return 1
+        fi
     fi
 
     /bin/rm -f -- "$lock_directory/owner.pid"

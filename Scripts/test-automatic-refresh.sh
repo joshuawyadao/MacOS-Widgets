@@ -206,6 +206,13 @@ assert_equal "healthy" "$(desktop_widgets_automatic_status_value "$STATUS_PATH" 
 [[ ! -d "$SUPPORT_ROOT/AutomaticRefresh/run.lock" ]] || fail "a completed check should remove a reclaimed stale lock"
 
 /bin/mkdir -p "$SUPPORT_ROOT/AutomaticRefresh/run.lock"
+: > "$REFRESH_LOG"
+run_automatic >/dev/null
+[[ ! -s "$REFRESH_LOG" ]] || fail "a fresh ownerless lock should prevent concurrent refresh during owner publication"
+[[ -d "$SUPPORT_ROOT/AutomaticRefresh/run.lock" ]] || fail "a contender must not remove a fresh ownerless lock"
+/bin/rmdir "$SUPPORT_ROOT/AutomaticRefresh/run.lock"
+
+/bin/mkdir -p "$SUPPORT_ROOT/AutomaticRefresh/run.lock"
 /usr/bin/printf '%s\n' "$$" > "$SUPPORT_ROOT/AutomaticRefresh/run.lock/owner.pid"
 echo '2026-08-28T12:00:00Z' > "$EXPIRATION_FILE"
 : > "$REFRESH_LOG"
