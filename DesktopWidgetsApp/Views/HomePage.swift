@@ -4,6 +4,7 @@ import SwiftUI
 struct HomePage: View {
     @Binding var destination: CompanionAppDestination?
     @ObservedObject var calendarPermission: CalendarPermissionController
+    let automaticStatusRevision: Int
 
     var body: some View {
         AppPage(
@@ -28,6 +29,7 @@ struct HomePage: View {
     }
 
     private var automaticMaintenanceCard: some View {
+        _ = automaticStatusRevision
         let installation = installationStatus
         let automatic = DesktopWidgetsAutomaticRefreshStatus.current(
             appGroupIdentifier: installation.appGroupIdentifier

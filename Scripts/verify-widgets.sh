@@ -195,6 +195,7 @@ require_contains "$PROJECT_ROOT/DesktopWidgetsApp/Info.plist" "DesktopWidgetsDis
 require_contains "$PROJECT_ROOT/DesktopWidgetsApp/Views/HomePage.swift" "Apple requires you to place widgets yourself" "macOS-controlled placement guidance"
 require_contains "$PROJECT_ROOT/DesktopWidgetsApp/Views/HomePage.swift" "Refresh Desktop Widgets.command" "free provisioning refresh guidance"
 require_contains "$PROJECT_ROOT/DesktopWidgetsApp/Views/HomePage.swift" "final 48 hours" "automatic maintenance renewal-window guidance"
+require_contains "$PROJECT_ROOT/DesktopWidgetsApp/Views/ContentView.swift" "automaticStatusRevision &+= 1" "automatic maintenance status refresh on app activation"
 require_contains "$PROJECT_ROOT/DesktopWidgetsApp/Views/HelpAndPrivacyPage.swift" "Technical details" "progressively disclosed installation diagnostics"
 require_contains "$PROJECT_ROOT/DesktopWidgetsApp/Views/HelpAndPrivacyPage.swift" "no KeepAlive" "nonresident automatic maintenance guidance"
 require_contains "$INSTALL_GUIDE" "Enable Automatic Refresh.command" "automatic maintenance enable guidance"

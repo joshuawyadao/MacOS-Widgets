@@ -3,6 +3,7 @@ import SwiftUI
 
 struct HelpAndPrivacyPage: View {
     @ObservedObject var calendarPermission: CalendarPermissionController
+    let automaticStatusRevision: Int
 
     var body: some View {
         AppPage(
@@ -26,6 +27,7 @@ struct HelpAndPrivacyPage: View {
     }
 
     private var installationHelp: some View {
+        _ = automaticStatusRevision
         let status = DesktopWidgetsInstallationStatus.current()
         let automatic = DesktopWidgetsAutomaticRefreshStatus.current(
             appGroupIdentifier: status.appGroupIdentifier
