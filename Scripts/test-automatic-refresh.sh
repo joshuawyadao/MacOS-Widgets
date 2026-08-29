@@ -69,6 +69,11 @@ desktop_widgets_automatic_should_refresh "$near_epoch" "$CURRENT_EPOCH" || fail 
 desktop_widgets_automatic_should_refresh 1 "$CURRENT_EPOCH" || fail "expired profile should refresh"
 desktop_widgets_automatic_should_refresh invalid "$CURRENT_EPOCH" || fail "unreadable profile should take the safe refresh path"
 
+first_status_temporary="$(desktop_widgets_automatic_status_temporary_path "$STATUS_PATH" 101)"
+second_status_temporary="$(desktop_widgets_automatic_status_temporary_path "$STATUS_PATH" 202)"
+[[ "$first_status_temporary" != "$second_status_temporary" ]] || fail "concurrent status writers should use distinct temporary files"
+assert_equal "$STATUS_PATH.new.101" "$first_status_temporary" "status temporary files should remain beside the atomic destination"
+
 /usr/bin/printf '%s\n' \
     '#!/bin/bash' \
     'set -euo pipefail' \

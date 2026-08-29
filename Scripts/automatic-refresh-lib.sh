@@ -55,6 +55,14 @@ desktop_widgets_automatic_status_value() {
     /usr/bin/plutil -extract "$key" raw -o - "$path" 2>/dev/null || true
 }
 
+desktop_widgets_automatic_status_temporary_path() {
+    local path="$1"
+    local writer_id="$2"
+
+    [[ "$writer_id" =~ ^[0-9]+$ ]] || return 1
+    /usr/bin/printf '%s.new.%s\n' "$path" "$writer_id"
+}
+
 desktop_widgets_automatic_write_status() {
     local path="$1"
     local enabled="$2"
@@ -65,7 +73,9 @@ desktop_widgets_automatic_write_status() {
     local error_code="${7:-}"
     local last_notification_epoch="${8:-0}"
     local checked_at="${DESKTOP_WIDGETS_AUTOMATIC_NOW_ISO:-$(/bin/date -u '+%Y-%m-%dT%H:%M:%SZ')}"
-    local temporary_path="${path}.new"
+    local temporary_path
+
+    temporary_path="$(desktop_widgets_automatic_status_temporary_path "$path" "$$")" || return 1
 
     if [[ -z "$last_success" ]]; then
         last_success="$(desktop_widgets_automatic_status_value "$path" LastSuccess)"
@@ -77,6 +87,7 @@ desktop_widgets_automatic_write_status() {
 
     /bin/mkdir -p "$(/usr/bin/dirname "$path")"
     umask 077
+    /bin/rm -f -- "$temporary_path"
     /usr/bin/plutil -create xml1 "$temporary_path"
     /usr/bin/plutil -insert Enabled -bool "$enabled" "$temporary_path"
     /usr/bin/plutil -insert State -string "$state" "$temporary_path"
