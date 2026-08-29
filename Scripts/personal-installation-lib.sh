@@ -21,6 +21,19 @@ desktop_widgets_installation_failure_message() {
     fi
 }
 
+desktop_widgets_resolve_automatic_refresh_choice() {
+    local choice="$1"
+    local prompt_was_shown="$2"
+
+    if [[ -n "$choice" ]]; then
+        /usr/bin/printf '%s\n' "$choice"
+    elif [[ "$prompt_was_shown" == "1" ]]; then
+        /usr/bin/printf '%s\n' 'y'
+    else
+        /usr/bin/printf '%s\n' 'unchanged'
+    fi
+}
+
 desktop_widgets_resolve_developer_dir() {
     local candidate
 

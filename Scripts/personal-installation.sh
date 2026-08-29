@@ -50,6 +50,7 @@ step() {
 configure_automatic_refresh() {
     local choice="${DESKTOP_WIDGETS_AUTOMATIC_REFRESH_CHOICE:-}"
     local manager="$SOURCE_ROOT/Scripts/manage-automatic-refresh.sh"
+    local prompt_was_shown=0
 
     if [[ "$MODE" != "install" ]]; then
         echo "Automatic maintenance schedule is unchanged."
@@ -61,9 +62,10 @@ configure_automatic_refresh() {
     fi
 
     if [[ -z "$choice" && -t 0 ]]; then
+        prompt_was_shown=1
         choice="$(desktop_widgets_read_interactive_choice 'Turn on low-resource automatic maintenance? [Y/n] ')"
     fi
-    choice="${choice:-y}"
+    choice="$(desktop_widgets_resolve_automatic_refresh_choice "$choice" "$prompt_was_shown")"
 
     case "$choice" in
     y|Y|yes|YES|Yes)
@@ -74,6 +76,10 @@ configure_automatic_refresh() {
         ;;
     n|N|no|NO|No)
         /bin/bash "$manager" disable || true
+        ;;
+    unchanged)
+        echo "Automatic maintenance was left unchanged because no interactive choice was available."
+        echo "Double-click Enable Automatic Refresh.command whenever you want to turn it on."
         ;;
     *)
         echo "Automatic maintenance was left unchanged because the answer was not recognized." >&2
