@@ -148,8 +148,10 @@ assert_rejects "another app destination must be rejected" env DESKTOP_WIDGETS_HO
 
 build_arguments="$(desktop_widgets_print_build_arguments "$PROJECT_ROOT/DesktopWidgets.xcodeproj" "$TEST_ROOT/DerivedData")"
 assert_contains "$build_arguments" "-allowProvisioningUpdates" "build command should allow automatic provisioning updates"
+assert_contains "$build_arguments" "-quiet" "friendly build command should suppress routine Xcode noise"
 assert_contains "$build_arguments" "Release" "build command should use Release configuration"
 [[ "$build_arguments" != *"$TEAM_ID"* ]] || fail "build command should obtain the team from ignored configuration"
+assert_contains "$(/bin/cat "$INSTALLATION_SCRIPT")" "IFS= read -r choice < /dev/tty" "interactive maintenance choice should bypass buffered logging"
 
 capability_log="$TEST_ROOT/capability.log"
 echo "Personal Teams do not support the App Groups capability" > "$capability_log"
@@ -215,10 +217,15 @@ write_fake_xcodebuild ready
 before_refresh="$(/bin/cat "$LOCAL_CONFIGURATION")"
 first_refresh_output="$(run_installer refresh DESKTOP_WIDGETS_DRY_RUN=1)"
 second_refresh_output="$(run_installer refresh DESKTOP_WIDGETS_DRY_RUN=1)"
+install_dry_run_output="$(run_installer install DESKTOP_WIDGETS_DRY_RUN=1)"
 after_refresh="$(/bin/cat "$LOCAL_CONFIGURATION")"
 assert_equal "$before_refresh" "$after_refresh" "repeated refresh should not churn signing configuration"
 assert_contains "$first_refresh_output" "DRY RUN: install" "existing installation refresh should use the safe dry-run install path"
 assert_contains "$second_refresh_output" "Desktop Widgets is ready" "a repeated refresh should remain successful"
+maintenance_line="$(/usr/bin/printf '%s\n' "$install_dry_run_output" | /usr/bin/grep -n -F 'DRY RUN: offer optional automatic maintenance' | /usr/bin/cut -d: -f1)"
+open_line="$(/usr/bin/printf '%s\n' "$install_dry_run_output" | /usr/bin/grep -n -F 'DRY RUN: open' | /usr/bin/cut -d: -f1)"
+[[ -n "$maintenance_line" && -n "$open_line" && "$maintenance_line" -lt "$open_line" ]] \
+    || fail "the companion app should open only after installer maintenance setup completes"
 
 scheduled_refresh_output="$(run_installer refresh DESKTOP_WIDGETS_DRY_RUN=1 DESKTOP_WIDGETS_SCHEDULED=1)"
 assert_contains "$scheduled_refresh_output" "scheduled maintenance leaves the app closed" "scheduled refresh should not interrupt the user by opening the app"

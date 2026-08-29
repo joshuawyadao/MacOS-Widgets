@@ -114,6 +114,9 @@ if /usr/bin/plutil -extract KeepAlive raw -o - "$AGENT_PATH" >/dev/null 2>&1; th
 fi
 assert_equal "enabled" "$(desktop_widgets_automatic_status_value "$STATUS_PATH" State)" "Enable should publish status"
 [[ "$(/usr/bin/grep -c 'bootstrap' "$COMMAND_LOG")" == "2" ]] || fail "Repeated enable should safely reload the same agent"
+if /usr/bin/grep -q 'kickstart' "$COMMAND_LOG"; then
+    fail "Enable should rely on RunAtLoad bootstrap instead of a potentially blocking kickstart"
+fi
 
 unrelated_agent="$TEST_HOME/Library/LaunchAgents/com.example.unrelated.plist"
 echo 'unrelated' > "$unrelated_agent"

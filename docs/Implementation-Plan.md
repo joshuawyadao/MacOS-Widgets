@@ -1,19 +1,22 @@
 # Plan
 
-Support Xcode 26.6’s valid profile-free macOS Personal Team output without weakening signing or entitlement checks. Validate the Apple Development signature, Team ID, App Group, sandbox, Calendar, and extension network entitlement directly, then use a conservative seven-day local signing window for automatic maintenance when no profile supplies an expiration date.
+Finish the friendly Personal Team installer after target-Mac validation exposed a blocking maintenance wake-up. Keep the terminal prompt visible, avoid the redundant blocking `launchctl kickstart`, and open the companion app only after setup has actually completed.
 
 ## Scope
-- In: Profile-optional macOS validation, complete required-entitlement checks, profile-free maintenance deadlines, regression tests, accurate user/operations documentation, replacement package, and branch save.
-- Out: Accepting ad-hoc or wrong-team signatures, removing App Group or sandbox security, sharing certificates, paid distribution, and the paused GitHub-update feature.
+- In: Installer completion ordering, visible terminal input, non-blocking automatic-maintenance activation, regression tests, full verification, replacement package, and branch save.
+- Out: Changes to widget identities, placement, signing capabilities, or the paused GitHub-update feature.
 
 ## Action items
-- [x] Add fixture-driven validation tests for the complete app/extension entitlement contracts and rejection of missing App Group, sandbox, Calendar, or network access.
-- [x] Accept an absent macOS provisioning profile only after both products pass strict Apple Development signature, Team ID, and required-entitlement validation; continue validating any embedded profile that Xcode does provide.
-- [x] Add profile-free maintenance deadline helpers based on the signed product timestamp, retaining the seven-day/48-hour conservative refresh policy and rejecting invalid or inconsistent signing state.
-- [x] Extend automatic-maintenance tests for healthy and near-renewal profile-free builds, invalid signatures, normal profiles, failures, idempotency, and notification throttling.
-- [x] Update companion wording, the installation guide, README, and Personal Team documentation to distinguish real profile expiration from the conservative profile-free renewal deadline.
-- [x] Run focused installer/maintenance tests, the exact identifier embedding build, the complete verification gate, and `git diff --check`.
-- [x] Save and push the fix on `codex/feature/easier-personal-installation`, then generate a clean replacement ZIP for the target Mac.
+- [x] Add a regression test proving automatic-maintenance enablement does not issue a blocking `launchctl kickstart`.
+- [x] Write the maintenance question directly to the interactive terminal and read its answer from that terminal so logging cannot hide it.
+- [x] Register the widget first, configure maintenance second, and open the installed companion app only after setup completes.
+- [x] Extend installer dry-run coverage to verify app-opening order and scheduled-refresh behavior.
+- [x] Run focused installer and maintenance tests, the complete verification script, and `git diff --check`.
+- [ ] Save and push the fix on `codex/feature/easier-personal-installation`, then generate a clean replacement ZIP.
+
+## Evidence
+- Target-Mac process inspection showed `manage-automatic-refresh.sh enable` blocked for several minutes in `/bin/launchctl kickstart -k` after the installed app was already present.
+- `bootstrap` had already loaded a `RunAtLoad` LaunchAgent and written enabled status, making the synchronous extra kickstart redundant.
 
 ## Open questions
 - None.
@@ -21,6 +24,5 @@ Support Xcode 26.6’s valid profile-free macOS Personal Team output without wea
 ## Verification result
 
 - Focused installer, automatic-maintenance, packaging, and shell-syntax tests passed.
-- The unsigned Release build passed with the generated app identifier and corrected child extension identifier.
-- `Scripts/verify-widgets.sh` passed the full macOS test suite, Release build, App Intents metadata checks, and runtime-registration safety checks.
+- `Scripts/verify-widgets.sh` passed the complete macOS tests, Release build, extension metadata checks, and registration-safety checks.
 - `git diff --check` passed.

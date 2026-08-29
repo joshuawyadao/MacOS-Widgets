@@ -57,8 +57,13 @@ configure_automatic_refresh() {
     fi
 
     if [[ -z "$choice" && -t 0 ]]; then
-        /usr/bin/printf 'Turn on low-resource automatic maintenance? [Y/n] '
-        IFS= read -r choice
+        if [[ -r /dev/tty && -w /dev/tty ]]; then
+            /usr/bin/printf 'Turn on low-resource automatic maintenance? [Y/n] ' > /dev/tty
+            IFS= read -r choice < /dev/tty
+        else
+            /usr/bin/printf 'Turn on low-resource automatic maintenance? [Y/n] '
+            IFS= read -r choice
+        fi
     fi
     choice="${choice:-y}"
 
@@ -262,6 +267,7 @@ run_xcode_build() {
         desktop_widgets_classify_build_failure "$build_log" >&2
         return "$status"
     fi
+    echo "Xcode finished building Desktop Widgets."
 }
 
 desktop_widgets_run() {
@@ -324,24 +330,23 @@ if [[ "$DRY_RUN" != "1" ]]; then
 fi
 install_built_app "$BUILT_APP" "$INSTALL_DESTINATION"
 
-step 6 "Refreshing the widget and opening the app"
+step 6 "Refreshing the widget"
 if [[ "$DRY_RUN" == "1" ]]; then
     echo "DRY RUN: refresh the installed widget runtime"
-    if [[ "$SCHEDULED_RUN" != "1" ]]; then
-        echo "DRY RUN: open $INSTALL_DESTINATION"
-    else
-        echo "DRY RUN: scheduled maintenance leaves the app closed"
-    fi
 else
     WIDGET_REFRESH_DERIVED_DATA_ROOT="$DERIVED_DATA_PATH" \
         /bin/bash "$SOURCE_ROOT/Scripts/refresh-widget-runtime.sh" "$INSTALL_DESTINATION"
-    if [[ "$SCHEDULED_RUN" != "1" ]]; then
-        /usr/bin/open "$INSTALL_DESTINATION"
-    fi
 fi
 
 step 7 "Setting up easy maintenance"
 configure_automatic_refresh
+if [[ "$SCHEDULED_RUN" == "1" ]]; then
+    [[ "$DRY_RUN" != "1" ]] || echo "DRY RUN: scheduled maintenance leaves the app closed"
+elif [[ "$DRY_RUN" == "1" ]]; then
+    echo "DRY RUN: open $INSTALL_DESTINATION"
+else
+    /usr/bin/open "$INSTALL_DESTINATION"
+fi
 
 trap - ERR
 echo

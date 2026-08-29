@@ -86,7 +86,6 @@ enable_agent() {
     "$LAUNCHCTL_COMMAND" bootstrap "$USER_DOMAIN" "$AGENT_PATH"
     desktop_widgets_automatic_write_status "$state_path" true enabled \
         "Automatic maintenance is on. The lightweight check runs at login and daily."
-    "$LAUNCHCTL_COMMAND" kickstart -k "$AGENT_SERVICE" >/dev/null 2>&1 || true
     echo "Automatic Desktop Widgets maintenance is on."
     echo "It checks briefly at login and 11:00 AM, then exits unless profiles are near expiration."
 }

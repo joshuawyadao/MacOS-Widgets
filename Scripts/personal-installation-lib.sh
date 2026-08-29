@@ -220,6 +220,7 @@ desktop_widgets_print_build_arguments() {
         -configuration Release \
         -destination platform=macOS \
         -derivedDataPath "$derived_data_path" \
+        -quiet \
         -allowProvisioningUpdates
 }
 
