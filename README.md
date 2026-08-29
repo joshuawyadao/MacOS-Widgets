@@ -69,7 +69,7 @@ See [Calendar privacy details](docs/Calendar-Widget.md#event-indicators-next-eve
 ### Requirements
 
 - macOS 14 or later
-- Xcode with a macOS 14+ SDK
+- Xcode 16 or later with a macOS 14+ SDK (validated with Xcode 26.6)
 - A free Apple Account added under **Xcode → Settings → Accounts**
 - An **Apple Development** certificate created through **Manage Certificates**
 
