@@ -181,6 +181,11 @@ provisioning_log="$TEST_ROOT/provisioning.log"
 echo "Provisioning profile could not be created" > "$provisioning_log"
 assert_contains "$(desktop_widgets_classify_build_failure "$provisioning_log")" "free provisioning" "provisioning failures should provide an Xcode recovery step"
 
+assert_contains "$(desktop_widgets_installation_failure_message 0)" "was not changed" "pre-install failures should report that the app was preserved"
+post_install_failure="$(desktop_widgets_installation_failure_message 1)"
+assert_contains "$post_install_failure" "was installed, but setup did not finish" "post-install failures should report partial completion"
+[[ "$post_install_failure" != *"was not changed"* ]] || fail "post-install failures must not claim the installed app was unchanged"
+
 write_fake_xcodebuild() {
     local mode="$1"
     /usr/bin/printf '%s\n' \

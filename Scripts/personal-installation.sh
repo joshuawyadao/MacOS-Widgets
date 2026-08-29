@@ -28,13 +28,14 @@ readonly INSTALL_DESTINATION="${DESKTOP_WIDGETS_INSTALL_DESTINATION:-$(desktop_w
 readonly LOCAL_CONFIGURATION="${DESKTOP_WIDGETS_LOCAL_CONFIGURATION:-$SOURCE_ROOT/Local.xcconfig}"
 readonly DRY_RUN="${DESKTOP_WIDGETS_DRY_RUN:-0}"
 readonly SCHEDULED_RUN="${DESKTOP_WIDGETS_SCHEDULED:-0}"
+APP_WAS_REPLACED=0
 
 /bin/mkdir -p "$LOG_DIRECTORY"
 
 failure_report() {
     local status=$?
     echo
-    echo "Desktop Widgets was not changed because setup stopped safely."
+    desktop_widgets_installation_failure_message "$APP_WAS_REPLACED"
     echo "Diagnostic log: $DIAGNOSTIC_LOG"
     echo "If the message above does not explain the fix, open the log and share it; Apple Account addresses and credential-like values are redacted."
     exit "$status"
@@ -232,6 +233,7 @@ install_built_app() {
         return 1
     fi
     /bin/rm -rf -- "$backup"
+    APP_WAS_REPLACED=1
     echo "Installed Desktop Widgets in your Applications folder."
 }
 

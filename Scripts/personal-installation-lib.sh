@@ -10,6 +10,17 @@ desktop_widgets_redact() {
         -e 's/((password|passwd|token|secret)[[:space:]]*[:=][[:space:]]*)[^[:space:]]+/\1[redacted]/Ig'
 }
 
+desktop_widgets_installation_failure_message() {
+    local app_was_replaced="$1"
+
+    if [[ "$app_was_replaced" == "1" ]]; then
+        echo "Desktop Widgets was installed, but setup did not finish."
+        echo "The new app remains installed; run Refresh Desktop Widgets.command to finish registration or opening it."
+    else
+        echo "Desktop Widgets was not changed because setup stopped safely."
+    fi
+}
+
 desktop_widgets_resolve_developer_dir() {
     local candidate
 
