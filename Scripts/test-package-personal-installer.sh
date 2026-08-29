@@ -9,10 +9,19 @@ readonly OUTPUT_PATH="$TEST_ROOT/Desktop-Widgets-Personal-Installer.zip"
 readonly CONTENTS_PATH="$TEST_ROOT/contents.txt"
 readonly TEST_XCUSERDATA_ROOT="$SCRIPT_DIRECTORY/../DesktopWidgets.xcodeproj/xcuserdata"
 readonly TEST_XCUSERDATA="$TEST_XCUSERDATA_ROOT/codex-package-test.xcuserdatad"
+readonly SECRET_TEST_ROOT="$SCRIPT_DIRECTORY/../Config"
+readonly SECRET_FIXTURES=(
+    "$SECRET_TEST_ROOT/Secrets.xcconfig"
+    "$SECRET_TEST_ROOT/codex.private.xcconfig"
+    "$SECRET_TEST_ROOT/.env"
+    "$SECRET_TEST_ROOT/.env.local"
+    "$SECRET_TEST_ROOT/AuthKey_codex.p8"
+)
 
 cleanup() {
     /bin/rm -rf -- "$TEST_XCUSERDATA"
     /bin/rmdir "$TEST_XCUSERDATA_ROOT" 2>/dev/null || true
+    /bin/rm -f -- "${SECRET_FIXTURES[@]}"
     if [[ -n "$TEST_ROOT" && "$TEST_ROOT" == *"/desktop-widgets-package-test."* ]]; then
         /bin/rm -rf -- "$TEST_ROOT"
     fi
@@ -47,5 +56,15 @@ if /usr/bin/grep -Eq '(^|/)(\.git|xcuserdata|Local\.xcconfig|DerivedData|build)(
     /bin/cat "$CONTENTS_PATH" >&2
     exit 1
 fi
+
+for secret_fixture in "${SECRET_FIXTURES[@]}"; do
+    /usr/bin/printf '%s\n' 'test-only secret material' > "$secret_fixture"
+    rejected_output="$(DESKTOP_WIDGETS_PACKAGE_NO_REVEAL=1 /bin/bash "$PACKAGE_SCRIPT" "$OUTPUT_PATH" 2>&1 || true)"
+    [[ "$rejected_output" == *"Refusing to package a local secret"* ]] || {
+        echo "FAIL: package accepted ignored secret pattern $(/usr/bin/basename "$secret_fixture")" >&2
+        exit 1
+    }
+    /bin/rm -f -- "$secret_fixture"
+done
 
 echo "PASS: Handoff package contains the guided source installer and excludes local/private artifacts."

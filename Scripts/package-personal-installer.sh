@@ -69,14 +69,19 @@ done < <(/usr/bin/find "$PAYLOAD_ROOT" -type d -name xcuserdata -print)
 if /usr/bin/find "$PAYLOAD_ROOT" \( \
     -name '.git' -o \
     -name 'xcuserdata' -o \
+    -name '.env' -o \
+    \( -name '.env.*' ! -name '.env.example' ! -name '.env.template' \) -o \
+    -name 'Secrets.xcconfig' -o \
     -name 'Local.xcconfig' -o \
+    -name '*.private.xcconfig' -o \
+    -name 'AuthKey_*.p8' -o \
     -name '*.p12' -o \
     -name '*.mobileprovision' -o \
     -name '*.provisionprofile' -o \
     -name '*.app' -o \
     -name '*.log' \
 \) -print -quit | /usr/bin/grep -q .; then
-    echo "Refusing to package a credential, build product, log, or Git metadata." >&2
+    echo "Refusing to package a local secret, credential, build product, log, or Git metadata." >&2
     exit 1
 fi
 
