@@ -234,6 +234,12 @@ failed_provisioning_output="$(run_installer install || true)"
 assert_contains "$failed_provisioning_output" "free provisioning" "failed provisioning should be classified"
 
 write_fake_xcodebuild ready
+/bin/mkdir -p "$TEST_ROOT/Logs"
+/usr/bin/awk 'BEGIN { for (line = 0; line < 90000; line += 1) print "repeatable installer diagnostic line" }' > "$TEST_ROOT/Logs/installation.log"
+run_installer install DESKTOP_WIDGETS_DRY_RUN=1 >/dev/null
+installation_log_size="$(/usr/bin/stat -f '%z' "$TEST_ROOT/Logs/installation.log")"
+[[ "$installation_log_size" -lt 1048576 ]] || fail "installer should rotate its diagnostic log before appending a new run"
+
 /bin/mkdir -p "$expected_destination"
 before_refresh="$(/bin/cat "$LOCAL_CONFIGURATION")"
 first_refresh_output="$(run_installer refresh DESKTOP_WIDGETS_DRY_RUN=1)"

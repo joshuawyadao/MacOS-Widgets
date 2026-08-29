@@ -6,6 +6,7 @@ readonly MODE="${1:-install}"
 readonly SCRIPT_DIRECTORY="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 readonly SOURCE_ROOT="$(cd "$SCRIPT_DIRECTORY/.." && pwd)"
 readonly LIBRARY_SCRIPT="$SCRIPT_DIRECTORY/personal-installation-lib.sh"
+readonly AUTOMATIC_LIBRARY_SCRIPT="$SCRIPT_DIRECTORY/automatic-refresh-lib.sh"
 
 if [[ "$MODE" != "install" && "$MODE" != "refresh" ]]; then
     echo "Usage: $0 install|refresh" >&2
@@ -14,6 +15,8 @@ fi
 
 # shellcheck source=Scripts/personal-installation-lib.sh
 source "$LIBRARY_SCRIPT"
+# shellcheck source=Scripts/automatic-refresh-lib.sh
+source "$AUTOMATIC_LIBRARY_SCRIPT"
 
 readonly USER_HOME="${DESKTOP_WIDGETS_HOME:-$HOME}"
 readonly SUPPORT_ROOT="${DESKTOP_WIDGETS_SUPPORT_ROOT:-$USER_HOME/Library/Application Support/Desktop Widgets}"
@@ -353,6 +356,7 @@ echo "Refresh Desktop Widgets.command remains the manual fallback."
 echo "Diagnostic log: $DIAGNOSTIC_LOG"
 }
 
+desktop_widgets_automatic_rotate_log "$DIAGNOSTIC_LOG"
 set +e
 desktop_widgets_run 2>&1 | desktop_widgets_redact | /usr/bin/tee -a "$DIAGNOSTIC_LOG"
 readonly INSTALLATION_STATUS="${PIPESTATUS[0]}"

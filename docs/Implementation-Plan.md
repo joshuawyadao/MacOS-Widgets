@@ -10,7 +10,8 @@ Address every actionable Codex review finding on PR #13 with test-backed, separa
 - [x] Preserve an existing ignored `Local.xcconfig` when creating the stable private installer copy, with migration and no-overwrite tests.
 - [x] Reclaim automatic-refresh locks only when their recorded owner process is gone, with active- and stale-lock tests.
 - [x] Exclude Xcode `xcuserdata` from handoff ZIPs and verify the archive cannot contain it.
-- [ ] Rotate the installer diagnostic log before append and distinguish failures before versus after app replacement.
+- [x] Rotate the installer diagnostic log before append so repeated scheduled failures stay bounded.
+- [ ] Distinguish failures before versus after app replacement.
 - [ ] Leave automatic maintenance unchanged during noninteractive installs unless the caller explicitly opts in.
 - [ ] Publish automatic-refresh status through per-process temporary files and cover the concurrency-safe path.
 - [ ] Run focused checks after each fix, then the complete verifier and `git diff --check`.
