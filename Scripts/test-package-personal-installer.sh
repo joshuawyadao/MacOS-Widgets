@@ -7,14 +7,20 @@ readonly PACKAGE_SCRIPT="$SCRIPT_DIRECTORY/package-personal-installer.sh"
 readonly TEST_ROOT="$(mktemp -d "${TMPDIR:-/tmp}/desktop-widgets-package-test.XXXXXX")"
 readonly OUTPUT_PATH="$TEST_ROOT/Desktop-Widgets-Personal-Installer.zip"
 readonly CONTENTS_PATH="$TEST_ROOT/contents.txt"
+readonly TEST_XCUSERDATA_ROOT="$SCRIPT_DIRECTORY/../DesktopWidgets.xcodeproj/xcuserdata"
+readonly TEST_XCUSERDATA="$TEST_XCUSERDATA_ROOT/codex-package-test.xcuserdatad"
 
 cleanup() {
+    /bin/rm -rf -- "$TEST_XCUSERDATA"
+    /bin/rmdir "$TEST_XCUSERDATA_ROOT" 2>/dev/null || true
     if [[ -n "$TEST_ROOT" && "$TEST_ROOT" == *"/desktop-widgets-package-test."* ]]; then
         /bin/rm -rf -- "$TEST_ROOT"
     fi
 }
 trap cleanup EXIT
 
+/bin/mkdir -p "$TEST_XCUSERDATA"
+/usr/bin/printf '%s\n' 'private Xcode workspace state' > "$TEST_XCUSERDATA/UserInterfaceState.xcuserstate"
 DESKTOP_WIDGETS_PACKAGE_NO_REVEAL=1 /bin/bash "$PACKAGE_SCRIPT" "$OUTPUT_PATH" >/dev/null
 [[ -s "$OUTPUT_PATH" ]] || {
     echo "FAIL: handoff archive was not created" >&2
@@ -35,7 +41,7 @@ for required in \
     }
 done
 
-if /usr/bin/grep -Eq '(^|/)(\.git|Local\.xcconfig|DerivedData|build)(/|$)|\.(app|p12|mobileprovision|provisionprofile|log)(/|$)' "$CONTENTS_PATH"; then
+if /usr/bin/grep -Eq '(^|/)(\.git|xcuserdata|Local\.xcconfig|DerivedData|build)(/|$)|\.(app|p12|mobileprovision|provisionprofile|log)(/|$)' "$CONTENTS_PATH"; then
     echo "FAIL: package contains local metadata, credentials, logs, or build products" >&2
     /bin/cat "$CONTENTS_PATH" >&2
     exit 1

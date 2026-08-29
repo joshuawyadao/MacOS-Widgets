@@ -45,6 +45,18 @@ for item in \
     copy_item "$item"
 done
 
+while IFS= read -r xcode_user_data; do
+    case "$xcode_user_data" in
+    "$PAYLOAD_ROOT"/*/xcuserdata)
+        /bin/rm -rf -- "$xcode_user_data"
+        ;;
+    *)
+        echo "Refusing unexpected Xcode user-data path: $xcode_user_data" >&2
+        exit 1
+        ;;
+    esac
+done < <(/usr/bin/find "$PAYLOAD_ROOT" -type d -name xcuserdata -print)
+
 /usr/bin/printf '%s\n' \
     'Desktop Widgets personal installation handoff' \
     '' \
@@ -55,6 +67,7 @@ done
 
 if /usr/bin/find "$PAYLOAD_ROOT" \( \
     -name '.git' -o \
+    -name 'xcuserdata' -o \
     -name 'Local.xcconfig' -o \
     -name '*.p12' -o \
     -name '*.mobileprovision' -o \
