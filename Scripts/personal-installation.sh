@@ -32,6 +32,9 @@ readonly INSTALL_LOCK_DIRECTORY="$SUPPORT_ROOT/AutomaticRefresh/run.lock"
 readonly HANDED_OFF_LOCK_OWNER="${DESKTOP_WIDGETS_INSTALL_LOCK_HELD_BY_PID:-}"
 APP_WAS_REPLACED=0
 OWNS_INSTALL_LOCK=0
+INSTALL_TRANSACTION_DESTINATION=""
+INSTALL_TRANSACTION_BACKUP=""
+INSTALL_TRANSACTION_COMMITTED=1
 
 /bin/mkdir -p "$LOG_DIRECTORY" "$SUPPORT_ROOT/AutomaticRefresh"
 
@@ -48,7 +51,20 @@ release_install_lock() {
     [[ "$OWNS_INSTALL_LOCK" == "1" ]] || return 0
     desktop_widgets_release_install_lock "$INSTALL_LOCK_DIRECTORY" "$$"
 }
-trap release_install_lock EXIT
+
+restore_incomplete_installation() {
+    [[ "$INSTALL_TRANSACTION_COMMITTED" == "0" ]] || return 0
+    [[ -n "$INSTALL_TRANSACTION_DESTINATION" && -n "$INSTALL_TRANSACTION_BACKUP" ]] || return 0
+    if [[ ! -e "$INSTALL_TRANSACTION_DESTINATION" && -e "$INSTALL_TRANSACTION_BACKUP" ]]; then
+        /bin/mv -- "$INSTALL_TRANSACTION_BACKUP" "$INSTALL_TRANSACTION_DESTINATION" || true
+    fi
+}
+
+cleanup_installation_process() {
+    restore_incomplete_installation
+    release_install_lock
+}
+trap cleanup_installation_process EXIT
 
 failure_report() {
     local status=$?
@@ -262,17 +278,25 @@ install_built_app() {
     fi
 
     /bin/mkdir -p "$(/usr/bin/dirname "$destination")"
-    /bin/rm -rf -- "$staging" "$backup"
+    desktop_widgets_recover_interrupted_install "$destination"
+    /bin/rm -rf -- "$staging"
     /usr/bin/ditto "$built_app" "$staging"
+
+    INSTALL_TRANSACTION_DESTINATION="$destination"
+    INSTALL_TRANSACTION_BACKUP="$backup"
+    INSTALL_TRANSACTION_COMMITTED=1
 
     if [[ -e "$destination" ]]; then
         /bin/mv -- "$destination" "$backup"
+        INSTALL_TRANSACTION_COMMITTED=0
     fi
 
     if ! /bin/mv -- "$staging" "$destination"; then
-        [[ ! -e "$backup" ]] || /bin/mv -- "$backup" "$destination"
+        desktop_widgets_recover_interrupted_install "$destination" || true
+        INSTALL_TRANSACTION_COMMITTED=1
         return 1
     fi
+    INSTALL_TRANSACTION_COMMITTED=1
     /bin/rm -rf -- "$backup"
     APP_WAS_REPLACED=1
     echo "Installed Desktop Widgets in your Applications folder."

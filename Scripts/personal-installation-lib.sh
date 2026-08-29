@@ -281,6 +281,20 @@ desktop_widgets_is_safe_install_destination() {
     [[ "$requested" == "$(desktop_widgets_expected_install_destination)" ]]
 }
 
+desktop_widgets_recover_interrupted_install() {
+    local destination="$1"
+    local backup="${destination}.previous"
+
+    desktop_widgets_is_safe_install_destination "$destination" || return 1
+    [[ -e "$backup" ]] || return 0
+    if [[ ! -e "$destination" ]]; then
+        /bin/mv -- "$backup" "$destination"
+        echo "Restored the previous Desktop Widgets app after an interrupted install."
+    else
+        /bin/rm -rf -- "$backup"
+    fi
+}
+
 desktop_widgets_print_build_arguments() {
     local project_path="$1"
     local derived_data_path="$2"

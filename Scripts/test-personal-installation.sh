@@ -169,6 +169,16 @@ DESKTOP_WIDGETS_HOME="$TEST_HOME" desktop_widgets_is_safe_install_destination "$
 assert_rejects "system Applications destination must be rejected" env DESKTOP_WIDGETS_HOME="$TEST_HOME" bash -c 'source "$1"; desktop_widgets_is_safe_install_destination "/Applications/Desktop Widgets.app"' _ "$LIBRARY_SCRIPT"
 assert_rejects "another app destination must be rejected" env DESKTOP_WIDGETS_HOME="$TEST_HOME" bash -c 'source "$1"; desktop_widgets_is_safe_install_destination "$2"' _ "$LIBRARY_SCRIPT" "$TEST_HOME/Applications/Other.app"
 
+/bin/mkdir -p "${expected_destination}.previous"
+/usr/bin/printf '%s\n' 'previous app marker' > "${expected_destination}.previous/marker.txt"
+DESKTOP_WIDGETS_HOME="$TEST_HOME" desktop_widgets_recover_interrupted_install "$expected_destination" >/dev/null
+[[ -f "$expected_destination/marker.txt" ]] || fail "next installer run should restore a backup left by an interrupted replacement"
+[[ ! -e "${expected_destination}.previous" ]] || fail "recovered backup should return to the normal destination"
+/bin/mkdir -p "${expected_destination}.previous"
+DESKTOP_WIDGETS_HOME="$TEST_HOME" desktop_widgets_recover_interrupted_install "$expected_destination" >/dev/null
+[[ -f "$expected_destination/marker.txt" ]] || fail "stale backup cleanup must preserve the installed app"
+[[ ! -e "${expected_destination}.previous" ]] || fail "stale backup should be removed once the destination is present"
+
 build_arguments="$(desktop_widgets_print_build_arguments "$PROJECT_ROOT/DesktopWidgets.xcodeproj" "$TEST_ROOT/DerivedData")"
 assert_contains "$build_arguments" "-allowProvisioningUpdates" "build command should allow automatic provisioning updates"
 assert_contains "$build_arguments" "-quiet" "friendly build command should suppress routine Xcode noise"
