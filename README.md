@@ -128,7 +128,7 @@ The script:
 3. Builds a fresh unsigned Release app and embedded widget extension.
 4. Verifies widget identities, App Intents schemas, sandbox entitlements, privacy strings, shared App Group metadata, and key configuration fields.
 
-CI runs the same test/build fundamentals on every pull request and push to `main` using a standard GitHub-hosted macOS runner.
+GitHub-hosted macOS verification runs for non-draft pull requests and manual dispatches. Draft pull requests do not reserve a macOS runner; marking one ready for review starts the complete test, coverage, and Release-build gate. A newer update to the same pull request cancels superseded work, and merging does not repeat the same full suite on `main`. Use the Actions tab's manual **CI Verify** dispatch whenever a hosted rerun is needed.
 
 Regenerate the privacy-safe README showcase after a relevant visual change:
 
