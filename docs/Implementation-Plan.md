@@ -1,18 +1,18 @@
 # Plan
 
-Increase visual separation between the transparent widget views and their public showcase background without changing the widgets' production appearance. Use a dark, code-generated presentation surface for both the README preview and GitHub social card, then validate contrast, dimensions, privacy, and the full project gate before protected publication.
+Separate public contact from commit attribution without rewriting published history, and add a recognized conduct policy with a genuinely private reporting route. Future commits will use the GitHub-provided noreply identity, while the already-public account email will be reserved for intentional conduct correspondence.
 
 ## Scope
-- In: Dark showcase backdrop and card treatment, deterministic contrast coverage, automatic social-preview generation, regenerated README/social images, documentation, validation, and protected publication.
-- Out: Production widget themes or behavior, user-specific screenshots, signed distribution, repository security settings, and GitHub's manual social-preview upload.
+- In: Future Git commit email configuration, existing-history decision, Contributor Covenant policy, contributor guidance, documentation consistency, local validation, and branch publication.
+- Out: Rewriting or force-pushing existing commits, changing the GitHub profile's public email setting, changing application behavior, and creating a new external mailbox or form.
 
 ## Action items
-[x] Update `PortfolioPreview` in `DesktopWidgetsTests/WidgetRenderingSmokeTests.swift` with a dark backdrop, stronger card surfaces, readable title/attribution styling, and a focused contrast assertion.
-[x] Extend `Scripts/generate-portfolio-preview.sh` to regenerate both `docs/images/widgets-preview.png` and a 1280 × 640, sub-1 MB `docs/images/widgets-social-preview.jpg` from the same synthetic render.
-[x] Update `README.md` so the documented generator accurately names both public assets without duplicating design-system documentation.
-[x] Generate and visually inspect both images for card separation, legibility, complete widget framing, deterministic synthetic data, dimensions, size, and absence of private text.
-[x] Run the focused generator test, shell/Markdown checks, `git diff --check`, and the complete `./Scripts/verify-widgets.sh` gate.
-[x] Commit and push the scoped changes on `codex/darker-showcase`, open pull request #11, complete automated review with no findings, confirm public CI passes, and prepare the change for protected squash merge.
+[x] Configure Git to use `38051882+joshuawyadao@users.noreply.github.com` for future commits and verify the effective identity without rewriting history.
+[x] Add GitHub's recognized Contributor Covenant template as `CODE_OF_CONDUCT.md`, using the account's public Gmail address as a private-by-email conduct reporting channel.
+[x] Update `CONTRIBUTING.md` and `README.md` so contributors can find the conduct standards and distinguish conduct reports from security vulnerabilities.
+[x] Verify the policy contact, Markdown links, repository diff, commit metadata, and absence of application/test impact. Automated tests do not apply because no executable, test, build, or project-configuration files changed.
+[x] Commit and push the scoped documentation and plan on `codex/community-privacy` using the noreply identity.
+[x] Check the pushed branch and report the expected community-profile improvement, noting that GitHub recalculates the default-branch score after merge.
 
 ## Open questions
-- None. The existing synthetic data, widget layouts, and manual GitHub upload workflow remain unchanged.
+- None. The existing Gmail address remains in published history and is already exposed on the GitHub profile; it will be used only as an intentional private reporting route, while new commit metadata uses noreply.

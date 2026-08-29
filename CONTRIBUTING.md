@@ -2,6 +2,13 @@
 
 Thanks for taking the time to improve macOS Widgets.
 
+## Code of conduct
+
+By participating, you agree to follow the [Contributor Covenant Code of
+Conduct](CODE_OF_CONDUCT.md). Report conduct concerns privately using the email
+channel in that policy; do not post reports or sensitive personal details in a
+public issue.
+
 ## Before opening a change
 
 1. Search existing issues and pull requests to avoid duplicate work.
@@ -32,3 +39,5 @@ Do not commit Apple Team IDs, certificates, provisioning profiles, API credentia
 - Treat accessibility labels, locale behavior, and all three widget families as part of the feature contract.
 
 Report vulnerabilities using [SECURITY.md](SECURITY.md), not a public issue.
+Security reports and conduct reports use separate private channels; follow the
+policy that matches the concern.

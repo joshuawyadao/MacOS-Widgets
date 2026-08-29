@@ -127,7 +127,12 @@ The generator runs the focused rendering test, writes build intermediates to tem
 
 ## Contributing
 
-Issues and pull requests are welcome. Read [CONTRIBUTING.md](CONTRIBUTING.md) before proposing a change. Security concerns should follow [SECURITY.md](SECURITY.md) rather than being posted publicly.
+Issues and pull requests are welcome. Read [CONTRIBUTING.md](CONTRIBUTING.md) and
+the [Code of Conduct](CODE_OF_CONDUCT.md) before participating. Conduct reports
+and security concerns should follow their respective private channels in the
+[Code of Conduct](CODE_OF_CONDUCT.md#enforcement) and
+[Security Policy](SECURITY.md#reporting-a-vulnerability) rather than being
+posted publicly.
 
 ## License
 
