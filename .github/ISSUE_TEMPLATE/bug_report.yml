@@ -1,0 +1,81 @@
+name: Bug report
+description: Report reproducible behavior that differs from the documented widget experience.
+title: "[Bug]: "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for helping improve macOS Widgets. Do not include calendar content, personal locations, signing credentials, or other private data. Use synthetic examples and redact screenshots.
+
+  - type: input
+    id: macos-version
+    attributes:
+      label: macOS version
+      placeholder: macOS 15.6
+    validations:
+      required: true
+
+  - type: input
+    id: xcode-version
+    attributes:
+      label: Xcode version
+      placeholder: Xcode 16.4
+    validations:
+      required: true
+
+  - type: dropdown
+    id: widget
+    attributes:
+      label: Affected component
+      options:
+        - Companion app
+        - Time & Date widget
+        - Weather widget
+        - Battery widget
+        - Calendar widget
+        - Build or verification tooling
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Reproduction steps
+      description: Include the smallest sequence that consistently demonstrates the problem.
+      placeholder: |
+        1. Build the DesktopWidgets scheme for My Mac.
+        2. Add a medium Weather widget.
+        3. Configure it with synthetic example data.
+        4. Observe…
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior
+    validations:
+      required: true
+
+  - type: textarea
+    id: verification
+    attributes:
+      label: Verification details
+      description: Note whether `./Scripts/verify-widgets.sh` passes and include redacted logs if useful.
+
+  - type: checkboxes
+    id: privacy
+    attributes:
+      label: Privacy check
+      options:
+        - label: I removed personal data and credentials from this report and its attachments.
+          required: true
+        - label: This is not a security vulnerability; security reports belong in private vulnerability reporting.
+          required: true

@@ -1,0 +1,55 @@
+name: Feature request
+description: Propose a focused improvement to a widget, the companion app, or project tooling.
+title: "[Feature]: "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Describe the user need before proposing an implementation. Changes to widget identity, permissions, privacy behavior, or external data sources require extra compatibility review.
+
+  - type: dropdown
+    id: component
+    attributes:
+      label: Component
+      options:
+        - Companion app
+        - Time & Date widget
+        - Weather widget
+        - Battery widget
+        - Calendar widget
+        - Shared styling or configuration
+        - Build, testing, or documentation
+    validations:
+      required: true
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: User need
+      description: What is difficult or impossible today, and who would benefit?
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed outcome
+      description: Describe the behavior rather than prescribing an internal implementation.
+    validations:
+      required: true
+
+  - type: textarea
+    id: constraints
+    attributes:
+      label: Compatibility, privacy, and accessibility considerations
+      description: Note configuration migrations, permissions, network access, localization, VoiceOver, and widget-family implications.
+
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Preliminary checks
+      options:
+        - label: I searched existing issues and pull requests for the same request.
+          required: true
+        - label: I did not include personal calendar, location, signing, or credential data.
+          required: true
