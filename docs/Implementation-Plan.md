@@ -28,6 +28,7 @@ Address every actionable Codex review finding on PR #13 with test-backed, separa
 - [x] Protect the lock-owner publication gap and validate profiled products before reporting healthy signing.
 - [x] Resolve the real account home outside the app sandbox and reveal configured helper locations without sandboxed file probing.
 - [x] Recover interrupted app replacements and allow maintenance to be disabled with damaged signing settings.
+- [x] Isolate packaging-test mutations in a temporary extracted handoff so tests cannot overwrite local secrets or Xcode state.
 - [x] Run focused checks after each fix, then the complete verifier and `git diff --check`.
 - [x] Push every feedback checkpoint and acknowledge each addressed Codex comment.
 

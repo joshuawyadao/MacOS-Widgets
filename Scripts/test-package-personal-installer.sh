@@ -3,15 +3,17 @@
 set -euo pipefail
 
 readonly SCRIPT_DIRECTORY="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-readonly PACKAGE_SCRIPT="$SCRIPT_DIRECTORY/package-personal-installer.sh"
+readonly SOURCE_PACKAGE_SCRIPT="$SCRIPT_DIRECTORY/package-personal-installer.sh"
 readonly TEST_ROOT="$(mktemp -d "${TMPDIR:-/tmp}/desktop-widgets-package-test.XXXXXX")"
+readonly FIXTURE_ROOT="$TEST_ROOT/source/Desktop Widgets"
+readonly PACKAGE_SCRIPT="$FIXTURE_ROOT/Scripts/package-personal-installer.sh"
 readonly OUTPUT_PATH="$TEST_ROOT/Desktop-Widgets-Personal-Installer.zip"
 readonly CONTENTS_PATH="$TEST_ROOT/contents.txt"
-readonly TEST_XCUSERDATA_ROOT="$SCRIPT_DIRECTORY/../DesktopWidgets.xcodeproj/xcuserdata"
+readonly TEST_XCUSERDATA_ROOT="$FIXTURE_ROOT/DesktopWidgets.xcodeproj/xcuserdata"
 readonly TEST_XCUSERDATA="$TEST_XCUSERDATA_ROOT/codex-package-test.xcuserdatad"
-readonly TEST_SOURCE_OUTPUT="$SCRIPT_DIRECTORY/codex-package-output-test.zip"
-readonly TEST_ARTIFACT_ROOT="$SCRIPT_DIRECTORY/../DesktopWidgetsApp/codex-package-local-artifacts"
-readonly SECRET_TEST_ROOT="$SCRIPT_DIRECTORY/../Config"
+readonly TEST_SOURCE_OUTPUT="$FIXTURE_ROOT/Scripts/codex-package-output-test.zip"
+readonly TEST_ARTIFACT_ROOT="$FIXTURE_ROOT/DesktopWidgetsApp/codex-package-local-artifacts"
+readonly SECRET_TEST_ROOT="$FIXTURE_ROOT/Config"
 readonly SECRET_FIXTURES=(
     "$SECRET_TEST_ROOT/Secrets.xcconfig"
     "$SECRET_TEST_ROOT/codex.private.xcconfig"
@@ -21,16 +23,16 @@ readonly SECRET_FIXTURES=(
 )
 
 cleanup() {
-    /bin/rm -rf -- "$TEST_XCUSERDATA"
-    /bin/rmdir "$TEST_XCUSERDATA_ROOT" 2>/dev/null || true
-    /bin/rm -f -- "${SECRET_FIXTURES[@]}"
-    /bin/rm -f -- "$TEST_SOURCE_OUTPUT"
-    /bin/rm -rf -- "$TEST_ARTIFACT_ROOT"
     if [[ -n "$TEST_ROOT" && "$TEST_ROOT" == *"/desktop-widgets-package-test."* ]]; then
         /bin/rm -rf -- "$TEST_ROOT"
     fi
 }
 trap cleanup EXIT
+
+# Validate real handoff inputs first, then mutate only an extracted temporary
+# copy. Ignored secrets and Xcode state in the working checkout belong to users.
+DESKTOP_WIDGETS_PACKAGE_NO_REVEAL=1 /bin/bash "$SOURCE_PACKAGE_SCRIPT" "$TEST_ROOT/source.zip" >/dev/null
+/usr/bin/ditto -x -k "$TEST_ROOT/source.zip" "$TEST_ROOT/source"
 
 /bin/mkdir -p "$TEST_XCUSERDATA"
 /usr/bin/printf '%s\n' 'private Xcode workspace state' > "$TEST_XCUSERDATA/UserInterfaceState.xcuserstate"
