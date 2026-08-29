@@ -34,6 +34,22 @@ status_path() {
     desktop_widgets_automatic_status_path "$LOCAL_CONFIGURATION" "$USER_HOME"
 }
 
+configured_status_path() {
+    local resolved=""
+
+    if [[ -n "${DESKTOP_WIDGETS_AUTOMATIC_STATUS_PATH:-}" ]]; then
+        /usr/bin/printf '%s\n' "$DESKTOP_WIDGETS_AUTOMATIC_STATUS_PATH"
+        return 0
+    fi
+    resolved="$(status_path 2>/dev/null || true)"
+    if [[ -n "$resolved" ]]; then
+        /usr/bin/printf '%s\n' "$resolved"
+        return 0
+    fi
+    [[ -f "$AGENT_PATH" ]] || return 1
+    /usr/bin/plutil -extract EnvironmentVariables.DESKTOP_WIDGETS_AUTOMATIC_STATUS_PATH raw -o - "$AGENT_PATH" 2>/dev/null
+}
+
 write_agent() {
     local state_path="$1"
     local temporary_path="${AGENT_PATH}.new"
@@ -95,9 +111,7 @@ enable_agent() {
 disable_agent() {
     local state_path=""
     validate_agent_path
-    if [[ -f "$LOCAL_CONFIGURATION" ]]; then
-        state_path="${DESKTOP_WIDGETS_AUTOMATIC_STATUS_PATH:-$(status_path)}"
-    fi
+    state_path="$(configured_status_path || true)"
 
     if [[ "$DRY_RUN" == "1" ]]; then
         echo "DRY RUN: remove only $AGENT_PATH"

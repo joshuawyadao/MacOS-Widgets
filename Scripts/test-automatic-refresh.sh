@@ -143,6 +143,15 @@ run_manager disable >/dev/null
 [[ -f "$unrelated_agent" ]] || fail "Disable must not remove unrelated agents"
 assert_equal "disabled" "$(desktop_widgets_automatic_status_value "$STATUS_PATH" State)" "Disable should publish status"
 
+run_manager enable >/dev/null
+/usr/bin/printf '%s\n' "LOCAL_DEVELOPMENT_TEAM = $TEAM_ID" > "$LOCAL_CONFIGURATION"
+run_manager disable >/dev/null
+[[ ! -e "$AGENT_PATH" ]] || fail "Disable should remove the agent even when local configuration is malformed"
+assert_equal "disabled" "$(desktop_widgets_automatic_status_value "$STATUS_PATH" State)" "Disable should recover the status path from the agent plist"
+/usr/bin/printf '%s\n' \
+    "LOCAL_DEVELOPMENT_TEAM = $TEAM_ID" \
+    "WIDGET_THEME_APP_GROUP = $APP_GROUP" > "$LOCAL_CONFIGURATION"
+
 unsafe_output="$(env DESKTOP_WIDGETS_HOME="$TEST_HOME" DESKTOP_WIDGETS_LAUNCH_AGENT_PATH="$unrelated_agent" DESKTOP_WIDGETS_SUPPORT_ROOT="$SUPPORT_ROOT" DESKTOP_WIDGETS_STABLE_SOURCE_ROOT="$STABLE_ROOT" DESKTOP_WIDGETS_LOCAL_CONFIGURATION="$LOCAL_CONFIGURATION" /bin/bash "$MANAGER_SCRIPT" disable 2>&1 || true)"
 assert_contains "$unsafe_output" "Refusing to manage" "manager should reject unexpected LaunchAgent paths"
 [[ -f "$unrelated_agent" ]] || fail "unsafe path rejection must preserve the unrelated agent"
