@@ -34,7 +34,8 @@ for required in \
     "Desktop Widgets/Enable Automatic Refresh.command" \
     "Desktop Widgets/Disable Automatic Refresh.command" \
     "Desktop Widgets/Installation Guide.md" \
-    "Desktop Widgets/DesktopWidgets.xcodeproj/project.pbxproj"; do
+    "Desktop Widgets/DesktopWidgets.xcodeproj/project.pbxproj" \
+    "Desktop Widgets/DesktopWidgetsTests/WidgetContractTests.swift"; do
     /usr/bin/grep -Fq "$required" "$CONTENTS_PATH" || {
         echo "FAIL: package is missing $required" >&2
         exit 1

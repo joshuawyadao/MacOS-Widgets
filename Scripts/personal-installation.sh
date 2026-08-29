@@ -114,6 +114,7 @@ sync_installation_source() {
         "DesktopWidgets.xcodeproj"
         "DesktopWidgetsApp"
         "DesktopWidgetsExtension"
+        "DesktopWidgetsTests"
         "Shared"
         "Scripts"
         "docs"

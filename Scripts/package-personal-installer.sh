@@ -33,6 +33,7 @@ for item in \
     "DesktopWidgets.xcodeproj" \
     "DesktopWidgetsApp" \
     "DesktopWidgetsExtension" \
+    "DesktopWidgetsTests" \
     "Shared" \
     "Scripts" \
     "docs" \
