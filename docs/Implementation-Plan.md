@@ -13,7 +13,7 @@ Prepare macOS Widgets as a trustworthy public portfolio repository, preserve its
 [x] Pin third-party Actions to an immutable commit, add concurrency protection, retain read-only permissions, and validate the workflow syntax and repository documentation.
 [x] Run `git diff --check` and `./Scripts/verify-widgets.sh`; no automated test files are needed because application behavior is unchanged, and the existing full suite plus Release build passed as the relevant regression gate.
 [x] Commit and push only the portfolio/publication changes while the repository is private, then make the repository public and configure its description, topics, Actions allowlist with immutable SHA pinning, secret scanning/push protection, dependency security updates, private vulnerability reporting, and a `main` ruleset that blocks deletion/force-push and requires CI through pull requests.
-[ ] Open the publication pull request, confirm the now-free public `macos-26` CI run succeeds, merge the verified change, and recheck public visibility, protections, repository presentation, and the absence of exposed repository secrets.
+[x] Open publication PR #9, confirm the now-free public `macos-26` CI run succeeds without warnings, merge the verified change, and recheck public visibility, protections, repository presentation, and the absence of exposed repository secrets.
 
 ## Open questions
 - None. The repository will use the MIT license; official repository updates remain controlled by GitHub write access and protected-branch settings.
