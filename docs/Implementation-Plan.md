@@ -12,7 +12,7 @@ Finish the friendly Personal Team installer after target-Mac validation exposed 
 - [x] Register the widget first, configure maintenance second, and open the installed companion app only after setup completes.
 - [x] Extend installer dry-run coverage to verify app-opening order and scheduled-refresh behavior.
 - [x] Run focused installer and maintenance tests, the complete verification script, and `git diff --check`.
-- [ ] Save and push the fix on `codex/feature/easier-personal-installation`, then generate a clean replacement ZIP.
+- [x] Save and push the fix on `codex/feature/easier-personal-installation`, then generate a clean replacement ZIP.
 
 ## Evidence
 - Target-Mac process inspection showed `manage-automatic-refresh.sh enable` blocked for several minutes in `/bin/launchctl kickstart -k` after the installed app was already present.
