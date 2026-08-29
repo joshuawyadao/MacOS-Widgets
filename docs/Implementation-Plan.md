@@ -14,6 +14,7 @@ Address the actionable Codex review feedback without changing the established pr
 [x] Commit and push the review fixes on `codex/community-privacy` with the effective noreply identity.
 [x] Recheck Codex feedback, CI Verify, and GitHub mergeability before marking the PR ready for review.
 [x] Merge updated `main` at `c8a9d79`, preserving its optimized CI workflow and README guidance while retaining this branch's conduct and security-reporting changes.
+[x] Merge updated `main` at `8fa56f0`, preserving its showcase test and generated-image fixes unchanged while retaining this branch's community-policy changes.
 
 ## Open questions
 - None. The Security Policy remains canonical for vulnerability-reporting fallbacks, and the GitHub API already confirms the intended author identity.
