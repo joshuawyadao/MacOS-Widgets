@@ -82,6 +82,10 @@ assert_equal "refreshed" "$(desktop_widgets_automatic_status_value "$STATUS_PATH
 desktop_widgets_automatic_publish_manual_refresh "$STATUS_PATH" false
 assert_equal "disabled" "$(desktop_widgets_automatic_status_value "$STATUS_PATH" State)" "manual refresh should preserve disabled maintenance"
 
+/usr/bin/printf '%s\n' 'installed agent fixture' > "$TEST_ROOT/enabled-agent.plist"
+assert_equal "true" "$(desktop_widgets_automatic_enabled_state "$TEST_ROOT/missing-status.plist" "$TEST_ROOT/enabled-agent.plist")" "missing status should retain enabled maintenance when its agent exists"
+assert_equal "false" "$(desktop_widgets_automatic_enabled_state "$TEST_ROOT/missing-status.plist" "$TEST_ROOT/missing-agent.plist")" "missing status should report off only when no agent exists"
+
 /usr/bin/printf '%s\n' \
     '#!/bin/bash' \
     'set -euo pipefail' \

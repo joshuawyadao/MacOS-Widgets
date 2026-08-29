@@ -162,6 +162,18 @@ desktop_widgets_automatic_publish_manual_refresh() {
     fi
 }
 
+desktop_widgets_automatic_enabled_state() {
+    local status_path="$1"
+    local agent_path="$2"
+    local enabled
+
+    enabled="$(desktop_widgets_automatic_status_value "$status_path" Enabled)"
+    case "$enabled" in
+    true|false) /usr/bin/printf '%s\n' "$enabled" ;;
+    *) [[ -f "$agent_path" ]] && echo true || echo false ;;
+    esac
+}
+
 desktop_widgets_automatic_should_notify() {
     local status_path="$1"
     local error_code="$2"

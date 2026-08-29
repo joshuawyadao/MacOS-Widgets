@@ -132,7 +132,7 @@ publish_manual_refresh_status() {
     fi
 
     status_path="${DESKTOP_WIDGETS_AUTOMATIC_STATUS_PATH:-$(desktop_widgets_automatic_status_path "$LOCAL_CONFIGURATION" "$USER_HOME")}" || return 0
-    enabled="$(desktop_widgets_automatic_status_value "$status_path" Enabled)"
+    enabled="$(desktop_widgets_automatic_enabled_state "$status_path" "$(desktop_widgets_automatic_expected_agent_path "$USER_HOME")")"
     desktop_widgets_automatic_publish_manual_refresh "$status_path" "$enabled"
 }
 
