@@ -9,6 +9,10 @@ A native SwiftUI companion app and WidgetKit extension for four configurable des
 
 > **Project status:** Source-first personal project. Build locally with Xcode and a free Apple Personal Team; no pre-signed binary is distributed.
 
+![Time & Date, Weather, Battery, and Calendar widgets rendered in a two-by-two showcase](docs/images/widgets-preview.png)
+
+> The showcase is generated from the real SwiftUI widget views using deterministic synthetic weather, battery, and calendar data. It contains no personal device or account data.
+
 ## What it includes
 
 | Widget | Capabilities | Data source |
@@ -104,6 +108,14 @@ The script:
 4. Verifies widget identities, App Intents schemas, sandbox entitlements, privacy strings, shared App Group metadata, and key configuration fields.
 
 CI runs the same test/build fundamentals on every pull request and push to `main` using a standard GitHub-hosted macOS runner.
+
+Regenerate the privacy-safe README showcase after a relevant visual change:
+
+```sh
+./Scripts/generate-portfolio-preview.sh
+```
+
+The generator runs the focused rendering test, writes build intermediates to temporary storage, and only replaces `docs/images/widgets-preview.png` after the test succeeds.
 
 ## Documentation
 

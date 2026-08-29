@@ -5,6 +5,7 @@ import WidgetKit
 struct WeatherWidgetView: View {
     @Environment(\.widgetFamily) private var environmentFamily
     @Environment(\.widgetRenderingMode) private var renderingMode
+    @Environment(\.locale) private var locale
 
     let entry: WeatherEntry
     private let familyOverride: WidgetFamily?
@@ -38,7 +39,7 @@ struct WeatherWidgetView: View {
             snapshot: entry.snapshot,
             state: entry.state,
             family: family,
-            locale: .autoupdatingCurrent
+            locale: locale
         )
     }
 
