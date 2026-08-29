@@ -18,8 +18,7 @@ final class WidgetContractTests: XCTestCase {
                 "DesktopWidgetsEnableAutomaticRefreshCommandPath": "$(HOME)/Library/Application Support/Desktop Widgets/Installer/Enable Automatic Refresh.command",
                 "DesktopWidgetsDisableAutomaticRefreshCommandPath": "$(HOME)/Library/Application Support/Desktop Widgets/Installer/Disable Automatic Refresh.command",
             ],
-            homeDirectory: home,
-            fileExists: { [refresh.path, enable.path, disable.path].contains($0) }
+            homeDirectory: home
         )
 
         XCTAssertTrue(status.isInPreferredLocation)
@@ -38,8 +37,7 @@ final class WidgetContractTests: XCTestCase {
         let status = DesktopWidgetsInstallationStatus(
             bundleURL: URL(fileURLWithPath: "/tmp/DesktopWidgets.app"),
             infoDictionary: ["CFBundleIdentifier": "com.example.DesktopWidgets"],
-            homeDirectory: home,
-            fileExists: { _ in false }
+            homeDirectory: home
         )
 
         XCTAssertFalse(status.isInPreferredLocation)
@@ -47,6 +45,16 @@ final class WidgetContractTests: XCTestCase {
         XCTAssertFalse(status.refreshCommandExists)
         XCTAssertNil(status.refreshCommandURL)
         XCTAssertFalse(status.isReady)
+    }
+
+    func testInstallationStatusUsesAccountRecordHomeOutsideSandboxContainer() {
+        let containerHome = URL(fileURLWithPath: "/Users/friendly/Library/Containers/example/Data")
+        let accountHome = DesktopWidgetsInstallationStatus.accountHomeDirectory(
+            userRecordHome: { "/Users/friendly" },
+            fallback: containerHome
+        )
+
+        XCTAssertEqual(accountHome.path, "/Users/friendly")
     }
 
     func testAutomaticRefreshStatusExplainsHealthyAndAttentionStates() {

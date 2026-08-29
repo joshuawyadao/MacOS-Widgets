@@ -1,3 +1,4 @@
+import Darwin
 import Foundation
 
 enum CompanionAppDestination: String, CaseIterable, Hashable, Identifiable {
@@ -61,8 +62,7 @@ struct DesktopWidgetsInstallationStatus: Equatable {
     init(
         bundleURL: URL,
         infoDictionary: [String: Any],
-        homeDirectory: URL,
-        fileExists: (String) -> Bool = FileManager.default.fileExists(atPath:)
+        homeDirectory: URL
     ) {
         self.bundleURL = bundleURL.standardizedFileURL
         expectedBundleURL = homeDirectory
@@ -79,7 +79,10 @@ struct DesktopWidgetsInstallationStatus: Equatable {
                 .replacingOccurrences(of: "$HOME", with: homeDirectory.path)
             guard !configuredPath.isEmpty else { return (nil, false) }
             let commandURL = URL(fileURLWithPath: configuredPath).standardizedFileURL
-            return (commandURL, fileExists(commandURL.path))
+            // The sandbox cannot reliably stat helpers in the account's
+            // Library. A configured URL is still safe to reveal in Finder,
+            // where the user grants the interaction explicitly.
+            return (commandURL, true)
         }
 
         let refreshCommand = command(forKey: "DesktopWidgetsRefreshCommandPath")
@@ -93,15 +96,25 @@ struct DesktopWidgetsInstallationStatus: Equatable {
         disableAutomaticRefreshCommandExists = disableCommand.1
     }
 
-    static func current(
-        bundle: Bundle = .main,
-        fileManager: FileManager = .default
-    ) -> Self {
+    static func accountHomeDirectory(
+        userRecordHome: () -> String? = {
+            guard let record = getpwuid(getuid()),
+                  let home = record.pointee.pw_dir else { return nil }
+            return String(cString: home)
+        },
+        fallback: URL = FileManager.default.homeDirectoryForCurrentUser
+    ) -> URL {
+        guard let path = userRecordHome(), path.hasPrefix("/") else {
+            return fallback.standardizedFileURL
+        }
+        return URL(fileURLWithPath: path, isDirectory: true).standardizedFileURL
+    }
+
+    static func current(bundle: Bundle = .main) -> Self {
         Self(
             bundleURL: bundle.bundleURL,
             infoDictionary: bundle.infoDictionary ?? [:],
-            homeDirectory: fileManager.homeDirectoryForCurrentUser,
-            fileExists: fileManager.fileExists(atPath:)
+            homeDirectory: accountHomeDirectory()
         )
     }
 
