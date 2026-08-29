@@ -1,18 +1,18 @@
 # Plan
 
-Polish the public repository with an authentic privacy-safe widget showcase, lightweight contribution templates, and removal of internal-only review history. Generate the visual from the real SwiftUI widget views using deterministic synthetic data, then publish the changes through the protected pull-request workflow.
+Increase visual separation between the transparent widget views and their public showcase background without changing the widgets' production appearance. Use a dark, code-generated presentation surface for both the README preview and GitHub social card, then validate contrast, dimensions, privacy, and the full project gate before protected publication.
 
 ## Scope
-- In: A generated portfolio preview, README presentation updates, issue and pull-request templates, internal artifact cleanup, documentation of the preview workflow, validation, and protected publication.
-- Out: Real calendar or location screenshots, application behavior changes, signed binary distribution, Git history rewriting, GitHub profile pinning, LinkedIn edits, commit-email changes, and a Code of Conduct that would require choosing a private maintainer contact channel.
+- In: Dark showcase backdrop and card treatment, deterministic contrast coverage, automatic social-preview generation, regenerated README/social images, documentation, validation, and protected publication.
+- Out: Production widget themes or behavior, user-specific screenshots, signed distribution, repository security settings, and GitHub's manual social-preview upload.
 
 ## Action items
-[x] Remove `.brooks-lint-history.json` from the tracked project and ignore future local Brooks review history without altering other project metadata.
-[x] Add focused GitHub issue forms and a pull-request template that reinforce the repository's privacy, security, compatibility, and verification expectations.
-[x] Extend `DesktopWidgetsTests/WidgetRenderingSmokeTests.swift` with a synthetic-data showcase that pins locale, time zone, and color scheme while rendering the real widget views into temporary storage; add an explicit generator that respects configured or system-selected Xcode paths as the only way to refresh the tracked preview.
-[x] Generate and visually inspect `docs/images/widgets-preview.png`, then add it near the top of `README.md` with an accurate synthetic-data caption and regeneration instructions.
-[x] Run targeted rendering tests, YAML/Markdown/link checks, `git diff --check`, and the complete `./Scripts/verify-widgets.sh` gate; confirm no personal data or credentials appear in the changed files or image.
-[x] Commit and push the scoped changes on `codex/public-polish`, open a pull request, address review feedback, confirm public CI passes, and leave the change ready for protected squash merge without bypassing the `main` ruleset.
+[x] Update `PortfolioPreview` in `DesktopWidgetsTests/WidgetRenderingSmokeTests.swift` with a dark backdrop, stronger card surfaces, readable title/attribution styling, and a focused contrast assertion.
+[x] Extend `Scripts/generate-portfolio-preview.sh` to regenerate both `docs/images/widgets-preview.png` and a 1280 × 640, sub-1 MB `docs/images/widgets-social-preview.jpg` from the same synthetic render.
+[x] Update `README.md` so the documented generator accurately names both public assets without duplicating design-system documentation.
+[x] Generate and visually inspect both images for card separation, legibility, complete widget framing, deterministic synthetic data, dimensions, size, and absence of private text.
+[x] Run the focused generator test, shell/Markdown checks, `git diff --check`, and the complete `./Scripts/verify-widgets.sh` gate.
+[ ] Commit and push the scoped changes on `codex/darker-showcase`, open a pull request, address review feedback, confirm public CI passes, and prepare the change for protected squash merge.
 
 ## Open questions
-- None. Account-level profile, LinkedIn, and email choices will be reported as manual follow-up steps.
+- None. The existing synthetic data, widget layouts, and manual GitHub upload workflow remain unchanged.

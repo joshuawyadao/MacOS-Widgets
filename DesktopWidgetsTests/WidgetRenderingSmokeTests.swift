@@ -263,7 +263,7 @@ final class WidgetRenderingSmokeTests: XCTestCase {
             content: PortfolioPreview()
                 .environment(\.locale, Locale(identifier: "en_US_POSIX"))
                 .environment(\.timeZone, utc)
-                .environment(\.colorScheme, .light)
+                .environment(\.colorScheme, .dark)
         )
         renderer.proposedSize = ProposedViewSize(width: size.width, height: size.height)
         renderer.scale = 2
@@ -275,6 +275,21 @@ final class WidgetRenderingSmokeTests: XCTestCase {
             "Portfolio preview could not be decoded"
         )
         XCTAssertTrue(containsVisibleContent(bitmap), "Portfolio preview contained no visible content")
+        let backdropLuminance = averageLuminance(
+            bitmap,
+            xRange: 12..<44,
+            yRange: 12..<44
+        )
+        let cardLuminance = averageLuminance(
+            bitmap,
+            xRange: 560..<640,
+            yRange: 80..<150
+        )
+        XCTAssertGreaterThan(
+            cardLuminance - backdropLuminance,
+            0.06,
+            "Portfolio widget cards must remain visually distinct from the backdrop"
+        )
 
         let requestURL = URL(fileURLWithPath: "/private/tmp/DesktopWidgetsPortfolioPreview.request")
         guard FileManager.default.fileExists(atPath: requestURL.path) else {
@@ -358,6 +373,27 @@ final class WidgetRenderingSmokeTests: XCTestCase {
             || abs(lhs.alphaComponent - rhs.alphaComponent) > 0.01
     }
 
+    private func averageLuminance(
+        _ bitmap: NSBitmapImageRep,
+        xRange: Range<Int>,
+        yRange: Range<Int>
+    ) -> CGFloat {
+        var total: CGFloat = 0
+        var count: CGFloat = 0
+        for y in yRange where y < bitmap.pixelsHigh {
+            for x in xRange where x < bitmap.pixelsWide {
+                guard let color = bitmap.colorAt(x: x, y: y)?.usingColorSpace(.deviceRGB) else {
+                    continue
+                }
+                total += (0.2126 * color.redComponent)
+                    + (0.7152 * color.greenComponent)
+                    + (0.0722 * color.blueComponent)
+                count += 1
+            }
+        }
+        return count > 0 ? total / count : 0
+    }
+
     private func renderSize(for family: WidgetFamily) -> CGSize {
         switch family {
         case .systemSmall:
@@ -380,9 +416,10 @@ private struct PortfolioPreview: View {
             VStack(alignment: .leading, spacing: 3) {
                 Text("macOS Widgets")
                     .font(.system(size: 28, weight: .bold, design: .rounded))
+                    .foregroundStyle(.white)
                 Text("Native WidgetKit views rendered with synthetic data")
                     .font(.system(size: 13, weight: .medium, design: .rounded))
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(.white.opacity(0.68))
             }
 
             VStack(spacing: 16) {
@@ -417,9 +454,9 @@ private struct PortfolioPreview: View {
                             Text("Open-Meteo")
                                 .font(.system(size: 8, weight: .medium, design: .monospaced))
                                 .underline()
-                                .foregroundStyle(.primary.opacity(0.82))
+                                .foregroundStyle(.white.opacity(0.88))
                                 .frame(width: 58, height: 16)
-                                .background(Color(red: 0.91, green: 0.93, blue: 0.97))
+                                .background(Color(red: 0.08, green: 0.13, blue: 0.22))
                         }
                     }
                 }
@@ -453,8 +490,8 @@ private struct PortfolioPreview: View {
         .background(
             LinearGradient(
                 colors: [
-                    Color(red: 0.95, green: 0.96, blue: 0.98),
-                    Color(red: 0.88, green: 0.91, blue: 0.96)
+                    Color(red: 0.035, green: 0.055, blue: 0.11),
+                    Color(red: 0.075, green: 0.13, blue: 0.23)
                 ],
                 startPoint: .topLeading,
                 endPoint: .bottomTrailing
@@ -482,11 +519,21 @@ private struct PortfolioPreview: View {
     private func widgetCard<Content: View>(@ViewBuilder content: () -> Content) -> some View {
         content()
             .frame(width: widgetSize.width, height: widgetSize.height)
+            .background(
+                LinearGradient(
+                    colors: [
+                        Color(red: 0.18, green: 0.25, blue: 0.38),
+                        Color(red: 0.10, green: 0.16, blue: 0.27)
+                    ],
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                )
+            )
             .clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
             .overlay {
                 RoundedRectangle(cornerRadius: 22, style: .continuous)
-                    .stroke(.white.opacity(0.55), lineWidth: 1)
+                    .stroke(.white.opacity(0.30), lineWidth: 1)
             }
-            .shadow(color: .black.opacity(0.13), radius: 12, y: 5)
+            .shadow(color: .black.opacity(0.48), radius: 14, y: 7)
     }
 }

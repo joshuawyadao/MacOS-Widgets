@@ -115,7 +115,7 @@ Regenerate the privacy-safe README showcase after a relevant visual change:
 ./Scripts/generate-portfolio-preview.sh
 ```
 
-The generator runs the focused rendering test, writes build intermediates to temporary storage, and only replaces `docs/images/widgets-preview.png` after the test succeeds.
+The generator runs the focused rendering test, writes build intermediates to temporary storage, and only replaces `docs/images/widgets-preview.png` and the 1280 × 640 `docs/images/widgets-social-preview.jpg` after the test succeeds. The JPEG stays below GitHub's 1 MB social-preview upload limit.
 
 ## Documentation
 
