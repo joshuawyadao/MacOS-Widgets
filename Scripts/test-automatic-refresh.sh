@@ -205,6 +205,12 @@ run_automatic >/dev/null
 assert_equal "healthy" "$(desktop_widgets_automatic_status_value "$STATUS_PATH" State)" "healthy no-op should publish status"
 [[ ! -d "$SUPPORT_ROOT/AutomaticRefresh/run.lock" ]] || fail "a completed check should remove a reclaimed stale lock"
 
+: > "$NOTIFICATION_LOG"
+run_automatic DESKTOP_WIDGETS_INSTALLED_PRODUCT_VALID=0 >/dev/null
+assert_equal "needsAttention" "$(desktop_widgets_automatic_status_value "$STATUS_PATH" State)" "an invalid profiled product must not be reported healthy"
+assert_equal "invalid-signing-state" "$(desktop_widgets_automatic_status_value "$STATUS_PATH" LastErrorCode)" "an invalid profiled product should request signing repair"
+[[ -s "$NOTIFICATION_LOG" ]] || fail "an invalid profiled product should notify the user"
+
 /bin/mkdir -p "$SUPPORT_ROOT/AutomaticRefresh/run.lock"
 : > "$REFRESH_LOG"
 run_automatic >/dev/null

@@ -76,7 +76,7 @@ earliest_profile_expiration() {
     fi
 }
 
-profileless_signed_at_epoch() {
+installed_product_is_valid() {
     local extension_path="$INSTALL_DESTINATION/Contents/PlugIns/DesktopWidgetsExtension.appex"
     local expected_team
     local expected_group
@@ -86,15 +86,10 @@ profileless_signed_at_epoch() {
     local extension_authority
     local app_entitlements="$AUTOMATIC_ROOT/app-entitlements.plist"
     local extension_entitlements="$AUTOMATIC_ROOT/extension-entitlements.plist"
-    local app_signature_path="$INSTALL_DESTINATION/Contents/_CodeSignature/CodeResources"
-    local extension_signature_path="$extension_path/Contents/_CodeSignature/CodeResources"
-    local app_epoch
-    local extension_epoch
 
-    if [[ -n "${DESKTOP_WIDGETS_PROFILELESS_SIGNED_AT_EPOCH:-}" ]]; then
-        [[ "${DESKTOP_WIDGETS_PROFILELESS_SIGNATURE_VALID:-1}" == "1" ]] || return 1
-        /usr/bin/printf '%s\n' "$DESKTOP_WIDGETS_PROFILELESS_SIGNED_AT_EPOCH"
-        return 0
+    if [[ -n "${DESKTOP_WIDGETS_INSTALLED_PRODUCT_VALID:-}" ]]; then
+        [[ "$DESKTOP_WIDGETS_INSTALLED_PRODUCT_VALID" == "1" ]]
+        return
     fi
 
     [[ -d "$INSTALL_DESTINATION" && -d "$extension_path" ]] || return 1
@@ -113,6 +108,22 @@ profileless_signed_at_epoch() {
     /usr/bin/codesign -d --entitlements :- "$extension_path" > "$extension_entitlements" 2>/dev/null || return 1
     desktop_widgets_validate_required_entitlements "$app_entitlements" "$expected_group" app || return 1
     desktop_widgets_validate_required_entitlements "$extension_entitlements" "$expected_group" extension || return 1
+}
+
+profileless_signed_at_epoch() {
+    local extension_path="$INSTALL_DESTINATION/Contents/PlugIns/DesktopWidgetsExtension.appex"
+    local app_signature_path="$INSTALL_DESTINATION/Contents/_CodeSignature/CodeResources"
+    local extension_signature_path="$extension_path/Contents/_CodeSignature/CodeResources"
+    local app_epoch
+    local extension_epoch
+
+    if [[ -n "${DESKTOP_WIDGETS_PROFILELESS_SIGNED_AT_EPOCH:-}" ]]; then
+        [[ "${DESKTOP_WIDGETS_PROFILELESS_SIGNATURE_VALID:-1}" == "1" ]] || return 1
+        /usr/bin/printf '%s\n' "$DESKTOP_WIDGETS_PROFILELESS_SIGNED_AT_EPOCH"
+        return 0
+    fi
+
+    installed_product_is_valid || return 1
 
     [[ -f "$app_signature_path" && -f "$extension_signature_path" ]] || return 1
     app_epoch="$(/usr/bin/stat -f '%m' "$app_signature_path" 2>/dev/null)" || return 1
@@ -132,12 +143,16 @@ maintenance_deadline() {
     local signature_deadline
 
     if [[ -n "${DESKTOP_WIDGETS_PROFILE_EXPIRATION_FILE:-}" || -n "${DESKTOP_WIDGETS_PROFILE_EXPIRATION_FIXTURE:-}" ]]; then
+        if [[ -n "${DESKTOP_WIDGETS_INSTALLED_PRODUCT_VALID:-}" ]]; then
+            installed_product_is_valid || return 1
+        fi
         profile_deadline="$(earliest_profile_expiration)" || return 1
         /usr/bin/printf 'profile|%s\n' "$profile_deadline"
         return 0
     fi
 
     if [[ -f "$app_profile" && -f "$extension_profile" ]]; then
+        installed_product_is_valid || return 1
         profile_deadline="$(earliest_profile_expiration)" || return 1
         /usr/bin/printf 'profile|%s\n' "$profile_deadline"
         return 0
