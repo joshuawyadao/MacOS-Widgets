@@ -127,6 +127,10 @@ if /usr/bin/plutil -extract KeepAlive raw -o - "$AGENT_PATH" >/dev/null 2>&1; th
     fail "LaunchAgent must not remain alive"
 fi
 assert_equal "enabled" "$(desktop_widgets_automatic_status_value "$STATUS_PATH" State)" "Enable should publish status"
+enable_status_line="$(/usr/bin/grep -n -F 'desktop_widgets_automatic_write_status "$state_path" true enabled' "$MANAGER_SCRIPT" | /usr/bin/head -n 1 | /usr/bin/cut -d: -f1)"
+bootstrap_line="$(/usr/bin/grep -n -F '"$LAUNCHCTL_COMMAND" bootstrap' "$MANAGER_SCRIPT" | /usr/bin/head -n 1 | /usr/bin/cut -d: -f1)"
+[[ -n "$enable_status_line" && -n "$bootstrap_line" && "$enable_status_line" -lt "$bootstrap_line" ]] \
+    || fail "Enable should publish its initial state before RunAtLoad can publish a newer result"
 [[ "$(/usr/bin/grep -c 'bootstrap' "$COMMAND_LOG")" == "2" ]] || fail "Repeated enable should safely reload the same agent"
 if /usr/bin/grep -q 'kickstart' "$COMMAND_LOG"; then
     fail "Enable should rely on RunAtLoad bootstrap instead of a potentially blocking kickstart"

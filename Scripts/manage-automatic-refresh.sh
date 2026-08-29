@@ -84,10 +84,10 @@ enable_agent() {
     fi
 
     write_agent "$state_path"
-    "$LAUNCHCTL_COMMAND" bootout "$USER_DOMAIN" "$AGENT_PATH" >/dev/null 2>&1 || true
-    "$LAUNCHCTL_COMMAND" bootstrap "$USER_DOMAIN" "$AGENT_PATH"
     desktop_widgets_automatic_write_status "$state_path" true enabled \
         "Automatic maintenance is on. The lightweight check runs at login and daily."
+    "$LAUNCHCTL_COMMAND" bootout "$USER_DOMAIN" "$AGENT_PATH" >/dev/null 2>&1 || true
+    "$LAUNCHCTL_COMMAND" bootstrap "$USER_DOMAIN" "$AGENT_PATH"
     echo "Automatic Desktop Widgets maintenance is on."
     echo "It checks briefly at login and 11:00 AM, then exits unless profiles are near expiration."
 }
