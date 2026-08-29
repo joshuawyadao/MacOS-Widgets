@@ -38,6 +38,8 @@ Do not commit Apple Team IDs, certificates, provisioning profiles, API credentia
 - Maintain App Sandbox and least-privilege entitlements.
 - Treat accessibility labels, locale behavior, and all three widget families as part of the feature contract.
 
-Report vulnerabilities using [SECURITY.md](SECURITY.md), not a public issue.
-Security reports and conduct reports use separate private channels; follow the
-policy that matches the concern.
+Report vulnerabilities using [SECURITY.md](SECURITY.md). Never publish exploit
+or sensitive details; if GitHub private vulnerability reporting is unavailable,
+a sanitized public issue may request a private contact channel. Security reports
+and conduct reports use separate workflows, so follow the policy that matches
+the concern.

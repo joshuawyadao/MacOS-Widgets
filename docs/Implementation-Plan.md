@@ -1,18 +1,18 @@
 # Plan
 
-Separate public contact from commit attribution without rewriting published history, and add a recognized conduct policy with a genuinely private reporting route. Future commits will use the GitHub-provided noreply identity, while the already-public account email will be reserved for intentional conduct correspondence.
+Address the actionable Codex review feedback without changing the established privacy decision. Preserve the Security Policy's sanitized public fallback, make the verified noreply attribution evidence explicit, and republish the documentation-only branch for another CI and review pass.
 
 ## Scope
-- In: Future Git commit email configuration, existing-history decision, Contributor Covenant policy, contributor guidance, documentation consistency, local validation, and branch publication.
-- Out: Rewriting or force-pushing existing commits, changing the GitHub profile's public email setting, changing application behavior, and creating a new external mailbox or form.
+- In: `README.md` and `CONTRIBUTING.md` security-reporting wording, `docs/Implementation-Plan.md` attribution evidence, documentation consistency, focused validation, and branch publication.
+- Out: Rewriting Git history, changing the conduct contact, changing application behavior, and modifying the Security Policy's reporting workflow.
 
 ## Action items
-[x] Configure Git to use `38051882+joshuawyadao@users.noreply.github.com` for future commits and verify the effective identity without rewriting history.
-[x] Add GitHub's recognized Contributor Covenant template as `CODE_OF_CONDUCT.md`, using the account's public Gmail address as a private-by-email conduct reporting channel.
-[x] Update `CONTRIBUTING.md` and `README.md` so contributors can find the conduct standards and distinguish conduct reports from security vulnerabilities.
-[x] Verify the policy contact, Markdown links, repository diff, commit metadata, and absence of application/test impact. Automated tests do not apply because no executable, test, build, or project-configuration files changed.
-[x] Commit and push the scoped documentation and plan on `codex/community-privacy` using the noreply identity.
-[x] Check the pushed branch and report the expected community-profile improvement, noting that GitHub recalculates the default-branch score after merge.
+[x] Clarify `README.md` and `CONTRIBUTING.md` so sensitive security details remain private while a sanitized public issue can request a private channel when GitHub reporting is unavailable.
+[x] Record that commit `5a47939` was verified locally and through GitHub with `Joshua Yadao <38051882+joshuawyadao@users.noreply.github.com>`, resolving the review's incorrect attribution premise.
+[x] Recheck the README, Code of Conduct, Contributing guide, and Security Policy as one consistent reporting flow.
+[x] Run Markdown link-target, whitespace, and `git diff --check` validation; skip application tests because no executable or project files change.
+[x] Commit and push the review fixes on `codex/community-privacy` with the effective noreply identity.
+[x] Recheck Codex feedback, CI Verify, and GitHub mergeability before marking the PR ready for review.
 
 ## Open questions
-- None. The existing Gmail address remains in published history and is already exposed on the GitHub profile; it will be used only as an intentional private reporting route, while new commit metadata uses noreply.
+- None. The Security Policy remains canonical for vulnerability-reporting fallbacks, and the GitHub API already confirms the intended author identity.
