@@ -3,8 +3,8 @@
 Address every actionable Codex review finding on PR #13 with test-backed, separately saved safety fixes, then re-run the complete merge-readiness gates.
 
 ## Scope
-- In: Legacy signing preservation, automatic-refresh locking and status writes, handoff privacy, bounded diagnostics, accurate partial-failure reporting, explicit maintenance consent, tests, documentation, and PR verification.
-- Out: New widget features, signing-capability changes, background resource increases, or paid distribution.
+- In: Personal Team installation and refresh reliability, signing preservation, concurrency safety, handoff privacy and completeness, bounded diagnostics, accurate status reporting, tests, documentation, and PR verification.
+- Out: New widget features, signing-capability changes, persistent background resource use, paid distribution, or rewriting feature-branch history.
 
 ## Action items
 - [x] Preserve an existing ignored `Local.xcconfig` when creating the stable private installer copy, with migration and no-overwrite tests.
@@ -18,12 +18,17 @@ Address every actionable Codex review finding on PR #13 with test-backed, separa
 - [x] Include the default Xcode DerivedData root when migrating a legacy developer install so stale same-identifier registrations are removed.
 - [x] Keep installer `errexit` active while still capturing the redacted logging pipeline status.
 - [x] Publish refresh success only when the recomputed signing deadline moves outside the renewal window.
+- [x] Inherit the friendly failure trap inside installer functions while preserving classified Xcode diagnostics.
+- [x] Serialize scheduled and interactive installer runs through one stale-safe lock.
+- [x] Include project test sources in both the handoff and reusable installer copy.
+- [x] Reload automatic-maintenance status when the companion app becomes active.
 - [x] Run focused checks after each fix, then the complete verifier and `git diff --check`.
 - [ ] Push every feedback checkpoint, acknowledge each addressed Codex comment, and confirm fresh Codex review, CI, and mergeability.
 
 ## Evidence
-- Codex review on commit `a629b51` reported seven unresolved actionable threads: one P1 data/identity-preservation issue and six P2 reliability, privacy, or consent issues.
-- The target-Mac Personal Team install and widget-gallery acceptance already succeeded; these fixes harden migration and unattended maintenance without changing the validated signing contract.
+- The target-Mac Personal Team install and widget-gallery acceptance succeeded: the companion app launched and Desktop Widgets appeared in the macOS widget gallery.
+- Codex review findings were addressed as isolated commits with focused regression coverage and acknowledgements on the corresponding review comments.
+- Updated `main` is incorporated through merge commits so feature history remains intact.
 
 ## Open questions
 - None.

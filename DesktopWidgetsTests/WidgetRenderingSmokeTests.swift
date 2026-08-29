@@ -257,7 +257,7 @@ final class WidgetRenderingSmokeTests: XCTestCase {
     }
 
     func testPortfolioPreviewRendersWithSyntheticData() throws {
-        let size = CGSize(width: 740, height: 448)
+        let size = PortfolioPreviewLayout.canvasSize
         let utc = try XCTUnwrap(TimeZone(secondsFromGMT: 0))
         let renderer = ImageRenderer(
             content: PortfolioPreview()
@@ -266,13 +266,23 @@ final class WidgetRenderingSmokeTests: XCTestCase {
                 .environment(\.colorScheme, .dark)
         )
         renderer.proposedSize = ProposedViewSize(width: size.width, height: size.height)
-        renderer.scale = 2
+        renderer.scale = PortfolioPreviewLayout.renderScale
 
         let image: NSImage = try XCTUnwrap(renderer.nsImage, "Failed to render the portfolio preview")
         let tiffData: Data = try XCTUnwrap(image.tiffRepresentation, "Portfolio preview had no pixels")
         let bitmap: NSBitmapImageRep = try XCTUnwrap(
             NSBitmapImageRep(data: tiffData),
             "Portfolio preview could not be decoded"
+        )
+        XCTAssertEqual(
+            bitmap.pixelsWide,
+            Int(size.width * renderer.scale),
+            "Portfolio preview width must match the shared layout and renderer scale"
+        )
+        XCTAssertEqual(
+            bitmap.pixelsHigh,
+            Int(size.height * renderer.scale),
+            "Portfolio preview height must match the shared layout and renderer scale"
         )
         XCTAssertTrue(containsVisibleContent(bitmap), "Portfolio preview contained no visible content")
         let backdropLuminance = averageLuminance(
@@ -290,6 +300,7 @@ final class WidgetRenderingSmokeTests: XCTestCase {
             0.06,
             "Portfolio widget cards must remain visually distinct from the backdrop"
         )
+        assertPortfolioCardEdgesAreClear(bitmap, scale: renderer.scale)
 
         let requestURL = URL(fileURLWithPath: "/private/tmp/DesktopWidgetsPortfolioPreview.request")
         guard FileManager.default.fileExists(atPath: requestURL.path) else {
@@ -394,6 +405,62 @@ final class WidgetRenderingSmokeTests: XCTestCase {
         return count > 0 ? total / count : 0
     }
 
+    private func assertPortfolioCardEdgesAreClear(
+        _ bitmap: NSBitmapImageRep,
+        scale: CGFloat,
+        file: StaticString = #filePath,
+        line: UInt = #line
+    ) {
+        let innerEdge = Int(PortfolioPreviewLayout.edgeScanInnerOffset * scale)
+        let safeMargin = Int(PortfolioPreviewLayout.edgeScanSafeMargin * scale)
+        let cornerClearance = Int(PortfolioPreviewLayout.edgeScanCornerClearance * scale)
+
+        for (index, card) in PortfolioPreviewLayout.cardRects.enumerated() {
+            let minX = Int(card.minX * scale)
+            let minY = Int(card.minY * scale)
+            let maxX = Int(card.maxX * scale)
+            let maxY = Int(card.maxY * scale)
+            let edgeRanges = [
+                (minX + innerEdge..<minX + safeMargin, minY + cornerClearance..<maxY - cornerClearance),
+                (maxX - safeMargin..<maxX - innerEdge, minY + cornerClearance..<maxY - cornerClearance),
+                (minX + cornerClearance..<maxX - cornerClearance, minY + innerEdge..<minY + safeMargin),
+                (minX + cornerClearance..<maxX - cornerClearance, maxY - safeMargin..<maxY - innerEdge)
+            ]
+
+            for (edgeIndex, ranges) in edgeRanges.enumerated() {
+                XCTAssertEqual(
+                    brightPixelCount(bitmap, xRange: ranges.0, yRange: ranges.1),
+                    0,
+                    "Portfolio card \(index + 1) has bright widget content inside safe edge \(edgeIndex + 1)",
+                    file: file,
+                    line: line
+                )
+            }
+        }
+    }
+
+    private func brightPixelCount(
+        _ bitmap: NSBitmapImageRep,
+        xRange: Range<Int>,
+        yRange: Range<Int>
+    ) -> Int {
+        var count = 0
+        for y in yRange where y < bitmap.pixelsHigh {
+            for x in xRange where x < bitmap.pixelsWide {
+                guard let color = bitmap.colorAt(x: x, y: y)?.usingColorSpace(.deviceRGB) else {
+                    continue
+                }
+                let luminance = (0.2126 * color.redComponent)
+                    + (0.7152 * color.greenComponent)
+                    + (0.0722 * color.blueComponent)
+                if color.alphaComponent > 0.9 && luminance > 0.72 {
+                    count += 1
+                }
+            }
+        }
+        return count
+    }
+
     private func renderSize(for family: WidgetFamily) -> CGSize {
         switch family {
         case .systemSmall:
@@ -406,13 +473,39 @@ final class WidgetRenderingSmokeTests: XCTestCase {
     }
 }
 
+private enum PortfolioPreviewLayout {
+    static let canvasSize = CGSize(width: 740, height: 448)
+    static let renderScale: CGFloat = 2
+    static let outerPadding: CGFloat = 24
+    static let headerHeight: CGFloat = 52
+    static let sectionSpacing: CGFloat = 18
+    static let cardSpacing: CGFloat = 16
+    static let cardSize = CGSize(width: 338, height: 158)
+    static let cardContentInset: CGFloat = 8
+    static let edgeScanInnerOffset: CGFloat = 2
+    static let edgeScanSafeMargin: CGFloat = 6
+    static let edgeScanCornerClearance: CGFloat = 12
+
+    static var cardRects: [CGRect] {
+        let firstX = outerPadding
+        let secondX = firstX + cardSize.width + cardSpacing
+        let firstY = outerPadding + headerHeight + sectionSpacing
+        let secondY = firstY + cardSize.height + cardSpacing
+        return [
+            CGRect(origin: CGPoint(x: firstX, y: firstY), size: cardSize),
+            CGRect(origin: CGPoint(x: secondX, y: firstY), size: cardSize),
+            CGRect(origin: CGPoint(x: firstX, y: secondY), size: cardSize),
+            CGRect(origin: CGPoint(x: secondX, y: secondY), size: cardSize)
+        ]
+    }
+}
+
 @MainActor
 private struct PortfolioPreview: View {
     private let referenceDate = CalendarProvider.referenceDate
-    private let widgetSize = CGSize(width: 338, height: 158)
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 18) {
+        VStack(alignment: .leading, spacing: PortfolioPreviewLayout.sectionSpacing) {
             VStack(alignment: .leading, spacing: 3) {
                 Text("macOS Widgets")
                     .font(.system(size: 28, weight: .bold, design: .rounded))
@@ -421,9 +514,10 @@ private struct PortfolioPreview: View {
                     .font(.system(size: 13, weight: .medium, design: .rounded))
                     .foregroundStyle(.white.opacity(0.68))
             }
+            .frame(height: PortfolioPreviewLayout.headerHeight, alignment: .topLeading)
 
-            VStack(spacing: 16) {
-                HStack(spacing: 16) {
+            VStack(spacing: PortfolioPreviewLayout.cardSpacing) {
+                HStack(spacing: PortfolioPreviewLayout.cardSpacing) {
                     widgetCard {
                         TimeAndDateWidgetView(
                             entry: TimeAndDateEntry(
@@ -461,7 +555,7 @@ private struct PortfolioPreview: View {
                     }
                 }
 
-                HStack(spacing: 16) {
+                HStack(spacing: PortfolioPreviewLayout.cardSpacing) {
                     widgetCard {
                         BatteryWidgetView(
                             entry: BatteryEntry(
@@ -485,8 +579,12 @@ private struct PortfolioPreview: View {
                 }
             }
         }
-        .padding(24)
-        .frame(width: 740, height: 448, alignment: .topLeading)
+        .padding(PortfolioPreviewLayout.outerPadding)
+        .frame(
+            width: PortfolioPreviewLayout.canvasSize.width,
+            height: PortfolioPreviewLayout.canvasSize.height,
+            alignment: .topLeading
+        )
         .background(
             LinearGradient(
                 colors: [
@@ -518,7 +616,15 @@ private struct PortfolioPreview: View {
 
     private func widgetCard<Content: View>(@ViewBuilder content: () -> Content) -> some View {
         content()
-            .frame(width: widgetSize.width, height: widgetSize.height)
+            .frame(
+                width: PortfolioPreviewLayout.cardSize.width - (PortfolioPreviewLayout.cardContentInset * 2),
+                height: PortfolioPreviewLayout.cardSize.height - (PortfolioPreviewLayout.cardContentInset * 2)
+            )
+            .padding(PortfolioPreviewLayout.cardContentInset)
+            .frame(
+                width: PortfolioPreviewLayout.cardSize.width,
+                height: PortfolioPreviewLayout.cardSize.height
+            )
             .background(
                 LinearGradient(
                     colors: [
