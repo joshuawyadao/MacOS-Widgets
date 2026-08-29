@@ -1,70 +1,124 @@
 # macOS Widgets
 
-One macOS app and WidgetKit extension containing four independently organized widgets:
+[![CI Verify](https://github.com/joshuawyadao/MacOS-Widgets/actions/workflows/ci.yml/badge.svg)](https://github.com/joshuawyadao/MacOS-Widgets/actions/workflows/ci.yml)
+[![macOS 14+](https://img.shields.io/badge/macOS-14%2B-000000?logo=apple)](https://www.apple.com/macos/)
+[![Swift 6](https://img.shields.io/badge/Swift-6-F05138?logo=swift&logoColor=white)](https://www.swift.org/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
-- Weather
-- Time and Date
-- Battery
-- Calendar
+A native SwiftUI companion app and WidgetKit extension for four configurable desktop widgets: **Time & Date**, **Weather**, **Battery**, and **Calendar**. The project favors local data, explicit permissions, accessible presentation, and free Personal Team builds over subscriptions or a hosted backend.
 
-## Project layout
+> **Project status:** Source-first personal project. Build locally with Xcode and a free Apple Personal Team; no pre-signed binary is distributed.
 
-- `DesktopWidgetsApp` contains the host app, onboarding, settings, and permission flows.
-- `DesktopWidgetsExtension` contains the WidgetKit bundle and each widget module.
-- `Shared` contains models, styling, and utilities compiled into both targets.
+## What it includes
 
-The companion app uses a native macOS sidebar instead of one long settings page. **Home** provides setup steps and clickable cards for each ready widget; **Appearance** owns the shared typography preview and Apply flow; Time & Date, Weather, Battery, and Calendar each have a focused guidance page; and **Help & Privacy** contains editing help, Calendar permission controls, data-source notes, and troubleshooting. Appearance drafts and Calendar permission state live above navigation so switching pages never discards unfinished theme choices or resets permission feedback.
+| Widget | Capabilities | Data source |
+| --- | --- | --- |
+| Time & Date | Layout, date/time formatting, typography, and an optional labeled second time zone | Foundation and system locale |
+| Weather | Searchable city, unit selection, seven-day forecast, comfort, UV, wind, precipitation, sunrise, and sunset presets | Open-Meteo forecast and geocoding APIs |
+| Battery | Charge, power state, estimate, update time, health, and cycle diagnostics | Local IOKit power sources |
+| Calendar | Automatic Day/Week/Month layouts, navigation, event indicators, and optional next-event timing | Local EventKit access |
 
-Time & Date, Weather, Battery, and Calendar are ready to use. Time & Date can add a labeled second time zone; Weather includes comfort, UV, and sun-time presets; Battery can optionally show health and cycle diagnostics; and Calendar can show only the next timed event's start time. Every Calendar copy can use Automatic, Day, Week, or Month; Automatic maps Small to Day, Medium to Week, and Large to Month. Optional event indicators and next-event timing require Calendar permission but never expose event titles, notes, or other event text.
+The companion app adds a shared typography system with six curated themes, per-widget overrides, live previews, and one coordinated WidgetKit reload.
 
-The companion app also controls typography across the complete widget set. Choose **System**, **Modern**, **Editorial**, **Technical**, **Playful**, or **Handmade**, preview the complete appearance locally, then select **Apply Theme** once to save the draft and request one coordinated WidgetKit reload. **Revert** returns the preview to the last applied appearance without touching desktop widgets, and no appearance edit changes the widgets' regular data-refresh schedules. Add a per-widget-type exception only where it helps. **Font Coverage** defaults to **Display Text**, which themes hero values and headers while keeping dense supporting data system-rounded for readability. Choose **All Text** to extend the theme to every textual label and value without changing SF Symbols or information density. Curated themes automatically use small, bounded point-size, horizontal-gap, vertical-spacing, and glyph-padding adjustments so wider or taller letterforms fit the same widget layouts without clipping. Time & Date additionally offers **Use Each Widget's Fonts**, which restores the separate date and time fonts configured on each placed copy and preserves those copies' original layout metrics.
+## Engineering highlights
 
-## One-time free signing setup
+- **Native macOS architecture:** one SwiftUI host app, one WidgetKit extension, App Intents configuration, and shared modules compiled into both targets.
+- **Privacy-aware Calendar modeling:** EventKit objects are reduced to counts and optional timing intervals before they reach widget presentation. Titles, notes, locations, attendees, and calendar names are never placed in widget models.
+- **Resilient weather delivery:** HTTPS requests use a keyless API, bounded timeouts, normalized decoding, retry-aware failures, and a hashed local cache capped at 12 recent city/unit forecasts.
+- **Hardware normalization:** IOKit and AppleSmartBattery values are converted into stable display models with explicit unavailable states and bounded health calculations.
+- **Configuration compatibility:** string-backed options, stable widget identities, and defaults preserve existing widget instances as features evolve.
+- **Verification as a product contract:** behavior tests, rendering smoke tests, Release compilation, embedded-extension checks, App Intents metadata validation, privacy strings, entitlements, and coverage reporting run through one command.
 
-Weather's searchable City control uses an App Intent entity. macOS only restores that entity for a widget extension with a registered development identity; **Sign to Run Locally** produces an ad-hoc signature without one and makes every saved city fall back to Portland. Shared typography preferences also use a team-ID-prefixed macOS App Group so the companion app and widget extension read the same setting.
+## Architecture
 
-The required Xcode Personal Team is free and does not enroll you in the $99/year Apple Developer Program:
+```mermaid
+flowchart LR
+    App["SwiftUI companion app"] -->|theme preferences| Group["Team-scoped App Group"]
+    Group --> Extension["WidgetKit extension"]
+    Extension --> Time["Time & Date"]
+    Extension --> Weather["Weather"]
+    Extension --> Battery["Battery"]
+    Extension --> Calendar["Calendar"]
+    Weather -->|HTTPS| Meteo["Open-Meteo"]
+    Battery --> IOKit["IOKit"]
+    Calendar -->|counts + timing only| EventKit["EventKit"]
+```
 
-1. Open **Xcode → Settings → Accounts**, press **+**, and sign in with your Apple Account. The account should expose a team ending in **(Personal Team)**.
-2. Select the account, choose **Manage Certificates**, press **+**, and create an **Apple Development** certificate if one is not already listed.
-3. From this repository, run `./Scripts/configure-personal-team.sh`. It reads Xcode's signing Team ID from the Apple Development certificate's Team field, rather than the different identifier that may appear in the certificate name. If needed, pass the 10-character Team ID shown by Xcode: `./Scripts/configure-personal-team.sh ABC123DE45`.
-4. The helper writes only `Local.xcconfig`, which is ignored by Git. Do not add this file or a literal Team ID to a commit.
+```text
+DesktopWidgetsApp/        Companion app, onboarding, settings, and permission flows
+DesktopWidgetsExtension/  Widget bundle and four independent widget modules
+Shared/                   Models, styling, and utilities shared by both targets
+DesktopWidgetsTests/      Behavior, contract, and rendering smoke tests
+Scripts/                  Personal Team setup, runtime refresh, and verification
+docs/                     Widget and design-system documentation
+```
 
-Free Personal Team provisioning is intended for personal development and can require periodic rebuilding. App Store, notarized Developer ID, or dependable direct-download distribution still requires the paid program.
+## Privacy and security
 
-## Open and run
+- Calendar access is optional and requested explicitly by the companion app.
+- Calendar event text does not enter widget models or views.
+- Weather sends a user-selected city search and coordinate to Open-Meteo; it does not request device location.
+- Weather is the only widget module with outbound network behavior.
+- The app and extension use App Sandbox and narrowly scoped entitlements.
+- Account-specific signing values, certificates, provisioning profiles, and local configuration are excluded from Git.
 
-1. Open `DesktopWidgets.xcodeproj` in Xcode.
-2. Select **My Mac** and run the `DesktopWidgets` scheme once. The app and widget extension use the same free Personal Team from ignored local configuration. The shared Run scheme unregisters stale copies of this extension from other Xcode DerivedData/worktree builds, registers the current extension, and refreshes the macOS widget runtime before opening the app. It never deletes a build, placed widget, or saved configuration, and it leaves matching installed copies outside DerivedData registered.
-3. Existing Time & Date copies remain compatible. The optional second-time-zone fields extend the established widget identity and default to Off for older configurations.
-4. Remove any earlier Weather widget once before adding the current one. Build 15 replaces the awkward two-row city editor with one searchable **City** field and therefore has a new WidgetKit identity; an existing build-14 Weather instance cannot migrate and appears as a blank system placeholder. If the widget is blank or its editor still shows **Location** or separate **Search City / Matching City** rows, remove that older widget and add Weather again.
-5. Existing Battery copies remain compatible; Health and Cycles default to Off until enabled for that copy.
-6. Existing Calendar copies remain compatible; Show Next Event Time defaults to Off until enabled for that copy.
-7. Control-click the desktop, choose **Edit Widgets**, and add **Time & Date**, **Weather**, **Battery**, or **Calendar**.
-8. Control-click a configurable widget and choose **Edit** to change its options. Calendar defaults to a size-appropriate view; Month keeps its navigation arrows. To use event indicators or next-event timing, enable Calendar access in the companion app and turn on the desired option for each widget copy.
-9. In the companion app, preview an **Appearance theme**, Font Coverage, and any **Widget overrides** for the whole set. Choose **Apply Theme** when the preview looks right; the app saves the complete selection and asks WidgetKit to reload all four widget types once. macOS renders placed widgets independently, so their visible transitions may still finish a few moments apart.
-10. Use the sidebar whenever you need to return: Home is the short setup dashboard, each widget page explains only that widget's controls, and Help & Privacy contains optional permissions and troubleshooting.
+See [Calendar privacy details](docs/Calendar-Widget.md#event-indicators-next-event-timing-and-permission) and [Weather data and privacy](docs/Weather-Widget.md#privacy) for the complete behavior.
 
-The companion app includes setup guidance and a short explanation of every widget. Time & Date uses string-backed dynamic options and can add a per-copy labeled clock from a curated time-zone list. Weather uses one native searchable **City** field and presets spanning temperature, condition, apparent temperature, humidity, precipitation, wind, UV, sunrise, and sunset. Battery reads local IOKit power-source values plus optional AppleSmartBattery capacity and cycle diagnostics; each copy can toggle Power, Status, Estimate, Updated, Health, and Cycles. Calendar follows the Mac's locale and first-weekday preference; its configurable Automatic mode selects a focused Day, seven-column Week, or six-row Month layout by family. Event indicators and next-event timing are off by default. If enabled, EventKit supplies only timing intervals that are normalized into counts and an optional start time; widget models and views never receive event titles, notes, locations, attendees, or calendar names. The widgets declare clear, removable backgrounds; macOS may still apply its own Liquid Glass or tint treatment.
+## Build locally
 
-Weather uses Open-Meteo's keyless API for this personal, noncommercial build, displays the required provider link, and keeps up to 12 recent city/unit forecasts in a small local cache. It declares the same clear, removable background as Time & Date; macOS may still apply system-owned Liquid Glass.
+### Requirements
 
-See [Time and Date widget](docs/Time-And-Date-Widget.md), [Weather widget](docs/Weather-Widget.md), [Battery widget](docs/Battery-Widget.md), and [Calendar widget](docs/Calendar-Widget.md) for customization, data-source, privacy, and display notes.
+- macOS 14 or later
+- Xcode with a macOS 14+ SDK
+- A free Apple Account added under **Xcode → Settings → Accounts**
+- An **Apple Development** certificate created through **Manage Certificates**
 
-All four widgets follow the shared family-density, rendering-mode, state, accessibility, and configuration guidance in [Widget Design System](docs/Widget-Design-System.md). Their data sources and domain-specific controls remain intentionally distinct.
+### Setup
 
-## Verify all widgets before committing
+```sh
+git clone https://github.com/joshuawyadao/MacOS-Widgets.git
+cd MacOS-Widgets
+./Scripts/configure-personal-team.sh
+open DesktopWidgets.xcodeproj
+```
 
-Run the repository's verification gate before committing or pushing:
+In Xcode, select **My Mac** and run the `DesktopWidgets` scheme. The local helper stores the detected Team ID only in ignored `Local.xcconfig`; never commit that file. The Run scheme refreshes stale development registrations before opening the companion app.
+
+Then control-click the desktop, choose **Edit Widgets**, search for **Desktop Widgets**, and add any of the four widgets.
+
+Free Personal Team provisioning is intended for local development and may require periodic rebuilding. Dependable direct-download distribution or notarization requires the paid Apple Developer Program.
+
+## Verification
+
+Run the complete local gate before committing:
 
 ```sh
 ./Scripts/verify-widgets.sh
 ```
 
-The command starts with fresh build artifacts, runs the complete `DesktopWidgetsTests` suite with code coverage, prints a target coverage summary, builds the app and extension in Release mode, and verifies all four widget identities and configurable-widget App Intent schemas in the embedded extension. It also verifies the companion-app destination contract, shared typography App Group metadata, second-clock fields, battery diagnostic toggles, Calendar navigation actions, Calendar event controls, privacy strings, and sandbox entitlements. Typography coverage checks theme and coverage persistence, bounded layout compensation, safe fallbacks, override resolution, and all six themes rendered through every widget in both coverage modes and all three families. Widget-specific coverage includes secondary-zone formatting, expanded weather decoding, battery diagnostic normalization and unavailable fallbacks, and Calendar next-event privacy and selection behavior. Representative render smoke tests exercise the new options and important edge states without storing brittle pixel-perfect golden images.
+The script:
 
-This removes the need to manually retest deterministic configuration, layout selection, data behavior, and basic SwiftUI rendering before every commit. Apple still owns desktop placement, the Edit Widget interface and persistence, Liquid Glass rendering, live VoiceOver navigation, and actual refresh timing, so use each widget's short desktop acceptance checklist before a release or after a visual/editor change. The shared Xcode scheme and CI job also collect coverage; coverage remains a diagnostic signal rather than a blanket percentage gate.
+1. Tests the safe runtime-refresh and Personal Team configuration contracts.
+2. Runs the complete `DesktopWidgetsTests` suite with code coverage.
+3. Builds a fresh unsigned Release app and embedded widget extension.
+4. Verifies widget identities, App Intents schemas, sandbox entitlements, privacy strings, shared App Group metadata, and key configuration fields.
 
-You can still run the tests alone from Xcode with **Product → Test**. Set `KEEP_WIDGET_VERIFY_ARTIFACTS=1` when running the script if you want to inspect its temporary build products after it finishes.
+CI runs the same test/build fundamentals on every pull request and push to `main` using a standard GitHub-hosted macOS runner.
 
-Repository verification builds unsigned artifacts deliberately, so CI and contributors without an Apple Account can still run the complete automated suite. Live searchable-city persistence requires the local Personal Team setup above.
+## Documentation
+
+- [Widget design system](docs/Widget-Design-System.md)
+- [Time & Date widget](docs/Time-And-Date-Widget.md)
+- [Weather widget](docs/Weather-Widget.md)
+- [Battery widget](docs/Battery-Widget.md)
+- [Calendar widget](docs/Calendar-Widget.md)
+
+## Contributing
+
+Issues and pull requests are welcome. Read [CONTRIBUTING.md](CONTRIBUTING.md) before proposing a change. Security concerns should follow [SECURITY.md](SECURITY.md) rather than being posted publicly.
+
+## License
+
+Released under the [MIT License](LICENSE).
+
+Weather data is provided by [Open-Meteo](https://open-meteo.com/) under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/); its geocoding data incorporates [GeoNames](https://www.geonames.org/).
