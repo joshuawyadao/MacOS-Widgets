@@ -1,18 +1,17 @@
 # Plan
 
-Increase visual separation between the transparent widget views and their public showcase background without changing the widgets' production appearance. Use a dark, code-generated presentation surface for both the README preview and GitHub social card, then validate contrast, dimensions, privacy, and the full project gate before protected publication.
+Preserve the full Xcode verification gate while sharply reducing costly macOS-hosted executions. Run the gate only for merge-ready pull requests or manual requests, cancel superseded work, and remove the duplicate post-merge `main` run.
 
 ## Scope
-- In: Dark showcase backdrop and card treatment, deterministic contrast coverage, automatic social-preview generation, regenerated README/social images, documentation, validation, and protected publication.
-- Out: Production widget themes or behavior, user-specific screenshots, signed distribution, repository security settings, and GitHub's manual social-preview upload.
+- In: `.github/workflows/ci.yml` trigger, concurrency, draft policy, manual dispatch, and README CI guidance.
+- Out: Xcode tests, coverage behavior, release-build behavior, signing, widget runtime code, branch-protection settings, and self-hosted runners.
 
 ## Action items
-[x] Update `PortfolioPreview` in `DesktopWidgetsTests/WidgetRenderingSmokeTests.swift` with a dark backdrop, stronger card surfaces, readable title/attribution styling, and a focused contrast assertion.
-[x] Extend `Scripts/generate-portfolio-preview.sh` to regenerate both `docs/images/widgets-preview.png` and a 1280 × 640, sub-1 MB `docs/images/widgets-social-preview.jpg` from the same synthetic render.
-[x] Update `README.md` so the documented generator accurately names both public assets without duplicating design-system documentation.
-[x] Generate and visually inspect both images for card separation, legibility, complete widget framing, deterministic synthetic data, dimensions, size, and absence of private text.
-[x] Run the focused generator test, shell/Markdown checks, `git diff --check`, and the complete `./Scripts/verify-widgets.sh` gate.
-[x] Commit and push the scoped changes on `codex/darker-showcase`, open pull request #11, complete automated review with no findings, confirm public CI passes, and prepare the change for protected squash merge.
+[x] Restrict macOS CI to merge-ready pull requests plus manual dispatch, removing the duplicate `main` push trigger.
+[x] Add per-workflow/per-ref concurrency cancellation while preserving the existing 20-minute timeout and read-only permissions.
+[x] Document when hosted macOS verification runs and how to request it manually.
+[x] Validate YAML parsing, workflow-policy invariants, `git diff --check`, and the scoped diff; no Swift test files are needed because executable widget behavior is unchanged.
+[x] Commit and push the isolated `codex/optimize-github-actions` branch while leaving the unrelated `v6` file in the original checkout untouched.
 
 ## Open questions
-- None. The existing synthetic data, widget layouts, and manual GitHub upload workflow remain unchanged.
+- None.
