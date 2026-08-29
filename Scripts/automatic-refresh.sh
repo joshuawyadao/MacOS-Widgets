@@ -165,8 +165,19 @@ automatic_refresh_run() {
     local refresh_status
 
     if [[ ! -f "$LOCAL_CONFIGURATION" ]]; then
+        status_path="${DESKTOP_WIDGETS_AUTOMATIC_STATUS_PATH:-}"
+        if [[ -n "$status_path" ]]; then
+            if desktop_widgets_automatic_should_notify "$status_path" "missing-local-configuration" "$CURRENT_EPOCH"; then
+                should_notify=1
+            fi
+            desktop_widgets_automatic_write_status "$status_path" true needsAttention \
+                "Private signing settings are missing. Run Install Desktop Widgets.command again." \
+                "" "" "missing-local-configuration" "$([[ "$should_notify" == 1 ]] && echo "$CURRENT_EPOCH" || echo 0)"
+        else
+            should_notify=1
+        fi
         echo "Automatic refresh needs the initial installer to create local signing settings." >&2
-        notify_attention
+        [[ "$should_notify" == 1 ]] && notify_attention
         return 0
     fi
     status_path="${DESKTOP_WIDGETS_AUTOMATIC_STATUS_PATH:-$(desktop_widgets_automatic_status_path "$LOCAL_CONFIGURATION" "$USER_HOME")}" || return 1

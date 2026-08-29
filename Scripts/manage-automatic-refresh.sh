@@ -35,6 +35,7 @@ status_path() {
 }
 
 write_agent() {
+    local state_path="$1"
     local temporary_path="${AGENT_PATH}.new"
 
     /bin/mkdir -p "$(/usr/bin/dirname "$AGENT_PATH")"
@@ -59,6 +60,7 @@ write_agent() {
     /usr/bin/plutil -insert EnvironmentVariables.DESKTOP_WIDGETS_HOME -string "$USER_HOME" "$temporary_path"
     /usr/bin/plutil -insert EnvironmentVariables.DESKTOP_WIDGETS_SUPPORT_ROOT -string "$SUPPORT_ROOT" "$temporary_path"
     /usr/bin/plutil -insert EnvironmentVariables.DESKTOP_WIDGETS_LOCAL_CONFIGURATION -string "$LOCAL_CONFIGURATION" "$temporary_path"
+    /usr/bin/plutil -insert EnvironmentVariables.DESKTOP_WIDGETS_AUTOMATIC_STATUS_PATH -string "$state_path" "$temporary_path"
     /usr/bin/plutil -lint "$temporary_path" >/dev/null
     /bin/mv -f -- "$temporary_path" "$AGENT_PATH"
 }
@@ -81,7 +83,7 @@ enable_agent() {
         return 0
     fi
 
-    write_agent
+    write_agent "$state_path"
     "$LAUNCHCTL_COMMAND" bootout "$USER_DOMAIN" "$AGENT_PATH" >/dev/null 2>&1 || true
     "$LAUNCHCTL_COMMAND" bootstrap "$USER_DOMAIN" "$AGENT_PATH"
     desktop_widgets_automatic_write_status "$state_path" true enabled \

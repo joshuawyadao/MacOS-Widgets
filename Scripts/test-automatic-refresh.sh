@@ -116,6 +116,7 @@ assert_equal "true" "$(/usr/bin/plutil -extract RunAtLoad raw -o - "$AGENT_PATH"
 assert_equal "11" "$(/usr/bin/plutil -extract StartCalendarInterval.Hour raw -o - "$AGENT_PATH")" "LaunchAgent should check daily at 11"
 assert_equal "10" "$(/usr/bin/plutil -extract Nice raw -o - "$AGENT_PATH")" "LaunchAgent should run at low CPU priority"
 assert_equal "true" "$(/usr/bin/plutil -extract LowPriorityIO raw -o - "$AGENT_PATH")" "LaunchAgent should use low-priority IO"
+assert_equal "$STATUS_PATH" "$(/usr/bin/plutil -extract EnvironmentVariables.DESKTOP_WIDGETS_AUTOMATIC_STATUS_PATH raw -o - "$AGENT_PATH")" "LaunchAgent should retain the status path independently of local signing settings"
 if /usr/bin/plutil -extract KeepAlive raw -o - "$AGENT_PATH" >/dev/null 2>&1; then
     fail "LaunchAgent must not remain alive"
 fi
@@ -260,5 +261,13 @@ run_profileless_automatic "$profileless_healthy_signed_at" DESKTOP_WIDGETS_PROFI
 assert_equal "needsAttention" "$(desktop_widgets_automatic_status_value "$STATUS_PATH" State)" "invalid profile-free signature should publish attention state"
 assert_equal "invalid-signing-state" "$(desktop_widgets_automatic_status_value "$STATUS_PATH" LastErrorCode)" "invalid profile-free signature should record a stable error code"
 [[ -s "$NOTIFICATION_LOG" ]] || fail "invalid profile-free signature should notify the user"
+
+/bin/mv "$LOCAL_CONFIGURATION" "$TEST_ROOT/Local.xcconfig.missing"
+: > "$NOTIFICATION_LOG"
+run_automatic >/dev/null
+assert_equal "needsAttention" "$(desktop_widgets_automatic_status_value "$STATUS_PATH" State)" "missing local configuration should replace stale healthy status"
+assert_equal "missing-local-configuration" "$(desktop_widgets_automatic_status_value "$STATUS_PATH" LastErrorCode)" "missing local configuration should record a stable error code"
+[[ -s "$NOTIFICATION_LOG" ]] || fail "missing local configuration should notify the user"
+/bin/mv "$TEST_ROOT/Local.xcconfig.missing" "$LOCAL_CONFIGURATION"
 
 echo "PASS: Automatic refresh thresholds, no-op behavior, low-resource LaunchAgent, idempotency, failures, and exact-target safety are covered."
