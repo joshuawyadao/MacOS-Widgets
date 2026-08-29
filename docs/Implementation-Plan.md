@@ -1,18 +1,20 @@
 # Plan
 
-Address the Brooks review warning on pull request #12 by giving the showcase layout one source of truth for dimensions, spacing, and card pixel rectangles. Preserve the approved visual output while making the clipping regression resistant to future layout changes, then validate and push the focused review fix.
+Address the actionable Codex review feedback without changing the established privacy decision. Preserve the Security Policy's sanitized public fallback, make the verified noreply attribution evidence explicit, and republish the documentation-only branch for another CI and review pass.
 
 ## Scope
-- In: Shared showcase layout metrics, derived card-edge scan rectangles, explicit render-size coverage, Brooks review history, regenerated assets if needed, validation, and a follow-up commit on `codex/fix-preview-text-clipping`.
-- Out: Production WidgetKit layouts, approved showcase styling or content, unrelated refactors, and merging pull request #12.
+- In: `README.md` and `CONTRIBUTING.md` security-reporting wording, `docs/Implementation-Plan.md` attribution evidence, documentation consistency, focused validation, and branch publication.
+- Out: Rewriting Git history, changing the conduct contact, changing application behavior, and modifying the Security Policy's reporting workflow.
 
 ## Action items
-[x] Extract the preview canvas, padding, header, row, card, inset, and pixel-scan metrics into a shared `PortfolioPreviewLayout` definition.
-[x] Update `PortfolioPreview` to consume the shared metrics and give the header an explicit layout height so card origins are deterministic.
-[x] Derive all card rectangles and edge-clearance ranges from the same point-based metrics and renderer scale; assert the expected bitmap dimensions before scanning.
-[x] Record the Brooks PR review result and verify the approved README/social assets remain visually unchanged apart from any deterministic re-encoding.
-[x] Run the focused generator, `git diff --check`, and complete `./Scripts/verify-widgets.sh` gate.
-[x] Prepare the Brooks review fix for pull request #12 and re-check Codex review, CI Verify, and mergeability without merging.
+[x] Clarify `README.md` and `CONTRIBUTING.md` so sensitive security details remain private while a sanitized public issue can request a private channel when GitHub reporting is unavailable.
+[x] Record that commit `5a47939` was verified locally and through GitHub with `Joshua Yadao <38051882+joshuawyadao@users.noreply.github.com>`, resolving the review's incorrect attribution premise.
+[x] Recheck the README, Code of Conduct, Contributing guide, and Security Policy as one consistent reporting flow.
+[x] Run Markdown link-target, whitespace, and `git diff --check` validation; skip application tests because no executable or project files change.
+[x] Commit and push the review fixes on `codex/community-privacy` with the effective noreply identity.
+[x] Recheck Codex feedback, CI Verify, and GitHub mergeability before marking the PR ready for review.
+[x] Merge updated `main` at `c8a9d79`, preserving its optimized CI workflow and README guidance while retaining this branch's conduct and security-reporting changes.
+[x] Merge updated `main` at `8fa56f0`, preserving its showcase test and generated-image fixes unchanged while retaining this branch's community-policy changes.
 
 ## Open questions
-- None. The shared metrics remain private test/showcase infrastructure and do not affect production widget behavior.
+- None. The Security Policy remains canonical for vulnerability-reporting fallbacks, and the GitHub API already confirms the intended author identity.
