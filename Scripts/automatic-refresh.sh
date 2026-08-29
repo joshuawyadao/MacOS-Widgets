@@ -28,11 +28,38 @@ readonly CURRENT_EPOCH="${DESKTOP_WIDGETS_AUTOMATIC_NOW_EPOCH:-$(/bin/date '+%s'
 /bin/mkdir -p "$AUTOMATIC_ROOT" "$LOG_DIRECTORY"
 desktop_widgets_automatic_rotate_log "$AUTOMATIC_LOG"
 
-if ! /bin/mkdir "$LOCK_DIRECTORY" 2>/dev/null; then
+acquire_refresh_lock() {
+    local owner_path="$LOCK_DIRECTORY/owner.pid"
+    local owner_pid=""
+
+    if /bin/mkdir "$LOCK_DIRECTORY" 2>/dev/null; then
+        /usr/bin/printf '%s\n' "$$" > "$owner_path"
+        return 0
+    fi
+
+    owner_pid="$(/bin/cat "$owner_path" 2>/dev/null || true)"
+    if [[ "$owner_pid" =~ ^[0-9]+$ ]] && kill -0 "$owner_pid" 2>/dev/null; then
+        return 1
+    fi
+
+    /bin/rm -f -- "$owner_path"
+    /bin/rmdir "$LOCK_DIRECTORY" 2>/dev/null || return 1
+    /bin/mkdir "$LOCK_DIRECTORY" 2>/dev/null || return 1
+    /usr/bin/printf '%s\n' "$$" > "$owner_path"
+}
+
+if ! acquire_refresh_lock; then
     exit 0
 fi
 cleanup() {
-    /bin/rmdir "$LOCK_DIRECTORY" 2>/dev/null || true
+    local owner_path="$LOCK_DIRECTORY/owner.pid"
+    local owner_pid=""
+
+    owner_pid="$(/bin/cat "$owner_path" 2>/dev/null || true)"
+    if [[ "$owner_pid" == "$$" ]]; then
+        /bin/rm -f -- "$owner_path"
+        /bin/rmdir "$LOCK_DIRECTORY" 2>/dev/null || true
+    fi
 }
 trap cleanup EXIT
 
