@@ -109,6 +109,7 @@ sync_installation_source() {
         /bin/mkdir -p "$(/usr/bin/dirname "$destination_path")"
         /usr/bin/ditto "$source_path" "$destination_path"
     done
+    desktop_widgets_preserve_local_configuration "$LOCAL_CONFIGURATION" "$STABLE_SOURCE_ROOT/Local.xcconfig"
 
     echo "Kept a private refresh copy at $STABLE_SOURCE_ROOT"
     exec /usr/bin/env \

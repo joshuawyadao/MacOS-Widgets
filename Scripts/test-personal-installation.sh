@@ -111,6 +111,14 @@ assert_equal "com.joshuawyadao.DesktopWidgets" "$(desktop_widgets_local_value DE
 assert_equal "$TEAM_ID.com.joshuawyadao.desktop-widgets" "$(desktop_widgets_local_value WIDGET_THEME_APP_GROUP "$legacy_configuration")" "legacy configuration should preserve the established App Group suffix"
 assert_rejects "configuration must not overwrite another team" desktop_widgets_write_local_configuration "$legacy_configuration" ZYX987WV65
 
+stable_legacy_configuration="$TEST_ROOT/StableInstaller/Local.xcconfig"
+desktop_widgets_preserve_local_configuration "$legacy_configuration" "$stable_legacy_configuration"
+assert_equal "$(/bin/cat "$legacy_configuration")" "$(/bin/cat "$stable_legacy_configuration")" "stable installer copy should retain legacy signing identifiers"
+[[ "$(/usr/bin/stat -f '%Lp' "$stable_legacy_configuration")" == "600" ]] || fail "preserved stable signing configuration should remain private"
+/usr/bin/printf '%s\n' 'LOCAL_DEVELOPMENT_TEAM = ZYX987WV65' > "$TEST_ROOT/replacement.xcconfig"
+desktop_widgets_preserve_local_configuration "$TEST_ROOT/replacement.xcconfig" "$stable_legacy_configuration"
+assert_equal "$TEAM_ID" "$(desktop_widgets_local_value LOCAL_DEVELOPMENT_TEAM "$stable_legacy_configuration")" "stable installer copy should not overwrite existing signing settings"
+
 generated_old_configuration="$TEST_ROOT/GeneratedOld.xcconfig"
 /usr/bin/printf '%s\n' \
     "LOCAL_DEVELOPMENT_TEAM = $TEAM_ID" \

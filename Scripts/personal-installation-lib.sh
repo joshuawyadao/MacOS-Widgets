@@ -217,6 +217,26 @@ desktop_widgets_write_local_configuration() {
     echo "Saved private signing settings for Personal Team $team_id."
 }
 
+desktop_widgets_preserve_local_configuration() {
+    local source_path="$1"
+    local destination_path="$2"
+    local temporary_path="${destination_path}.new.$$"
+
+    [[ -f "$source_path" ]] || return 0
+    [[ "$source_path" != "$destination_path" ]] || return 0
+    if [[ -f "$destination_path" ]]; then
+        echo "Kept the stable installer's existing private signing settings."
+        return 0
+    fi
+
+    /bin/mkdir -p "$(/usr/bin/dirname "$destination_path")"
+    umask 077
+    /bin/cp "$source_path" "$temporary_path"
+    /bin/chmod 600 "$temporary_path"
+    /bin/mv -f -- "$temporary_path" "$destination_path"
+    echo "Preserved existing private signing settings for the stable installer."
+}
+
 desktop_widgets_expected_install_destination() {
     /usr/bin/printf '%s\n' "${DESKTOP_WIDGETS_HOME:-$HOME}/Applications/Desktop Widgets.app"
 }
