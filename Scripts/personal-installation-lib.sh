@@ -76,6 +76,28 @@ desktop_widgets_read_personal_teams() {
         | desktop_widgets_parse_personal_teams
 }
 
+desktop_widgets_read_interactive_choice() {
+    local prompt="$1"
+    local supplied_choice="${2:-}"
+    local choice
+
+    if [[ -n "$supplied_choice" ]]; then
+        /usr/bin/printf '%s%s\n' "$prompt" "$supplied_choice" >&2
+        /usr/bin/printf '%s\n' "$supplied_choice"
+        return 0
+    fi
+
+    if [[ -t 0 && -r /dev/tty && -w /dev/tty ]]; then
+        /usr/bin/printf '%s' "$prompt" > /dev/tty
+        IFS= read -r choice < /dev/tty || return 1
+    else
+        /usr/bin/printf '%s' "$prompt" >&2
+        IFS= read -r choice || return 1
+    fi
+
+    /usr/bin/printf '%s\n' "$choice"
+}
+
 desktop_widgets_select_personal_team() {
     local teams="$1"
     local count
@@ -92,17 +114,11 @@ desktop_widgets_select_personal_team() {
 
     echo "More than one Personal Team is available:" >&2
     /usr/bin/printf '%s\n' "$teams" | /usr/bin/awk -F '\t' 'NF { printf "  %d. %s (%s)\n", NR, $2, $1 }' >&2
-    /usr/bin/printf 'Choose a team [1-%s]: ' "$count" >&2
-    if [[ -n "${DESKTOP_WIDGETS_TEAM_SELECTION:-}" ]]; then
-        selection="$DESKTOP_WIDGETS_TEAM_SELECTION"
-        echo "$selection" >&2
-    else
-        IFS= read -r selection
-    fi
+    selection="$(desktop_widgets_read_interactive_choice "Choose a team [1-$count]: " "${DESKTOP_WIDGETS_TEAM_SELECTION:-}")" || return 1
 
     [[ "$selection" =~ ^[0-9]+$ ]] || return 1
     [[ "$selection" -ge 1 && "$selection" -le "$count" ]] || return 1
-    selected="$(/usr/bin/printf '%s\n' "$teams" | /usr/bin/awk -F '\t' -v row="$selection" 'NF { index += 1; if (index == row) { print $1; exit } }')"
+    selected="$(/usr/bin/printf '%s\n' "$teams" | /usr/bin/awk -F '\t' -v row="$selection" 'NF { row_index += 1; if (row_index == row) { print $1; exit } }')"
     [[ "$selected" =~ ^[A-Z0-9]{10}$ ]] || return 1
     /usr/bin/printf '%s\n' "$selected"
 }

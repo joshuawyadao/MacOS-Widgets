@@ -97,5 +97,16 @@
       "suggestion": 0
     },
     "scope": "PR #8 changes vs main (59 files, highest-risk paths sampled)"
+  },
+  {
+    "date": "2026-08-29",
+    "mode": "PR Review",
+    "score": 95,
+    "findings": {
+      "critical": 0,
+      "warning": 1,
+      "suggestion": 0
+    },
+    "scope": "PR #13 changes vs main (28 files, highest-risk paths sampled)"
   }
 ]

@@ -1,28 +1,22 @@
 # Plan
 
-Finish the friendly Personal Team installer after target-Mac validation exposed a blocking maintenance wake-up. Keep the terminal prompt visible, avoid the redundant blocking `launchctl kickstart`, and open the companion app only after setup has actually completed.
+Make every installer question visible through the same terminal-safe input path so selecting among multiple Personal Teams cannot look like a stalled installation.
 
 ## Scope
-- In: Installer completion ordering, visible terminal input, non-blocking automatic-maintenance activation, regression tests, full verification, replacement package, and branch save.
-- Out: Changes to widget identities, placement, signing capabilities, or the paused GitHub-update feature.
+- In: Shared interactive-choice handling, Personal Team selection, automatic-maintenance confirmation, regression coverage, verification, and branch save.
+- Out: Changes to signing capabilities, widget identifiers, provisioning policy, or the already validated installation destination.
 
 ## Action items
-- [x] Add a regression test proving automatic-maintenance enablement does not issue a blocking `launchctl kickstart`.
-- [x] Write the maintenance question directly to the interactive terminal and read its answer from that terminal so logging cannot hide it.
-- [x] Register the widget first, configure maintenance second, and open the installed companion app only after setup completes.
-- [x] Extend installer dry-run coverage to verify app-opening order and scheduled-refresh behavior.
-- [x] Run focused installer and maintenance tests, the complete verification script, and `git diff --check`.
-- [x] Save and push the fix on `codex/feature/easier-personal-installation`, then generate a clean replacement ZIP.
+- [x] Add a failing regression test for a visible, piped fallback choice and selection from multiple Personal Teams.
+- [x] Add one terminal-safe interactive-choice helper to the personal-installation library.
+- [x] Route Personal Team selection and automatic-maintenance confirmation through the shared helper while preserving noninteractive defaults.
+- [x] Run focused installation, automatic-refresh, packaging, and shell-syntax tests.
+- [x] Run the complete widget verification script and `git diff --check`.
+- [x] Save and push the review fix on `codex/feature/easier-personal-installation`.
 
 ## Evidence
-- Target-Mac process inspection showed `manage-automatic-refresh.sh enable` blocked for several minutes in `/bin/launchctl kickstart -k` after the installed app was already present.
-- `bootstrap` had already loaded a `RunAtLoad` LaunchAgent and written enabled status, making the synchronous extra kickstart redundant.
+- The target-Mac installer previously appeared stalled when a maintenance prompt was hidden behind piped diagnostic logging.
+- Brooks review found the multiple-Personal-Team prompt still used direct stdin/stderr handling and could reproduce the same failure mode.
 
 ## Open questions
 - None.
-
-## Verification result
-
-- Focused installer, automatic-maintenance, packaging, and shell-syntax tests passed.
-- `Scripts/verify-widgets.sh` passed the complete macOS tests, Release build, extension metadata checks, and registration-safety checks.
-- `git diff --check` passed.

@@ -73,6 +73,18 @@ assert_equal "$TEAM_ID" "$(/usr/bin/printf '%s\n' "$parsed_teams" | /usr/bin/awk
 assert_contains "$parsed_teams" "Friendly Person (Personal Team)" "Personal Team parser should retain the friendly team name"
 [[ "$parsed_teams" != *"PAID123456"* ]] || fail "Personal Team parser included a paid team"
 
+choice_prompt_log="$TEST_ROOT/choice-prompt.log"
+choice_output="$(/usr/bin/printf '2\n' | desktop_widgets_read_interactive_choice 'Choose a team [1-2]: ' 2> "$choice_prompt_log")"
+assert_equal "2" "$choice_output" "interactive choices should accept a piped fallback when no terminal is attached"
+assert_contains "$(/bin/cat "$choice_prompt_log")" "Choose a team [1-2]:" "interactive choices should keep their prompt visible"
+
+multiple_personal_teams="$(/usr/bin/printf '%s\t%s\n%s\t%s\n' \
+    "$TEAM_ID" 'Friendly Person (Personal Team)' \
+    'ZYX987WV65' 'Second Person (Personal Team)')"
+selected_team="$(DESKTOP_WIDGETS_TEAM_SELECTION=2 desktop_widgets_select_personal_team "$multiple_personal_teams" 2> "$TEST_ROOT/team-selection.log")"
+assert_equal "ZYX987WV65" "$selected_team" "multiple Personal Teams should honor the supplied numbered choice"
+assert_contains "$(/bin/cat "$TEST_ROOT/team-selection.log")" "Choose a team [1-2]: 2" "supplied team choices should be logged without hiding the prompt"
+
 identifier_values="$(desktop_widgets_identifier_values "$TEAM_ID")"
 generated_app_identifier="$(echo "$identifier_values" | /usr/bin/sed -n '1p')"
 generated_extension_identifier="$(echo "$identifier_values" | /usr/bin/sed -n '2p')"
@@ -151,7 +163,8 @@ assert_contains "$build_arguments" "-allowProvisioningUpdates" "build command sh
 assert_contains "$build_arguments" "-quiet" "friendly build command should suppress routine Xcode noise"
 assert_contains "$build_arguments" "Release" "build command should use Release configuration"
 [[ "$build_arguments" != *"$TEAM_ID"* ]] || fail "build command should obtain the team from ignored configuration"
-assert_contains "$(/bin/cat "$INSTALLATION_SCRIPT")" "IFS= read -r choice < /dev/tty" "interactive maintenance choice should bypass buffered logging"
+assert_contains "$(/bin/cat "$INSTALLATION_SCRIPT")" "desktop_widgets_read_interactive_choice 'Turn on low-resource automatic maintenance? [Y/n] '" "interactive maintenance choice should use the shared visible prompt helper"
+assert_contains "$(/bin/cat "$LIBRARY_SCRIPT")" 'selection="$(desktop_widgets_read_interactive_choice' "Personal Team selection should use the shared visible prompt helper"
 
 capability_log="$TEST_ROOT/capability.log"
 echo "Personal Teams do not support the App Groups capability" > "$capability_log"

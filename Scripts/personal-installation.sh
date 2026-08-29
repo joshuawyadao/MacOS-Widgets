@@ -57,13 +57,7 @@ configure_automatic_refresh() {
     fi
 
     if [[ -z "$choice" && -t 0 ]]; then
-        if [[ -r /dev/tty && -w /dev/tty ]]; then
-            /usr/bin/printf 'Turn on low-resource automatic maintenance? [Y/n] ' > /dev/tty
-            IFS= read -r choice < /dev/tty
-        else
-            /usr/bin/printf 'Turn on low-resource automatic maintenance? [Y/n] '
-            IFS= read -r choice
-        fi
+        choice="$(desktop_widgets_read_interactive_choice 'Turn on low-resource automatic maintenance? [Y/n] ')"
     fi
     choice="${choice:-y}"
 
