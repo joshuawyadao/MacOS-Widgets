@@ -267,6 +267,14 @@ after_refresh="$(/bin/cat "$LOCAL_CONFIGURATION")"
 assert_equal "$before_refresh" "$after_refresh" "repeated refresh should not churn signing configuration"
 assert_contains "$first_refresh_output" "DRY RUN: install" "existing installation refresh should use the safe dry-run install path"
 assert_contains "$second_refresh_output" "Desktop Widgets is ready" "a repeated refresh should remain successful"
+
+/bin/mkdir -p "$TEST_ROOT/Support/AutomaticRefresh/run.lock"
+/usr/bin/printf '%s\n' "$$" > "$TEST_ROOT/Support/AutomaticRefresh/run.lock/owner.pid"
+concurrent_output="$(run_installer refresh DESKTOP_WIDGETS_DRY_RUN=1)"
+assert_contains "$concurrent_output" "setup is already running" "interactive refresh should not race another installer run"
+/bin/rm -f -- "$TEST_ROOT/Support/AutomaticRefresh/run.lock/owner.pid"
+/bin/rmdir "$TEST_ROOT/Support/AutomaticRefresh/run.lock"
+
 maintenance_line="$(/usr/bin/printf '%s\n' "$install_dry_run_output" | /usr/bin/grep -n -F 'DRY RUN: offer optional automatic maintenance' | /usr/bin/cut -d: -f1)"
 open_line="$(/usr/bin/printf '%s\n' "$install_dry_run_output" | /usr/bin/grep -n -F 'DRY RUN: open' | /usr/bin/cut -d: -f1)"
 [[ -n "$maintenance_line" && -n "$open_line" && "$maintenance_line" -lt "$open_line" ]] \

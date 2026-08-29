@@ -73,6 +73,8 @@ first_status_temporary="$(desktop_widgets_automatic_status_temporary_path "$STAT
 second_status_temporary="$(desktop_widgets_automatic_status_temporary_path "$STATUS_PATH" 202)"
 [[ "$first_status_temporary" != "$second_status_temporary" ]] || fail "concurrent status writers should use distinct temporary files"
 assert_equal "$STATUS_PATH.new.101" "$first_status_temporary" "status temporary files should remain beside the atomic destination"
+[[ "$(/bin/cat "$AUTOMATIC_SCRIPT")" == *'DESKTOP_WIDGETS_INSTALL_LOCK_HELD_BY_PID="$$"'* ]] \
+    || fail "automatic refresh should hand its common installer lock to the scheduled child"
 
 /usr/bin/printf '%s\n' \
     '#!/bin/bash' \

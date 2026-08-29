@@ -4,6 +4,42 @@ readonly DESKTOP_WIDGETS_AUTOMATIC_REFRESH_LABEL="io.desktopwidgets.automatic-re
 readonly DESKTOP_WIDGETS_AUTOMATIC_REFRESH_THRESHOLD_SECONDS=172800
 readonly DESKTOP_WIDGETS_PROFILELESS_RENEWAL_SECONDS=604800
 
+desktop_widgets_lock_owner_pid() {
+    local lock_directory="$1"
+    /bin/cat "$lock_directory/owner.pid" 2>/dev/null || true
+}
+
+desktop_widgets_acquire_install_lock() {
+    local lock_directory="$1"
+    local owner_pid=""
+
+    if /bin/mkdir "$lock_directory" 2>/dev/null; then
+        /usr/bin/printf '%s\n' "$$" > "$lock_directory/owner.pid"
+        return 0
+    fi
+
+    owner_pid="$(desktop_widgets_lock_owner_pid "$lock_directory")"
+    if [[ "$owner_pid" =~ ^[0-9]+$ ]] && kill -0 "$owner_pid" 2>/dev/null; then
+        return 1
+    fi
+
+    /bin/rm -f -- "$lock_directory/owner.pid"
+    /bin/rmdir "$lock_directory" 2>/dev/null || return 1
+    /bin/mkdir "$lock_directory" 2>/dev/null || return 1
+    /usr/bin/printf '%s\n' "$$" > "$lock_directory/owner.pid"
+}
+
+desktop_widgets_release_install_lock() {
+    local lock_directory="$1"
+    local expected_owner="$2"
+    local owner_pid=""
+
+    owner_pid="$(desktop_widgets_lock_owner_pid "$lock_directory")"
+    [[ "$owner_pid" == "$expected_owner" ]] || return 0
+    /bin/rm -f -- "$lock_directory/owner.pid"
+    /bin/rmdir "$lock_directory" 2>/dev/null || true
+}
+
 desktop_widgets_automatic_expiration_epoch() {
     local expiration="$1"
     local normalized

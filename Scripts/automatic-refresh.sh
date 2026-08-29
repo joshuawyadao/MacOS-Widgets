@@ -28,38 +28,11 @@ readonly CURRENT_EPOCH="${DESKTOP_WIDGETS_AUTOMATIC_NOW_EPOCH:-$(/bin/date '+%s'
 /bin/mkdir -p "$AUTOMATIC_ROOT" "$LOG_DIRECTORY"
 desktop_widgets_automatic_rotate_log "$AUTOMATIC_LOG"
 
-acquire_refresh_lock() {
-    local owner_path="$LOCK_DIRECTORY/owner.pid"
-    local owner_pid=""
-
-    if /bin/mkdir "$LOCK_DIRECTORY" 2>/dev/null; then
-        /usr/bin/printf '%s\n' "$$" > "$owner_path"
-        return 0
-    fi
-
-    owner_pid="$(/bin/cat "$owner_path" 2>/dev/null || true)"
-    if [[ "$owner_pid" =~ ^[0-9]+$ ]] && kill -0 "$owner_pid" 2>/dev/null; then
-        return 1
-    fi
-
-    /bin/rm -f -- "$owner_path"
-    /bin/rmdir "$LOCK_DIRECTORY" 2>/dev/null || return 1
-    /bin/mkdir "$LOCK_DIRECTORY" 2>/dev/null || return 1
-    /usr/bin/printf '%s\n' "$$" > "$owner_path"
-}
-
-if ! acquire_refresh_lock; then
+if ! desktop_widgets_acquire_install_lock "$LOCK_DIRECTORY"; then
     exit 0
 fi
 cleanup() {
-    local owner_path="$LOCK_DIRECTORY/owner.pid"
-    local owner_pid=""
-
-    owner_pid="$(/bin/cat "$owner_path" 2>/dev/null || true)"
-    if [[ "$owner_pid" == "$$" ]]; then
-        /bin/rm -f -- "$owner_path"
-        /bin/rmdir "$LOCK_DIRECTORY" 2>/dev/null || true
-    fi
+    desktop_widgets_release_install_lock "$LOCK_DIRECTORY" "$$"
 }
 trap cleanup EXIT
 
@@ -252,6 +225,7 @@ automatic_refresh_run() {
         DESKTOP_WIDGETS_SUPPORT_ROOT="$SUPPORT_ROOT" \
         DESKTOP_WIDGETS_LOG_DIRECTORY="$LOG_DIRECTORY" \
         DESKTOP_WIDGETS_SCHEDULED=1 \
+        DESKTOP_WIDGETS_INSTALL_LOCK_HELD_BY_PID="$$" \
         /bin/bash "$REFRESH_SCRIPT" refresh
     refresh_status=$?
     set -e

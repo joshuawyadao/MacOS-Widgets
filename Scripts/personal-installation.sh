@@ -28,9 +28,27 @@ readonly INSTALL_DESTINATION="${DESKTOP_WIDGETS_INSTALL_DESTINATION:-$(desktop_w
 readonly LOCAL_CONFIGURATION="${DESKTOP_WIDGETS_LOCAL_CONFIGURATION:-$SOURCE_ROOT/Local.xcconfig}"
 readonly DRY_RUN="${DESKTOP_WIDGETS_DRY_RUN:-0}"
 readonly SCHEDULED_RUN="${DESKTOP_WIDGETS_SCHEDULED:-0}"
+readonly INSTALL_LOCK_DIRECTORY="$SUPPORT_ROOT/AutomaticRefresh/run.lock"
+readonly HANDED_OFF_LOCK_OWNER="${DESKTOP_WIDGETS_INSTALL_LOCK_HELD_BY_PID:-}"
 APP_WAS_REPLACED=0
+OWNS_INSTALL_LOCK=0
 
-/bin/mkdir -p "$LOG_DIRECTORY"
+/bin/mkdir -p "$LOG_DIRECTORY" "$SUPPORT_ROOT/AutomaticRefresh"
+
+if [[ -n "$HANDED_OFF_LOCK_OWNER" && "$(desktop_widgets_lock_owner_pid "$INSTALL_LOCK_DIRECTORY")" == "$HANDED_OFF_LOCK_OWNER" ]]; then
+    [[ "$HANDED_OFF_LOCK_OWNER" == "$$" ]] && OWNS_INSTALL_LOCK=1
+elif desktop_widgets_acquire_install_lock "$INSTALL_LOCK_DIRECTORY"; then
+    OWNS_INSTALL_LOCK=1
+else
+    echo "Desktop Widgets setup is already running. Let that window finish, then try again." >&2
+    exit 0
+fi
+
+release_install_lock() {
+    [[ "$OWNS_INSTALL_LOCK" == "1" ]] || return 0
+    desktop_widgets_release_install_lock "$INSTALL_LOCK_DIRECTORY" "$$"
+}
+trap release_install_lock EXIT
 
 failure_report() {
     local status=$?
@@ -127,6 +145,7 @@ sync_installation_source() {
         DESKTOP_WIDGETS_SUPPORT_ROOT="$SUPPORT_ROOT" \
         DESKTOP_WIDGETS_LOG_DIRECTORY="$LOG_DIRECTORY" \
         DESKTOP_WIDGETS_AUTOMATIC_REFRESH_CHOICE="${DESKTOP_WIDGETS_AUTOMATIC_REFRESH_CHOICE:-}" \
+        DESKTOP_WIDGETS_INSTALL_LOCK_HELD_BY_PID="$$" \
         /bin/bash "$STABLE_SOURCE_ROOT/Scripts/personal-installation.sh" "$MODE"
 }
 
