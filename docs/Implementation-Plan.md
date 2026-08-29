@@ -14,7 +14,7 @@ Address every actionable Codex review finding on PR #13 with test-backed, separa
 - [x] Distinguish failures before versus after app replacement.
 - [x] Leave automatic maintenance unchanged during noninteractive installs unless the caller explicitly opts in.
 - [x] Publish automatic-refresh status through per-process temporary files and cover the concurrency-safe path.
-- [ ] Run focused checks after each fix, then the complete verifier and `git diff --check`.
+- [x] Run focused checks after each fix, then the complete verifier and `git diff --check`.
 - [ ] Push every feedback checkpoint, acknowledge each addressed Codex comment, and confirm fresh Codex review, CI, and mergeability.
 
 ## Evidence
