@@ -183,8 +183,12 @@ automatic_refresh_run() {
     local expiration_epoch
     local previous_error
     local should_notify=0
+    local refreshed_deadline
     local refreshed_expiration
+    local refreshed_expiration_epoch
     local refreshed_at
+    local refresh_error_code="refresh-failed"
+    local refresh_error_message="Automatic refresh could not finish. Open Xcode if asked, then run the manual Refresh command."
     local refresh_status
 
     if [[ ! -f "$LOCAL_CONFIGURATION" ]]; then
@@ -253,24 +257,35 @@ automatic_refresh_run() {
     set -e
 
     if [[ "$refresh_status" -eq 0 ]]; then
-        refreshed_at="$(/bin/date -u '+%Y-%m-%dT%H:%M:%SZ')"
-        refreshed_expiration="$(maintenance_deadline 2>/dev/null || true)"
-        refreshed_expiration="${refreshed_expiration#*|}"
+        refreshed_deadline="$(maintenance_deadline 2>/dev/null || true)"
+        refreshed_expiration="${refreshed_deadline#*|}"
+        if [[ -n "$refreshed_deadline" && "$refreshed_expiration" != "$refreshed_deadline" ]] \
+            && refreshed_expiration_epoch="$(desktop_widgets_automatic_expiration_epoch "$refreshed_expiration")" \
+            && ! desktop_widgets_automatic_should_refresh "$refreshed_expiration_epoch" "$CURRENT_EPOCH"; then
+            refreshed_at="$(/bin/date -u '+%Y-%m-%dT%H:%M:%SZ')"
+            desktop_widgets_automatic_write_status "$status_path" true refreshed \
+                "Automatic maintenance refreshed Desktop Widgets successfully." "$refreshed_expiration" "$refreshed_at"
+            echo "Automatic refresh completed successfully."
+            return 0
+        fi
+
+        refresh_error_code="renewal-not-extended"
+        refresh_error_message="Xcode finished, but the signing renewal deadline did not move beyond the 48-hour window. Open Xcode, then run the manual Refresh command."
         refreshed_expiration="${refreshed_expiration:-$expiration}"
-        desktop_widgets_automatic_write_status "$status_path" true refreshed \
-            "Automatic maintenance refreshed Desktop Widgets successfully." "$refreshed_expiration" "$refreshed_at"
-        echo "Automatic refresh completed successfully."
-        return 0
     fi
 
-    if [[ "$previous_error" != "refresh-failed" ]] || desktop_widgets_automatic_should_notify "$status_path" "refresh-failed" "$CURRENT_EPOCH"; then
+    if [[ "$previous_error" != "$refresh_error_code" ]] || desktop_widgets_automatic_should_notify "$status_path" "$refresh_error_code" "$CURRENT_EPOCH"; then
         should_notify=1
     fi
     desktop_widgets_automatic_write_status "$status_path" true needsAttention \
-        "Automatic refresh could not finish. Open Xcode if asked, then run the manual Refresh command." \
-        "$expiration" "" "refresh-failed" "$([[ "$should_notify" == 1 ]] && echo "$CURRENT_EPOCH" || echo 0)"
+        "$refresh_error_message" \
+        "${refreshed_expiration:-$expiration}" "" "$refresh_error_code" "$([[ "$should_notify" == 1 ]] && echo "$CURRENT_EPOCH" || echo 0)"
     [[ "$should_notify" == 1 ]] && notify_attention
-    echo "Automatic refresh failed. It will retry at the next daily check; manual Refresh remains available." >&2
+    if [[ "$refresh_error_code" == "renewal-not-extended" ]]; then
+        echo "Automatic refresh finished, but the signing deadline is still inside the 48-hour renewal window." >&2
+    else
+        echo "Automatic refresh failed. It will retry at the next daily check; manual Refresh remains available." >&2
+    fi
     return 0
 }
 

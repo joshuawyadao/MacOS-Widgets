@@ -216,6 +216,13 @@ run_automatic >/dev/null
 
 echo '2026-08-28T12:00:00Z' > "$EXPIRATION_FILE"
 : > "$NOTIFICATION_LOG"
+run_automatic >/dev/null
+assert_equal "needsAttention" "$(desktop_widgets_automatic_status_value "$STATUS_PATH" State)" "unchanged signing deadline should not be reported as refreshed"
+assert_equal "renewal-not-extended" "$(desktop_widgets_automatic_status_value "$STATUS_PATH" LastErrorCode)" "unchanged signing deadline should record a stable error code"
+[[ -s "$NOTIFICATION_LOG" ]] || fail "unchanged signing deadline should notify the user"
+
+echo '2026-08-28T12:00:00Z' > "$EXPIRATION_FILE"
+: > "$NOTIFICATION_LOG"
 run_automatic DESKTOP_WIDGETS_TEST_REFRESH_RESULT=failure >/dev/null
 run_automatic DESKTOP_WIDGETS_TEST_REFRESH_RESULT=failure >/dev/null
 assert_equal "needsAttention" "$(desktop_widgets_automatic_status_value "$STATUS_PATH" State)" "failed refresh should publish attention state"

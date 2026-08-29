@@ -17,7 +17,7 @@ Address every actionable Codex review finding on PR #13 with test-backed, separa
 - [x] Reuse the saved `Local.xcconfig` Personal Team for unattended refreshes when multiple free teams exist.
 - [x] Include the default Xcode DerivedData root when migrating a legacy developer install so stale same-identifier registrations are removed.
 - [x] Keep installer `errexit` active while still capturing the redacted logging pipeline status.
-- [ ] Publish refresh success only when the recomputed signing deadline moves outside the renewal window.
+- [x] Publish refresh success only when the recomputed signing deadline moves outside the renewal window.
 - [x] Run focused checks after each fix, then the complete verifier and `git diff --check`.
 - [ ] Push every feedback checkpoint, acknowledge each addressed Codex comment, and confirm fresh Codex review, CI, and mergeability.
 
