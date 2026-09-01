@@ -280,7 +280,9 @@ final class WeatherConfigurationTests: XCTestCase {
             .appendingPathComponent(UUID().uuidString, isDirectory: true)
         defer { try? FileManager.default.removeItem(at: root) }
         let now = Date.now
-        let snapshot = WeatherSnapshot.sample(now: now)
+        let snapshot = WeatherSnapshot.sample(
+            now: now.addingTimeInterval(-WeatherSnapshotCache.maximumFreshAge - 1)
+        )
         let configuration = WeatherV8ConfigurationIntent.referencePreview()
 
         let loadedTimeline = await WeatherProvider(
@@ -666,6 +668,11 @@ final class WeatherConfigurationTests: XCTestCase {
         XCTAssertEqual(items.first(where: { $0.name == "wind_speed_unit" })?.value, "mph")
         XCTAssertEqual(items.first(where: { $0.name == "timezone" })?.value, "auto")
         XCTAssertEqual(items.first(where: { $0.name == "timeformat" })?.value, "unixtime")
+        XCTAssertEqual(items.first(where: { $0.name == "forecast_days" })?.value, "7")
+        XCTAssertEqual(
+            items.first(where: { $0.name == "forecast_hours" })?.value,
+            String(OpenMeteoWeatherService.forecastHourCount)
+        )
     }
 
     func testGeocodingRequestAndResponseProvideSelectableCityCoordinates() throws {
@@ -868,6 +875,26 @@ final class WeatherConfigurationTests: XCTestCase {
         XCTAssertNil(cache.load(city: "Expired City", unit: .fahrenheit))
     }
 
+    func testSnapshotCacheUsesAFifteenMinuteFreshnessWindowWithoutLosingStaleFallback() throws {
+        let root = FileManager.default.temporaryDirectory
+            .appendingPathComponent(UUID().uuidString, isDirectory: true)
+        defer { try? FileManager.default.removeItem(at: root) }
+        let now = Date(timeIntervalSince1970: 1_788_200_000)
+        let cache = WeatherSnapshotCache(directoryURL: root)
+        let fresh = WeatherSnapshot.sample(now: now.addingTimeInterval(-15 * 60))
+        let refreshable = WeatherSnapshot.sample(now: now.addingTimeInterval(-15 * 60 - 1))
+
+        try cache.save(fresh, city: "Fresh City")
+        try cache.save(refreshable, city: "Refreshable City")
+
+        XCTAssertEqual(cache.loadFresh(city: "Fresh City", unit: .fahrenheit, now: now), fresh)
+        XCTAssertNil(cache.loadFresh(city: "Refreshable City", unit: .fahrenheit, now: now))
+        XCTAssertEqual(
+            cache.load(city: "Refreshable City", unit: .fahrenheit, now: now),
+            refreshable
+        )
+    }
+
     func testOlderCachedSnapshotsDecodeWithoutNewOptionalWeatherMetrics() throws {
         let original = WeatherSnapshot.sample()
         let encoded = try JSONEncoder().encode(original)
@@ -923,11 +950,59 @@ final class WeatherConfigurationTests: XCTestCase {
         XCTAssertEqual(cache.load(city: WeatherLocation.portland.cacheIdentifier, unit: .fahrenheit), snapshot)
     }
 
-    func testLoaderReturnsSavedForecastAsStaleWhenRefreshFails() async throws {
+    func testLoaderReusesAMatchingFreshSnapshotWithoutCallingTheService() async throws {
         let root = FileManager.default.temporaryDirectory
             .appendingPathComponent(UUID().uuidString, isDirectory: true)
         defer { try? FileManager.default.removeItem(at: root) }
         let snapshot = WeatherSnapshot.sample(now: .now)
+        let cache = WeatherSnapshotCache(directoryURL: root)
+        try cache.save(snapshot, city: WeatherLocation.portland.cacheIdentifier)
+        let service = CountingWeatherService(result: .failure(.requestFailed("Should not run")))
+        let loader = WeatherLoader(service: service, cache: cache)
+
+        let outcome = await loader.load(
+            location: .portland,
+            unit: .fahrenheit,
+            locale: Locale(identifier: "en_US")
+        )
+
+        XCTAssertEqual(outcome, .fresh(snapshot))
+        let requestCount = await service.requestCount
+        XCTAssertEqual(requestCount, 0)
+    }
+
+    func testRequestCoordinatorCoalescesOnlySimultaneousMatchingForecasts() async throws {
+        let coordinator = WeatherForecastRequestCoordinator()
+        let operation = DelayedWeatherOperation()
+
+        async let first = coordinator.forecast(for: "portland-fahrenheit") {
+            try await operation.forecast()
+        }
+        async let second = coordinator.forecast(for: "portland-fahrenheit") {
+            try await operation.forecast()
+        }
+        _ = try await (first, second)
+        let matchingRequestCount = await operation.requestCount
+        XCTAssertEqual(matchingRequestCount, 1)
+
+        async let third = coordinator.forecast(for: "portland-celsius") {
+            try await operation.forecast()
+        }
+        async let fourth = coordinator.forecast(for: "tokyo-celsius") {
+            try await operation.forecast()
+        }
+        _ = try await (third, fourth)
+        let distinctRequestCount = await operation.requestCount
+        XCTAssertEqual(distinctRequestCount, 3)
+    }
+
+    func testLoaderReturnsSavedForecastAsStaleWhenRefreshFails() async throws {
+        let root = FileManager.default.temporaryDirectory
+            .appendingPathComponent(UUID().uuidString, isDirectory: true)
+        defer { try? FileManager.default.removeItem(at: root) }
+        let snapshot = WeatherSnapshot.sample(
+            now: .now.addingTimeInterval(-WeatherSnapshotCache.maximumFreshAge - 1)
+        )
         let cache = WeatherSnapshotCache(directoryURL: root)
         try cache.save(snapshot, city: WeatherLocation.portland.cacheIdentifier)
         let loader = WeatherLoader(
@@ -1200,6 +1275,34 @@ private struct StubWeatherService: WeatherServing {
 
     func forecast(location: WeatherLocation, unit: WeatherTemperatureUnit, locale: Locale) async throws -> WeatherSnapshot {
         try result.get()
+    }
+}
+
+private actor CountingWeatherService: WeatherServing {
+    let result: Result<WeatherSnapshot, WeatherServiceError>
+    private(set) var requestCount = 0
+
+    init(result: Result<WeatherSnapshot, WeatherServiceError>) {
+        self.result = result
+    }
+
+    func forecast(
+        location: WeatherLocation,
+        unit: WeatherTemperatureUnit,
+        locale: Locale
+    ) async throws -> WeatherSnapshot {
+        requestCount += 1
+        return try result.get()
+    }
+}
+
+private actor DelayedWeatherOperation {
+    private(set) var requestCount = 0
+
+    func forecast() async throws -> WeatherSnapshot {
+        requestCount += 1
+        try await Task.sleep(nanoseconds: 50_000_000)
+        return WeatherSnapshot.sample(now: .now)
     }
 }
 

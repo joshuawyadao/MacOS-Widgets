@@ -59,6 +59,10 @@ struct WeatherLoader: Sendable {
     func load(location: WeatherLocation, unit: WeatherTemperatureUnit, locale: Locale) async -> WeatherLoadOutcome {
         let resolvedUnit = unit.resolved(for: locale)
         let cacheKey = location.cacheIdentifier
+        if let cached = cache.loadFresh(city: cacheKey, unit: resolvedUnit) {
+            return .fresh(cached)
+        }
+
         do {
             let snapshot = try await service.forecast(location: location, unit: unit, locale: locale)
             try? cache.save(snapshot, city: cacheKey)
@@ -73,6 +77,28 @@ struct WeatherLoader: Sendable {
                 retryable: (error as? WeatherServiceError)?.isRetryable ?? true
             )
         }
+    }
+}
+
+actor WeatherForecastRequestCoordinator {
+    static let shared = WeatherForecastRequestCoordinator()
+
+    private var inFlight: [String: Task<WeatherSnapshot, any Error>] = [:]
+
+    func forecast(
+        for key: String,
+        operation: @escaping @Sendable () async throws -> WeatherSnapshot
+    ) async throws -> WeatherSnapshot {
+        if let existing = inFlight[key] {
+            return try await existing.value
+        }
+
+        let task = Task {
+            try await operation()
+        }
+        inFlight[key] = task
+        defer { inFlight[key] = nil }
+        return try await task.value
     }
 }
 
@@ -118,19 +144,27 @@ struct WeatherLocation: Codable, Equatable, Hashable, Sendable {
 
 struct OpenMeteoWeatherService: WeatherServing {
     static let providerID = "open-meteo"
+    static let forecastHourCount = 24
 
     private let session: URLSession
+    private let coordinator: WeatherForecastRequestCoordinator
 
-    init(session: URLSession = .shared) {
+    init(
+        session: URLSession = .shared,
+        coordinator: WeatherForecastRequestCoordinator = .shared
+    ) {
         self.session = session
+        self.coordinator = coordinator
     }
 
     func forecast(location: WeatherLocation, unit: WeatherTemperatureUnit, locale: Locale) async throws -> WeatherSnapshot {
         do {
             let resolvedUnit = unit.resolved(for: locale)
             let url = try Self.forecastURL(location: location, unit: resolvedUnit)
-            let data = try await data(from: url)
-            return try Self.decodeForecast(data: data, location: location, unit: resolvedUnit)
+            return try await coordinator.forecast(for: url.absoluteString) {
+                let data = try await data(from: url)
+                return try Self.decodeForecast(data: data, location: location, unit: resolvedUnit)
+            }
         } catch let error as WeatherServiceError {
             throw error
         } catch {
@@ -165,6 +199,7 @@ struct OpenMeteoWeatherService: WeatherServing {
             URLQueryItem(name: "timezone", value: "auto"),
             URLQueryItem(name: "timeformat", value: "unixtime"),
             URLQueryItem(name: "forecast_days", value: "7"),
+            URLQueryItem(name: "forecast_hours", value: String(forecastHourCount)),
         ]
         guard let url = components.url else { throw WeatherServiceError.invalidResponse }
         return url
@@ -342,6 +377,7 @@ struct OpenMeteoLocationSearchService: WeatherLocationSearching {
 }
 
 struct WeatherSnapshotCache: Sendable {
+    static let maximumFreshAge: TimeInterval = 15 * 60
     private static let maximumStaleAge: TimeInterval = 24 * 60 * 60
     private static let maximumStoredEntries = 12
     private let directoryURL: URL
@@ -352,13 +388,29 @@ struct WeatherSnapshotCache: Sendable {
                 .appendingPathComponent("WeatherSnapshots", isDirectory: true)
     }
 
-    func load(city: String, unit: WeatherResolvedUnit) -> WeatherSnapshot? {
+    func loadFresh(
+        city: String,
+        unit: WeatherResolvedUnit,
+        now: Date = .now
+    ) -> WeatherSnapshot? {
+        guard let snapshot = load(city: city, unit: unit, now: now),
+              now.timeIntervalSince(snapshot.fetchedAt) <= Self.maximumFreshAge else {
+            return nil
+        }
+        return snapshot
+    }
+
+    func load(
+        city: String,
+        unit: WeatherResolvedUnit,
+        now: Date = .now
+    ) -> WeatherSnapshot? {
         let url = fileURL(city: city, unit: unit)
         guard let data = try? Data(contentsOf: url),
               let snapshot = try? JSONDecoder().decode(WeatherSnapshot.self, from: data) else {
             return nil
         }
-        guard Date.now.timeIntervalSince(snapshot.fetchedAt) <= Self.maximumStaleAge else {
+        guard now.timeIntervalSince(snapshot.fetchedAt) <= Self.maximumStaleAge else {
             try? FileManager.default.removeItem(at: url)
             return nil
         }

@@ -328,6 +328,39 @@ final class CalendarWidgetTests: XCTestCase {
         XCTAssertEqual(CalendarEventSnapshot(accessState: .denied, countsByDay: [:]).accessState, .denied)
     }
 
+    func testEventQueryPolicyCombinesOnlyOverlappingBoundedIntervals() {
+        let reference = Date(timeIntervalSince1970: 1_786_262_940)
+        let display = DateInterval(
+            start: reference.addingTimeInterval(-12 * 60 * 60),
+            end: reference.addingTimeInterval(24 * 60 * 60)
+        )
+        let upcoming = DateInterval(
+            start: reference,
+            end: reference.addingTimeInterval(7 * 86_400)
+        )
+
+        XCTAssertEqual(
+            CalendarEventQueryPolicy.combinedInterval(
+                displayInterval: display,
+                upcomingInterval: upcoming
+            ),
+            DateInterval(start: display.start, end: upcoming.end)
+        )
+
+        let navigatedMonth = DateInterval(
+            start: reference.addingTimeInterval(60 * 86_400),
+            duration: 42 * 86_400
+        )
+        XCTAssertNil(CalendarEventQueryPolicy.combinedInterval(
+            displayInterval: navigatedMonth,
+            upcomingInterval: upcoming
+        ))
+        XCTAssertNil(CalendarEventQueryPolicy.combinedInterval(
+            displayInterval: upcoming,
+            upcomingInterval: upcoming
+        ))
+    }
+
     func testNextEventTimingIgnoresAllDayAndEndedEventsWithoutReadingEventText() throws {
         let reference = Date(timeIntervalSince1970: 1_786_262_940)
         let query = DateInterval(start: reference, duration: 7 * 86_400)
@@ -377,6 +410,29 @@ final class CalendarWidgetTests: XCTestCase {
         XCTAssertEqual(timing.start, ongoing.start)
         XCTAssertEqual(timing.end, ongoing.end)
         XCTAssertTrue(timing.isOngoing)
+    }
+
+    func testNextEventTimingFindsTheEarliestEligibleEventWithoutInputOrdering() throws {
+        let reference = Date(timeIntervalSince1970: 1_786_262_940)
+        let query = DateInterval(start: reference, duration: 7 * 86_400)
+        let later = CalendarEventInterval(
+            start: reference.addingTimeInterval(7_200),
+            end: reference.addingTimeInterval(10_800)
+        )
+        let earliest = CalendarEventInterval(
+            start: reference.addingTimeInterval(1_800),
+            end: reference.addingTimeInterval(3_600)
+        )
+
+        let timing = try XCTUnwrap(CalendarEventCounter.nextTiming(
+            for: [later, earliest],
+            after: reference,
+            within: query
+        ))
+
+        XCTAssertEqual(timing.start, earliest.start)
+        XCTAssertEqual(timing.end, earliest.end)
+        XCTAssertFalse(timing.isOngoing)
     }
 
     func testNextEventTimeCanBeEnabledWithoutEventIndicators() {
