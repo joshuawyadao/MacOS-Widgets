@@ -34,8 +34,7 @@ struct CalendarNextEventTextPresentation: Equatable, Sendable {
     init(
         snapshot: CalendarEventSnapshot,
         calendar: Calendar,
-        locale: Locale,
-        timeZone: TimeZone
+        locale: Locale
     ) {
         switch snapshot.accessState {
         case .available:
@@ -53,7 +52,7 @@ struct CalendarNextEventTextPresentation: Equatable, Sendable {
             let formatter = DateFormatter()
             formatter.calendar = calendar
             formatter.locale = locale
-            formatter.timeZone = timeZone
+            formatter.timeZone = calendar.timeZone
             formatter.setLocalizedDateFormatFromTemplate("jm")
             let timeText = formatter.string(from: nextEvent.start)
             displayText = "Next \(timeText)"

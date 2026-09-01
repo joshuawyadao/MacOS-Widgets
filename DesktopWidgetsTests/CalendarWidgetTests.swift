@@ -457,8 +457,7 @@ final class CalendarWidgetTests: XCTestCase {
         let presentation = CalendarNextEventTextPresentation(
             snapshot: snapshot,
             calendar: calendar,
-            locale: Locale(identifier: "en_US"),
-            timeZone: calendar.timeZone
+            locale: Locale(identifier: "en_US")
         )
         let formatter = DateFormatter()
         formatter.calendar = calendar
@@ -513,8 +512,7 @@ final class CalendarWidgetTests: XCTestCase {
             let presentation = CalendarNextEventTextPresentation(
                 snapshot: snapshot,
                 calendar: calendar,
-                locale: Locale(identifier: "en_US"),
-                timeZone: calendar.timeZone
+                locale: Locale(identifier: "en_US")
             )
             XCTAssertEqual(presentation.displayText, displayText)
             XCTAssertEqual(presentation.accessibilityText, accessibilityText)

@@ -207,8 +207,7 @@ private struct ResolvedCalendarWidgetView: View {
             ? CalendarNextEventTextPresentation(
                 snapshot: entry.events,
                 calendar: calendar,
-                locale: locale,
-                timeZone: timeZone
+                locale: locale
             )
             : nil
 

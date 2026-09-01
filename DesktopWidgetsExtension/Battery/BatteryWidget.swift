@@ -24,12 +24,7 @@ struct BatteryProvider: AppIntentTimelineProvider {
             configuration: configuration,
             snapshot: context.isPreview
                 ? .sample
-                : reader.snapshot(
-                    includeHardwareMetrics: BatteryDetailSelection(
-                        configuration: configuration,
-                        family: context.family
-                    ).requiresHardwareMetrics
-                )
+                : readSnapshot(for: configuration, family: context.family)
         )
     }
 
@@ -41,17 +36,20 @@ struct BatteryProvider: AppIntentTimelineProvider {
         let entry = BatteryEntry(
             date: now,
             configuration: configuration,
-            snapshot: reader.snapshot(
-                includeHardwareMetrics: BatteryDetailSelection(
-                    configuration: configuration,
-                    family: context.family
-                ).requiresHardwareMetrics
-            )
+            snapshot: readSnapshot(for: configuration, family: context.family)
         )
         return Timeline(
             entries: [entry],
             policy: .after(BatteryTimelinePolicy.refreshDate(after: now))
         )
+    }
+
+    private func readSnapshot(
+        for configuration: BatteryConfigurationIntent,
+        family: WidgetFamily
+    ) -> BatterySnapshot? {
+        let selection = BatteryDetailSelection(configuration: configuration, family: family)
+        return reader.snapshot(includeHardwareMetrics: selection.requiresHardwareMetrics)
     }
 }
 

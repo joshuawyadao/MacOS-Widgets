@@ -1,20 +1,18 @@
 # Plan
 
-Finish the low-resource widget pass by avoiding Battery diagnostics that cannot be displayed, retaining one decoded Weather fallback through a failed refresh, and removing redundant Calendar formatting and offscreen composition. Preserve every refresh interval, visible state, privacy boundary, and configuration contract.
+Address the two actionable Brooks PR-review suggestions without changing widget behavior: centralize Battery diagnostic-read policy inside the provider and make the configured Calendar the single source of truth for next-event time zones.
 
 ## Scope
-- In: visible-detail-driven Battery hardware reads, single-read Weather stale fallback, prepared Calendar next-event text, removal of the Calendar today-marker drawing group, focused tests, and canonical Battery/Weather/Calendar documentation.
-- Out: refresh-frequency changes, persistent monitoring, new caches, visual redesign, App Intent migrations, or changes to displayed and accessibility text.
+- In: Battery provider helper extraction, Calendar next-event formatter parameter simplification, focused regression tests, full repository verification, and PR branch save.
+- Out: Refresh schedules, displayed or accessibility text, new test scenarios, user documentation changes, configuration schemas, and additional performance work.
 
 ## Action items
-- [x] Derive Battery hardware-reading requirements from the details visible for the configured widget family and skip `AppleSmartBattery` registry access otherwise.
-- [x] Retain one decoded Weather cache candidate across the refresh attempt so offline fallback does not reread and redecode the same file.
-- [x] Prepare Calendar next-event display and accessibility strings together with one locale-aware formatter per render.
-- [x] Remove the Calendar today marker's unnecessary offscreen `drawingGroup` while preserving its composition and render coverage.
-- [x] Extend Battery, Weather, and Calendar unit tests for visible diagnostic requirements, retained fallback behavior, and next-event text states.
-- [x] Update `docs/Battery-Widget.md`, `docs/Weather-Widget.md`, and `docs/Calendar-Widget.md` with the final resource-efficiency contracts.
-- [x] Run focused suites, `./Scripts/verify-widgets.sh`, `git diff --check`, and a final refresh/privacy/render review.
-- [x] Commit and push the completed plan to `codex/widget-render-performance` with the save-branch workflow.
+- [x] Extract the repeated Battery detail-selection and hardware-read decision into one provider helper used by snapshot and timeline generation.
+- [x] Remove the redundant Calendar next-event `timeZone` parameter and format with the supplied calendar's time zone.
+- [x] Confirm existing Battery visibility and Calendar localized-text tests cover the behavior-preserving refactor; add tests only if a coverage gap appears.
+- [x] Leave canonical widget guides unchanged because resource behavior and user-visible contracts do not change; retain this plan as the review-remediation record.
+- [x] Run focused Battery and Calendar tests, `./Scripts/verify-widgets.sh`, and `git diff --check`.
+- [x] Commit and push the Brooks fixes to `codex/widget-render-performance`, then re-check PR review, CI, and mergeability state.
 
 ## Open questions
 - None.
