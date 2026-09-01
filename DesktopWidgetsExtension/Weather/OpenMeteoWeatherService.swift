@@ -60,7 +60,12 @@ struct WeatherLoader: Sendable {
         let resolvedUnit = unit.resolved(for: locale)
         let cacheKey = location.cacheIdentifier
         let now = Date.now
-        let cached = cache.load(city: cacheKey, unit: resolvedUnit, now: now)
+        let cached = cachedSnapshot(
+            for: location,
+            cacheKey: cacheKey,
+            unit: resolvedUnit,
+            now: now
+        )
         if let cached, cache.isFresh(cached, now: now) {
             return .fresh(cached)
         }
@@ -79,6 +84,30 @@ struct WeatherLoader: Sendable {
                 retryable: (error as? WeatherServiceError)?.isRetryable ?? true
             )
         }
+    }
+
+    private func cachedSnapshot(
+        for location: WeatherLocation,
+        cacheKey: String,
+        unit: WeatherResolvedUnit,
+        now: Date
+    ) -> WeatherSnapshot? {
+        if let snapshot = cache.load(city: cacheKey, unit: unit, now: now) {
+            return snapshot
+        }
+
+        let legacyKey = location.legacyCacheIdentifier
+        guard let legacySnapshot = cache.load(city: legacyKey, unit: unit, now: now),
+              legacySnapshot.locationName == location.displayName else {
+            return nil
+        }
+
+        do {
+            try cache.migrate(legacySnapshot, fromCity: legacyKey, toCity: cacheKey)
+        } catch {
+            // The validated in-memory fallback is still safe for this load.
+        }
+        return legacySnapshot
     }
 }
 
@@ -131,7 +160,16 @@ struct WeatherLocation: Codable, Equatable, Hashable, Sendable {
     }
 
     var cacheIdentifier: String {
-        "latitude=\(latitude.bitPattern)|longitude=\(longitude.bitPattern)|location=\(displayName)|timezone=\(timeZoneIdentifier)"
+        [
+            "latitude=\(latitude.bitPattern)",
+            "longitude=\(longitude.bitPattern)",
+            "location=\(displayName)",
+            "timezone=\(timeZoneIdentifier)",
+        ].joined(separator: "|")
+    }
+
+    var legacyCacheIdentifier: String {
+        "latitude=\(latitude.bitPattern)|longitude=\(longitude.bitPattern)"
     }
 
     static let portland = Self(
@@ -146,7 +184,7 @@ struct WeatherLocation: Codable, Equatable, Hashable, Sendable {
 
 struct OpenMeteoWeatherService: WeatherServing {
     static let providerID = "open-meteo"
-    static let forecastHourCount = 24
+    static let forecastHourCount = 30
 
     private let session: URLSession
     private let coordinator: WeatherForecastRequestCoordinator
@@ -381,7 +419,7 @@ struct OpenMeteoLocationSearchService: WeatherLocationSearching {
 
 struct WeatherSnapshotCache: Sendable {
     static let maximumFreshAge: TimeInterval = 15 * 60
-    private static let maximumStaleAge: TimeInterval = 24 * 60 * 60
+    static let maximumStaleAge: TimeInterval = 24 * 60 * 60
     private static let maximumStoredEntries = 12
     private let directoryURL: URL
 
@@ -429,6 +467,14 @@ struct WeatherSnapshotCache: Sendable {
         try FileManager.default.createDirectory(at: directoryURL, withIntermediateDirectories: true)
         let data = try JSONEncoder().encode(snapshot)
         try data.write(to: fileURL(city: city, unit: snapshot.unit), options: .atomic)
+        pruneIfNeeded()
+    }
+
+    func migrate(_ snapshot: WeatherSnapshot, fromCity: String, toCity: String) throws {
+        try FileManager.default.createDirectory(at: directoryURL, withIntermediateDirectories: true)
+        let data = try JSONEncoder().encode(snapshot)
+        try data.write(to: fileURL(city: toCity, unit: snapshot.unit), options: .atomic)
+        try? FileManager.default.removeItem(at: fileURL(city: fromCity, unit: snapshot.unit))
         pruneIfNeeded()
     }
 

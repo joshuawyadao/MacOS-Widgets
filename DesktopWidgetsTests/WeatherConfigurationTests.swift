@@ -673,6 +673,10 @@ final class WeatherConfigurationTests: XCTestCase {
             items.first(where: { $0.name == "forecast_hours" })?.value,
             String(OpenMeteoWeatherService.forecastHourCount)
         )
+        XCTAssertEqual(
+            OpenMeteoWeatherService.forecastHourCount,
+            Int(WeatherSnapshotCache.maximumStaleAge / (60 * 60)) + 6
+        )
     }
 
     func testGeocodingRequestAndResponseProvideSelectableCityCoordinates() throws {
@@ -973,6 +977,81 @@ final class WeatherConfigurationTests: XCTestCase {
         XCTAssertEqual(outcome, .fresh(snapshot))
         let requestCount = await service.requestCount
         XCTAssertEqual(requestCount, 0)
+    }
+
+    func testLoaderMigratesAValidatedLegacySnapshotBeforeUsingItAsStaleFallback() async throws {
+        let root = FileManager.default.temporaryDirectory
+            .appendingPathComponent(UUID().uuidString, isDirectory: true)
+        defer { try? FileManager.default.removeItem(at: root) }
+        let sample = WeatherSnapshot.sample(
+            now: .now.addingTimeInterval(-WeatherSnapshotCache.maximumFreshAge - 1)
+        )
+        let snapshot = WeatherSnapshot(
+            locationName: WeatherLocation.portland.displayName,
+            providerID: sample.providerID,
+            timeZoneIdentifier: sample.timeZoneIdentifier,
+            fetchedAt: sample.fetchedAt,
+            unit: sample.unit,
+            current: sample.current,
+            hourly: sample.hourly,
+            daily: sample.daily
+        )
+        let cache = WeatherSnapshotCache(directoryURL: root)
+        try cache.save(snapshot, city: WeatherLocation.portland.legacyCacheIdentifier)
+        let service = CountingWeatherService(result: .failure(.requestFailed("Offline")))
+        let loader = WeatherLoader(service: service, cache: cache)
+
+        let outcome = await loader.load(
+            location: .portland,
+            unit: .fahrenheit,
+            locale: Locale(identifier: "en_US")
+        )
+
+        XCTAssertEqual(
+            outcome,
+            .stale(snapshot, message: "Weather is temporarily unavailable. Offline")
+        )
+        let requestCount = await service.requestCount
+        XCTAssertEqual(requestCount, 1)
+        XCTAssertEqual(
+            cache.load(city: WeatherLocation.portland.cacheIdentifier, unit: .fahrenheit),
+            snapshot
+        )
+        XCTAssertNil(
+            cache.load(city: WeatherLocation.portland.legacyCacheIdentifier, unit: .fahrenheit)
+        )
+    }
+
+    func testLoaderRejectsALegacySnapshotForADifferentDisplayLocation() async throws {
+        let root = FileManager.default.temporaryDirectory
+            .appendingPathComponent(UUID().uuidString, isDirectory: true)
+        defer { try? FileManager.default.removeItem(at: root) }
+        let mismatchedSnapshot = WeatherSnapshot.sample(now: .now)
+        let cache = WeatherSnapshotCache(directoryURL: root)
+        try cache.save(mismatchedSnapshot, city: WeatherLocation.portland.legacyCacheIdentifier)
+        let loader = WeatherLoader(
+            service: StubWeatherService(result: .failure(.requestFailed("Offline"))),
+            cache: cache
+        )
+
+        let outcome = await loader.load(
+            location: .portland,
+            unit: .fahrenheit,
+            locale: Locale(identifier: "en_US")
+        )
+
+        XCTAssertEqual(
+            outcome,
+            .failed(
+                message: "Weather is temporarily unavailable. Offline",
+                retryable: true
+            )
+        )
+        XCTAssertNil(cache.load(city: WeatherLocation.portland.cacheIdentifier, unit: .fahrenheit))
+        XCTAssertEqual(
+            cache.load(city: WeatherLocation.portland.legacyCacheIdentifier, unit: .fahrenheit),
+            mismatchedSnapshot
+        )
     }
 
     func testRequestCoordinatorCoalescesOnlySimultaneousMatchingForecasts() async throws {

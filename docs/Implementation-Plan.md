@@ -17,6 +17,9 @@ Prepare the widget-efficiency pull request for merge by addressing Brooks and Co
 - [x] Include weather location presentation identity in cache and in-flight request keys so coordinate-identical selections cannot share the wrong displayed location.
 - [x] Run focused Weather tests, `./Scripts/verify-widgets.sh`, and `git diff --check`.
 - [x] Commit and push the Codex fixes, acknowledge the addressed review comments, and complete the final PR audit.
+- [x] Migrate validated coordinate-only cache entries to identity-aware keys so upgrades preserve the correct offline fallback.
+- [x] Retain 30 forecast hours so the 24-hour stale window can still supply all six visible hourly columns.
+- [x] Re-run focused and full verification, commit the final review fixes, and complete the current-head PR gates.
 
 ## Open questions
 - None.
