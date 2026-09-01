@@ -29,6 +29,8 @@ The free endpoint is keyless and limited to noncommercial use under [Open-Meteo'
 
 WidgetKit receives several future hourly entries from one forecast response and asks for fresh data approximately hourly. Forecast times use Unix timestamps so repeated local hours around daylight-saving transitions remain unambiguous. The system owns the actual schedule and may delay or coalesce refreshes. If a refresh fails, the widget shows the last successful forecast with a visible last-updated label and retries later. If the city has never loaded, it shows a focused error with editing guidance.
 
+Each rendered entry resolves its presentation, typography, family metrics, localized forecast titles, and combined VoiceOver labels once before SwiftUI constructs the forecast columns. Batch title formatting reuses one formatter for the visible day or hour sequence. This render preparation does not change the hourly network-refresh policy or the stale-cache fallback described above.
+
 ## Privacy
 
 - macOS owns the configuration interface. The extension sends the text typed into the City search to Open-Meteo's geocoding endpoint and the selected result's coordinate to its forecast endpoint. Open-Meteo's geocoding data is based on [GeoNames](https://www.geonames.org/).

@@ -62,24 +62,19 @@ struct CalendarDayFocusPresentation: Equatable, Sendable {
     let accessibilityLabel: String
 
     init(date: Date, calendar: Calendar, locale: Locale) {
-        weekdayText = Self.formatted(date, pattern: "EEEE", calendar: calendar, locale: locale).uppercased(with: locale)
-        dayText = Self.formatted(date, pattern: "d", calendar: calendar, locale: locale)
-        monthYearText = Self.formatted(date, pattern: "MMMM yyyy", calendar: calendar, locale: locale).uppercased(with: locale)
-        accessibilityLabel = Self.formatted(date, pattern: "EEEE, MMMM d, yyyy", calendar: calendar, locale: locale)
-    }
-
-    private static func formatted(
-        _ date: Date,
-        pattern: String,
-        calendar: Calendar,
-        locale: Locale
-    ) -> String {
         let formatter = DateFormatter()
         formatter.calendar = calendar
         formatter.locale = locale
         formatter.timeZone = calendar.timeZone
-        formatter.dateFormat = pattern
-        return formatter.string(from: date)
+
+        formatter.dateFormat = "EEEE"
+        weekdayText = formatter.string(from: date).uppercased(with: locale)
+        formatter.dateFormat = "d"
+        dayText = formatter.string(from: date)
+        formatter.dateFormat = "MMMM yyyy"
+        monthYearText = formatter.string(from: date).uppercased(with: locale)
+        formatter.dateFormat = "EEEE, MMMM d, yyyy"
+        accessibilityLabel = formatter.string(from: date)
     }
 }
 
@@ -106,36 +101,25 @@ struct CalendarWeekPresentation: Equatable, Sendable {
             headerText = "\(startText) – \(endText)".uppercased(with: locale)
         }
 
-        let dayFormatter = DateFormatter()
-        dayFormatter.calendar = calendar
-        dayFormatter.locale = locale
-        dayFormatter.timeZone = calendar.timeZone
-        dayFormatter.dateFormat = "d"
-
         days = (0..<7).map { position in
             let day = calendar.date(byAdding: .day, value: position, to: interval.start) ?? interval.start
-            let weekdayFormatter = DateFormatter()
-            weekdayFormatter.calendar = calendar
-            weekdayFormatter.locale = locale
-            weekdayFormatter.timeZone = calendar.timeZone
-            weekdayFormatter.dateFormat = "EEE"
-            let labelFormatter = DateFormatter()
-            labelFormatter.calendar = calendar
-            labelFormatter.locale = locale
-            labelFormatter.timeZone = calendar.timeZone
-            labelFormatter.dateFormat = "EEEE, MMMM d, yyyy"
             let isToday = calendar.isDate(day, inSameDayAs: today)
-            var label = labelFormatter.string(from: day)
+            formatter.dateFormat = "EEEE, MMMM d, yyyy"
+            var label = formatter.string(from: day)
             if isToday { label += ", Today" }
+            formatter.dateFormat = "EEE"
+            let weekday = formatter.string(from: day)
+            formatter.dateFormat = "d"
+            let dayText = formatter.string(from: day)
 
             return CalendarDayPresentation(
                 id: position,
                 date: day,
-                weekdayText: weekdayFormatter.string(from: day).uppercased(with: locale),
-                dayText: dayFormatter.string(from: day),
+                weekdayText: weekday.uppercased(with: locale),
+                dayText: dayText,
                 isInDisplayedMonth: true,
                 isToday: isToday,
-                accessibilityLabel: "\(weekdayFormatter.string(from: day)), \(label)"
+                accessibilityLabel: "\(weekday), \(label)"
             )
         }
         accessibilityLabel = "Week of \(days.first?.accessibilityLabel ?? headerText)"
@@ -163,34 +147,20 @@ struct CalendarMonthPresentation: Equatable, Sendable {
         let displayComponents = calendar.dateComponents([.era, .year, .month, .isLeapMonth], from: displayDate)
         let monthStart = calendar.date(from: displayComponents) ?? displayDate
 
-        monthText = Self.formatted(
-            monthStart,
-            pattern: "LLLL",
-            calendar: calendar,
-            locale: locale
-        ).uppercased(with: locale)
-        abbreviatedMonthText = Self.formatted(
-            monthStart,
-            pattern: "LLL",
-            calendar: calendar,
-            locale: locale
-        ).uppercased(with: locale)
-        yearText = Self.formatted(
-            monthStart,
-            pattern: "yyyy",
-            calendar: calendar,
-            locale: locale
-        )
-        accessibilityLabel = Self.formatted(
-            monthStart,
-            pattern: "LLLL yyyy",
-            calendar: calendar,
-            locale: locale
-        )
-
         let formatter = DateFormatter()
         formatter.calendar = calendar
         formatter.locale = locale
+        formatter.timeZone = calendar.timeZone
+
+        formatter.dateFormat = "LLLL"
+        monthText = formatter.string(from: monthStart).uppercased(with: locale)
+        formatter.dateFormat = "LLL"
+        abbreviatedMonthText = formatter.string(from: monthStart).uppercased(with: locale)
+        formatter.dateFormat = "yyyy"
+        yearText = formatter.string(from: monthStart)
+        formatter.dateFormat = "LLLL yyyy"
+        accessibilityLabel = formatter.string(from: monthStart)
+
         weekdayTexts = Self.rotatedWeekdaySymbols(
             formatter.shortStandaloneWeekdaySymbols,
             firstWeekday: calendar.firstWeekday
@@ -212,50 +182,26 @@ struct CalendarMonthPresentation: Equatable, Sendable {
                 && components.month == displayComponents.month
                 && components.isLeapMonth == displayComponents.isLeapMonth
             let isToday = calendar.isDate(date, inSameDayAs: today)
-            var label = Self.formatted(
-                date,
-                pattern: "EEEE, MMMM d, yyyy",
-                calendar: calendar,
-                locale: locale
-            )
+            formatter.dateFormat = "EEEE, MMMM d, yyyy"
+            var label = formatter.string(from: date)
             if isToday {
                 label += ", Today"
             }
+            formatter.dateFormat = "EEE"
+            let weekdayText = formatter.string(from: date).uppercased(with: locale)
+            formatter.dateFormat = "d"
+            let dayText = formatter.string(from: date)
 
             return CalendarDayPresentation(
                 id: position,
                 date: date,
-                weekdayText: Self.formatted(
-                    date,
-                    pattern: "EEE",
-                    calendar: calendar,
-                    locale: locale
-                ).uppercased(with: locale),
-                dayText: Self.formatted(
-                    date,
-                    pattern: "d",
-                    calendar: calendar,
-                    locale: locale
-                ),
+                weekdayText: weekdayText,
+                dayText: dayText,
                 isInDisplayedMonth: isInDisplayedMonth,
                 isToday: isToday,
                 accessibilityLabel: label
             )
         }
-    }
-
-    private static func formatted(
-        _ date: Date,
-        pattern: String,
-        calendar: Calendar,
-        locale: Locale
-    ) -> String {
-        let formatter = DateFormatter()
-        formatter.calendar = calendar
-        formatter.locale = locale
-        formatter.timeZone = calendar.timeZone
-        formatter.dateFormat = pattern
-        return formatter.string(from: date)
     }
 
     private static func rotatedWeekdaySymbols(

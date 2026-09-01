@@ -45,6 +45,8 @@ Month navigation is capped at ten years in either direction. WidgetKit does not 
 
 Without event features, the next timeline refresh is requested for the next local midnight. With indicators or next-event timing enabled, the widget requests a refresh every 30 minutes so event changes can appear while still using bounded queries. Local calendar arithmetic keeps the midnight transition correct across daylight-saving changes; macOS owns actual scheduling and may delay or combine reloads.
 
+Calendar prepares only the selected Day, Week, or Month presentation for each render. A Month presentation builds its stable 42-date grid once and reuses one locale- and time-zone-aware formatter while producing headers, numerals, and accessibility labels. The prepared presentation and typography style are then shared by every grid cell, so Month navigation does not repeat formatting or shared-preference reads while SwiftUI builds the view tree.
+
 ## Appearance and accessibility
 
 - Calendar uses the shared compact/standard/expanded family density, widget surface, and action-required badge treatment. Its today marker and Month navigation remain calendar-specific.

@@ -368,6 +368,8 @@ final class WeatherConfigurationTests: XCTestCase {
                     )
                     let renderedMode = try XCTUnwrap(presentation.renderedMode, context)
                     let detailLimit = WeatherDetailLimits.maximum(for: family, mode: renderedMode)
+                    let forecastTitles = presentation.forecastTitles
+                    let forecastAccessibilityLabels = presentation.forecastAccessibilityLabels
 
                     XCTAssertLessThanOrEqual(
                         presentation.detailPresentation.visibleDetails.count,
@@ -384,14 +386,19 @@ final class WeatherConfigurationTests: XCTestCase {
                         presentation.detailPresentation.hiddenCount == 0,
                         context
                     )
-                    XCTAssertEqual(presentation.forecastTitles.count, presentation.forecastColumnCount, context)
+                    XCTAssertEqual(forecastTitles.count, presentation.forecastColumnCount, context)
                     XCTAssertEqual(
-                        presentation.forecastAccessibilityLabels.count,
+                        forecastAccessibilityLabels.count,
                         presentation.forecastColumnCount,
                         context
                     )
-                    XCTAssertTrue(presentation.forecastTitles.allSatisfy { !$0.isEmpty }, context)
-                    XCTAssertTrue(presentation.forecastAccessibilityLabels.allSatisfy { !$0.isEmpty }, context)
+                    XCTAssertEqual(
+                        presentation.forecastAccessibilityLabels(titles: forecastTitles),
+                        forecastAccessibilityLabels,
+                        context
+                    )
+                    XCTAssertTrue(forecastTitles.allSatisfy { !$0.isEmpty }, context)
+                    XCTAssertTrue(forecastAccessibilityLabels.allSatisfy { !$0.isEmpty }, context)
                     if presentation.renderedMode == .day {
                         XCTAssertFalse(presentation.dayAccessibilityLabel?.isEmpty ?? true, context)
                     } else {
@@ -539,6 +546,21 @@ final class WeatherConfigurationTests: XCTestCase {
 
         XCTAssertTrue(us.contains("AM") || us.contains("PM"))
         XCTAssertFalse(british.contains("AM") || british.contains("PM"))
+    }
+
+    func testBatchedForecastLabelsMatchIndividualLocalizedFormatting() throws {
+        let timeZone = try XCTUnwrap(TimeZone(identifier: "America/Los_Angeles"))
+        let locale = Locale(identifier: "en_US")
+        let dates = WeatherSnapshot.sample().hourly.prefix(4).map(\.date)
+
+        XCTAssertEqual(
+            WeatherValueFormatter.weekdayLabels(for: dates, timeZone: timeZone, locale: locale),
+            dates.map { WeatherValueFormatter.weekday($0, timeZone: timeZone, locale: locale) }
+        )
+        XCTAssertEqual(
+            WeatherValueFormatter.hourLabels(for: dates, timeZone: timeZone, locale: locale),
+            dates.map { WeatherValueFormatter.hour($0, timeZone: timeZone, locale: locale) }
+        )
     }
 
     func testWeatherCodesMapToSemanticConditions() {

@@ -57,26 +57,52 @@ struct TimeAndDateWidgetView: View {
         familyOverride ?? environmentFamily
     }
 
-    private var metrics: TimeAndDateMetrics {
-        TimeAndDateMetrics(family: family)
-    }
-
-    private var presentation: TimeAndDatePresentation {
-        TimeAndDatePresentation(
-            date: entry.date,
-            configuration: entry.configuration,
-            family: family,
-            locale: locale,
-            timeZone: timeZone
-        )
-    }
-
-    private var typography: WidgetTypographyStyle {
+    private var resolvedTypography: WidgetTypographyStyle {
         let stored = WidgetTypographyStore.live.style(for: .timeAndDate)
         return WidgetTypographyStyle(
             resolution: typographyOverride ?? stored.resolution,
             coverage: coverageOverride ?? stored.coverage
         )
+    }
+
+    var body: some View {
+        ResolvedTimeAndDateWidgetView(
+            entry: entry,
+            family: family,
+            renderingMode: renderingMode,
+            presentation: TimeAndDatePresentation(
+                date: entry.date,
+                configuration: entry.configuration,
+                family: family,
+                locale: locale,
+                timeZone: timeZone
+            ),
+            typography: resolvedTypography
+        )
+    }
+}
+
+private struct ResolvedTimeAndDateWidgetView: View {
+    let entry: TimeAndDateEntry
+    let family: WidgetFamily
+    let renderingMode: WidgetRenderingMode
+    let presentation: TimeAndDatePresentation
+    let typography: WidgetTypographyStyle
+    let metrics: TimeAndDateMetrics
+
+    init(
+        entry: TimeAndDateEntry,
+        family: WidgetFamily,
+        renderingMode: WidgetRenderingMode,
+        presentation: TimeAndDatePresentation,
+        typography: WidgetTypographyStyle
+    ) {
+        self.entry = entry
+        self.family = family
+        self.renderingMode = renderingMode
+        self.presentation = presentation
+        self.typography = typography
+        self.metrics = TimeAndDateMetrics(family: family)
     }
 
     var body: some View {

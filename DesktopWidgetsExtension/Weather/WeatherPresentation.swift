@@ -209,10 +209,20 @@ struct WeatherWidgetPresentation: Equatable, Sendable {
     var forecastTitles: [String] {
         switch content {
         case let .week(days):
-            days.map { WeatherValueFormatter.weekday($0.date, timeZone: timeZone, locale: locale) }
+            WeatherValueFormatter.weekdayLabels(
+                for: days.map(\.date),
+                timeZone: timeZone,
+                locale: locale
+            )
         case let .hour(hours):
-            hours.enumerated().map { index, hour in
-                index == 0 ? "Now" : WeatherValueFormatter.hour(hour.date, timeZone: timeZone, locale: locale)
+            WeatherValueFormatter.hourLabels(
+                for: hours.map(\.date),
+                timeZone: timeZone,
+                locale: locale
+            )
+            .enumerated()
+            .map { index, label in
+                index == 0 ? "Now" : label
             }
         case .failure, .day:
             []
@@ -220,16 +230,20 @@ struct WeatherWidgetPresentation: Equatable, Sendable {
     }
 
     var forecastAccessibilityLabels: [String] {
+        forecastAccessibilityLabels(titles: forecastTitles)
+    }
+
+    func forecastAccessibilityLabels(titles: [String]) -> [String] {
         switch content {
         case let .week(days):
-            return zip(forecastTitles, days).map { title, day in
+            return zip(titles, days).map { title, day in
                 ([title, day.condition.displayName] + metricValues(for: day)
                     .filter { $0.detail != .condition }
                     .map(\.spokenText))
                     .joined(separator: ", ")
             }
         case let .hour(hours):
-            return zip(forecastTitles, hours).map { title, hour in
+            return zip(titles, hours).map { title, hour in
                 ([title, hour.condition.displayName] + metricValues(for: hour)
                     .filter { $0.detail != .condition }
                     .map(\.spokenText))

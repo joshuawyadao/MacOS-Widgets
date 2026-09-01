@@ -70,29 +70,53 @@ struct BatteryWidgetView: View {
         familyOverride ?? environmentFamily
     }
 
-    private var presentation: BatteryWidgetPresentation {
-        BatteryWidgetPresentation(
-            snapshot: entry.snapshot,
-            updatedAt: entry.date,
-            locale: locale,
-            timeZone: timeZone
-        )
-    }
-
-    private var metrics: BatteryWidgetLayoutMetrics {
-        BatteryWidgetLayoutMetrics(family: family)
-    }
-
-    private var detailSelection: BatteryDetailSelection {
-        BatteryDetailSelection(configuration: entry.configuration, family: family)
-    }
-
-    private var typography: WidgetTypographyStyle {
+    private var resolvedTypography: WidgetTypographyStyle {
         let stored = WidgetTypographyStore.live.style(for: .battery)
         return WidgetTypographyStyle(
             resolution: typographyOverride ?? stored.resolution,
             coverage: coverageOverride ?? stored.coverage
         )
+    }
+
+    var body: some View {
+        ResolvedBatteryWidgetView(
+            entry: entry,
+            family: family,
+            renderingMode: renderingMode,
+            presentation: BatteryWidgetPresentation(
+                snapshot: entry.snapshot,
+                updatedAt: entry.date,
+                locale: locale,
+                timeZone: timeZone
+            ),
+            typography: resolvedTypography
+        )
+    }
+}
+
+private struct ResolvedBatteryWidgetView: View {
+    let entry: BatteryEntry
+    let family: WidgetFamily
+    let renderingMode: WidgetRenderingMode
+    let presentation: BatteryWidgetPresentation
+    let metrics: BatteryWidgetLayoutMetrics
+    let detailSelection: BatteryDetailSelection
+    let typography: WidgetTypographyStyle
+
+    init(
+        entry: BatteryEntry,
+        family: WidgetFamily,
+        renderingMode: WidgetRenderingMode,
+        presentation: BatteryWidgetPresentation,
+        typography: WidgetTypographyStyle
+    ) {
+        self.entry = entry
+        self.family = family
+        self.renderingMode = renderingMode
+        self.presentation = presentation
+        self.metrics = BatteryWidgetLayoutMetrics(family: family)
+        self.detailSelection = BatteryDetailSelection(configuration: entry.configuration, family: family)
+        self.typography = typography
     }
 
     var body: some View {
