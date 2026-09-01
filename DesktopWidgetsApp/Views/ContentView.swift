@@ -5,6 +5,7 @@ struct ContentView: View {
     @StateObject private var calendarPermission = CalendarPermissionController()
     @StateObject private var typography = WidgetTypographyController()
     @State private var destination: CompanionAppDestination? = .home
+    @State private var automaticStatusRevision = 0
 
     var body: some View {
         NavigationSplitView {
@@ -37,6 +38,7 @@ struct ContentView: View {
         .onChange(of: scenePhase) { _, newPhase in
             guard newPhase == .active else { return }
             calendarPermission.refreshAndReloadWidget()
+            automaticStatusRevision &+= 1
         }
     }
 
@@ -68,7 +70,8 @@ struct ContentView: View {
         case .home:
             HomePage(
                 destination: $destination,
-                calendarPermission: calendarPermission
+                calendarPermission: calendarPermission,
+                automaticStatusRevision: automaticStatusRevision
             )
         case .appearance:
             AppearancePage(typography: typography)
@@ -79,7 +82,10 @@ struct ContentView: View {
                 calendarPermission: calendarPermission
             )
         case .helpAndPrivacy:
-            HelpAndPrivacyPage(calendarPermission: calendarPermission)
+            HelpAndPrivacyPage(
+                calendarPermission: calendarPermission,
+                automaticStatusRevision: automaticStatusRevision
+            )
         }
     }
 }

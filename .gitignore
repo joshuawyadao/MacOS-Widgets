@@ -44,6 +44,7 @@ AuthKey_*.p8
 # Distribution artifacts
 *.dmg
 *.pkg
+Desktop-Widgets-Personal-Installer*.zip
 
 # Temporary files
 *.tmp

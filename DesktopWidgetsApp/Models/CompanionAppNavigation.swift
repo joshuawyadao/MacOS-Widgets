@@ -1,3 +1,6 @@
+import Darwin
+import Foundation
+
 enum CompanionAppDestination: String, CaseIterable, Hashable, Identifiable {
     case home
     case appearance
@@ -40,5 +43,158 @@ enum CompanionAppDestination: String, CaseIterable, Hashable, Identifiable {
 
     var isWidget: Bool {
         Self.widgets.contains(self)
+    }
+}
+
+struct DesktopWidgetsInstallationStatus: Equatable {
+    let bundleURL: URL
+    let expectedBundleURL: URL
+    let bundleIdentifier: String
+    let teamIdentifier: String
+    let appGroupIdentifier: String
+    let refreshCommandURL: URL?
+    let refreshCommandExists: Bool
+    let enableAutomaticRefreshCommandURL: URL?
+    let enableAutomaticRefreshCommandExists: Bool
+    let disableAutomaticRefreshCommandURL: URL?
+    let disableAutomaticRefreshCommandExists: Bool
+
+    init(
+        bundleURL: URL,
+        infoDictionary: [String: Any],
+        homeDirectory: URL
+    ) {
+        self.bundleURL = bundleURL.standardizedFileURL
+        expectedBundleURL = homeDirectory
+            .appendingPathComponent("Applications", isDirectory: true)
+            .appendingPathComponent("Desktop Widgets.app", isDirectory: true)
+            .standardizedFileURL
+        bundleIdentifier = infoDictionary["CFBundleIdentifier"] as? String ?? "Unknown"
+        teamIdentifier = infoDictionary["DesktopWidgetsDevelopmentTeam"] as? String ?? ""
+        appGroupIdentifier = infoDictionary["WidgetThemeAppGroupIdentifier"] as? String ?? ""
+
+        func command(forKey key: String) -> (URL?, Bool) {
+            let configuredPath = (infoDictionary[key] as? String ?? "")
+                .replacingOccurrences(of: "$(HOME)", with: homeDirectory.path)
+                .replacingOccurrences(of: "$HOME", with: homeDirectory.path)
+            guard !configuredPath.isEmpty else { return (nil, false) }
+            let commandURL = URL(fileURLWithPath: configuredPath).standardizedFileURL
+            // The sandbox cannot reliably stat helpers in the account's
+            // Library. A configured URL is still safe to reveal in Finder,
+            // where the user grants the interaction explicitly.
+            return (commandURL, true)
+        }
+
+        let refreshCommand = command(forKey: "DesktopWidgetsRefreshCommandPath")
+        refreshCommandURL = refreshCommand.0
+        refreshCommandExists = refreshCommand.1
+        let enableCommand = command(forKey: "DesktopWidgetsEnableAutomaticRefreshCommandPath")
+        enableAutomaticRefreshCommandURL = enableCommand.0
+        enableAutomaticRefreshCommandExists = enableCommand.1
+        let disableCommand = command(forKey: "DesktopWidgetsDisableAutomaticRefreshCommandPath")
+        disableAutomaticRefreshCommandURL = disableCommand.0
+        disableAutomaticRefreshCommandExists = disableCommand.1
+    }
+
+    static func accountHomeDirectory(
+        userRecordHome: () -> String? = {
+            guard let record = getpwuid(getuid()),
+                  let home = record.pointee.pw_dir else { return nil }
+            return String(cString: home)
+        },
+        fallback: URL = FileManager.default.homeDirectoryForCurrentUser
+    ) -> URL {
+        guard let path = userRecordHome(), path.hasPrefix("/") else {
+            return fallback.standardizedFileURL
+        }
+        return URL(fileURLWithPath: path, isDirectory: true).standardizedFileURL
+    }
+
+    static func current(bundle: Bundle = .main) -> Self {
+        Self(
+            bundleURL: bundle.bundleURL,
+            infoDictionary: bundle.infoDictionary ?? [:],
+            homeDirectory: accountHomeDirectory()
+        )
+    }
+
+    var isInPreferredLocation: Bool {
+        bundleURL == expectedBundleURL
+    }
+
+    var hasRequiredSigningConfiguration: Bool {
+        teamIdentifier.count == 10
+            && appGroupIdentifier.hasPrefix(teamIdentifier + ".")
+    }
+
+    var isReady: Bool {
+        isInPreferredLocation && hasRequiredSigningConfiguration
+    }
+}
+
+enum DesktopWidgetsAutomaticRefreshState: String, Equatable {
+    case unavailable
+    case disabled
+    case enabled
+    case healthy
+    case refreshing
+    case refreshed
+    case needsAttention
+}
+
+struct DesktopWidgetsAutomaticRefreshStatus: Equatable {
+    let isEnabled: Bool
+    let state: DesktopWidgetsAutomaticRefreshState
+    let message: String
+    let lastCheck: String?
+    let lastSuccess: String?
+    let profileExpiration: String?
+
+    init(dictionary: [String: Any]?) {
+        guard let dictionary else {
+            isEnabled = false
+            state = .unavailable
+            message = "Automatic maintenance has not reported status yet."
+            lastCheck = nil
+            lastSuccess = nil
+            profileExpiration = nil
+            return
+        }
+
+        isEnabled = dictionary["Enabled"] as? Bool ?? false
+        state = DesktopWidgetsAutomaticRefreshState(
+            rawValue: dictionary["State"] as? String ?? ""
+        ) ?? .unavailable
+        message = dictionary["Message"] as? String ?? "Automatic maintenance status is unavailable."
+        lastCheck = dictionary["LastCheck"] as? String
+        lastSuccess = dictionary["LastSuccess"] as? String
+        profileExpiration = dictionary["ProfileExpiration"] as? String
+    }
+
+    static func current(
+        appGroupIdentifier: String,
+        fileManager: FileManager = .default
+    ) -> Self {
+        guard !appGroupIdentifier.isEmpty,
+              let containerURL = fileManager.containerURL(
+                forSecurityApplicationGroupIdentifier: appGroupIdentifier
+              ) else {
+            return Self(dictionary: nil)
+        }
+        let statusURL = containerURL.appendingPathComponent("DesktopWidgetsAutomaticRefresh.plist")
+        let dictionary = NSDictionary(contentsOf: statusURL) as? [String: Any]
+        return Self(dictionary: dictionary)
+    }
+
+    var title: String {
+        switch state {
+        case .healthy: "Automatic maintenance is ready"
+        case .refreshing: "Refreshing in the background"
+        case .refreshed: "Automatic refresh succeeded"
+        case .needsAttention: "Automatic refresh needs attention"
+        case .enabled: "Automatic maintenance is on"
+        case .disabled: "Automatic maintenance is off"
+        case .unavailable: "Automatic maintenance is not set up"
+        }
     }
 }

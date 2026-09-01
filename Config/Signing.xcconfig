@@ -1,12 +1,16 @@
 // Shared signing policy. Account-specific values belong in the ignored
 // Local.xcconfig file at the repository root.
-#include? "../Local.xcconfig"
-
 CODE_SIGN_STYLE = Automatic
 CODE_SIGN_IDENTITY = Apple Development
 DEVELOPMENT_TEAM = $(LOCAL_DEVELOPMENT_TEAM)
 
-// A Team-ID-prefixed group is the macOS-native App Group form and does not
-// require committing a machine-specific Team ID or registering an iOS-style
-// group identifier. Both targets receive the same expanded value.
+// These defaults preserve existing developer builds. The friendly installer
+// overrides them with stable Personal-Team-derived values in Local.xcconfig.
+DESKTOP_WIDGETS_APP_BUNDLE_IDENTIFIER = com.joshuawyadao.DesktopWidgets
+DESKTOP_WIDGETS_EXTENSION_BUNDLE_IDENTIFIER = com.joshuawyadao.DesktopWidgets.Widgets
 WIDGET_THEME_APP_GROUP = $(DEVELOPMENT_TEAM).com.joshuawyadao.desktop-widgets
+DESKTOP_WIDGETS_REFRESH_COMMAND_PATH =
+DESKTOP_WIDGETS_ENABLE_AUTOMATIC_REFRESH_COMMAND_PATH =
+DESKTOP_WIDGETS_DISABLE_AUTOMATIC_REFRESH_COMMAND_PATH =
+
+#include? "../Local.xcconfig"

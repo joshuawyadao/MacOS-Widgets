@@ -8,7 +8,7 @@ readonly PLUGINKIT_COMMAND="${WIDGET_REFRESH_PLUGINKIT_COMMAND:-/usr/bin/plugink
 readonly PKILL_COMMAND="${WIDGET_REFRESH_PKILL_COMMAND:-/usr/bin/pkill}"
 readonly ID_COMMAND="${WIDGET_REFRESH_ID_COMMAND:-/usr/bin/id}"
 readonly PLISTBUDDY_COMMAND="${WIDGET_REFRESH_PLISTBUDDY_COMMAND:-/usr/libexec/PlistBuddy}"
-readonly DERIVED_DATA_ROOT="${WIDGET_REFRESH_DERIVED_DATA_ROOT:-${HOME}/Library/Developer/Xcode/DerivedData}"
+readonly DERIVED_DATA_ROOTS="${WIDGET_REFRESH_DERIVED_DATA_ROOTS:-${WIDGET_REFRESH_DERIVED_DATA_ROOT:-${HOME}/Library/Developer/Xcode/DerivedData}}"
 
 if [[ -z "$APP_PATH" || ! -d "$EXTENSION_PATH" ]]; then
     echo "Widget runtime refresh skipped: built extension not found at $EXTENSION_PATH" >&2
@@ -22,13 +22,18 @@ canonical_directory() {
 is_stale_development_registration() {
     local registered_path="$1"
     local current_path="$2"
-    local derived_data_root="${DERIVED_DATA_ROOT%/}"
+    local derived_data_root
 
-    if [[ -d "$derived_data_root" ]]; then
-        derived_data_root="$(canonical_directory "$derived_data_root")"
-    fi
     [[ "$registered_path" != "$current_path" ]] || return 1
-    [[ "$registered_path" == "$derived_data_root/"* ]]
+    while IFS= read -r derived_data_root; do
+        derived_data_root="${derived_data_root%/}"
+        [[ -n "$derived_data_root" ]] || continue
+        if [[ -d "$derived_data_root" ]]; then
+            derived_data_root="$(canonical_directory "$derived_data_root")"
+        fi
+        [[ "$registered_path" == "$derived_data_root/"* ]] && return 0
+    done < <(/usr/bin/printf '%s\n' "$DERIVED_DATA_ROOTS" | /usr/bin/tr ':' '\n')
+    return 1
 }
 
 unregister_stale_development_copies() {

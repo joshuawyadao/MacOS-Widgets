@@ -7,8 +7,10 @@ readonly REFRESH_SCRIPT="$SCRIPT_DIRECTORY/refresh-widget-runtime.sh"
 readonly TEMPORARY_ROOT="${TMPDIR:-/tmp}"
 readonly TEST_DIRECTORY="$(cd "$(mktemp -d "${TEMPORARY_ROOT%/}/desktop-widget-refresh-test.XXXXXX")" && pwd -P)"
 readonly DERIVED_DATA_ROOT="$TEST_DIRECTORY/DerivedData"
+readonly LEGACY_DERIVED_DATA_ROOT="$TEST_DIRECTORY/LegacyDerivedData"
 readonly CURRENT_EXTENSION="$DERIVED_DATA_ROOT/Current/Build/Products/Debug/DesktopWidgets.app/Contents/PlugIns/DesktopWidgetsExtension.appex"
 readonly STALE_EXTENSION="$DERIVED_DATA_ROOT/Stale/Build/Products/Debug/DesktopWidgets.app/Contents/PlugIns/DesktopWidgetsExtension.appex"
+readonly LEGACY_EXTENSION="$LEGACY_DERIVED_DATA_ROOT/Old/Build/Products/Debug/DesktopWidgets.app/Contents/PlugIns/DesktopWidgetsExtension.appex"
 readonly EXTERNAL_EXTENSION="$TEST_DIRECTORY/Applications/DesktopWidgets.app/Contents/PlugIns/DesktopWidgetsExtension.appex"
 readonly CURRENT_APP="${CURRENT_EXTENSION%/Contents/PlugIns/DesktopWidgetsExtension.appex}"
 readonly COMMAND_LOG="$TEST_DIRECTORY/commands.log"
@@ -23,7 +25,7 @@ cleanup() {
 }
 trap cleanup EXIT
 
-mkdir -p "$CURRENT_EXTENSION/Contents" "$STALE_EXTENSION" "$EXTERNAL_EXTENSION"
+mkdir -p "$CURRENT_EXTENSION/Contents" "$STALE_EXTENSION" "$LEGACY_EXTENSION" "$EXTERNAL_EXTENSION"
 
 printf '%s\n' \
     '<?xml version="1.0" encoding="UTF-8"?>' \
@@ -41,6 +43,8 @@ printf '%s\n' \
     "     $BUNDLE_IDENTIFIER(0.1.0)" \
     "                 Path = $STALE_EXTENSION" \
     "     $BUNDLE_IDENTIFIER(0.1.0)" \
+    "                 Path = $LEGACY_EXTENSION" \
+    "     $BUNDLE_IDENTIFIER(0.1.0)" \
     "                 Path = $EXTERNAL_EXTENSION" > "$REGISTRATION_LIST"
 
 printf '%s\n' \
@@ -56,7 +60,7 @@ chmod +x "$FAKE_COMMAND"
 
 WIDGET_REFRESH_PLUGINKIT_COMMAND="$FAKE_COMMAND" \
 WIDGET_REFRESH_PKILL_COMMAND="$FAKE_COMMAND" \
-WIDGET_REFRESH_DERIVED_DATA_ROOT="$DERIVED_DATA_ROOT" \
+WIDGET_REFRESH_DERIVED_DATA_ROOTS="$DERIVED_DATA_ROOT:$LEGACY_DERIVED_DATA_ROOT" \
 WIDGET_REFRESH_TEST_COMMAND_LOG="$COMMAND_LOG" \
 WIDGET_REFRESH_TEST_REGISTRATION_LIST="$REGISTRATION_LIST" \
     /bin/bash "$REFRESH_SCRIPT" "$CURRENT_APP"
@@ -86,6 +90,7 @@ reject_command() {
 }
 
 require_command $'-r\t'"$STALE_EXTENSION" "stale DerivedData extension was not unregistered"
+require_command $'-r\t'"$LEGACY_EXTENSION" "legacy default-DerivedData extension was not unregistered"
 require_command $'-a\t'"$CURRENT_EXTENSION" "current extension was not registered"
 reject_command $'-r\t'"$CURRENT_EXTENSION" "current extension must never be unregistered"
 reject_command $'-r\t'"$EXTERNAL_EXTENSION" "extension outside DerivedData must remain registered"

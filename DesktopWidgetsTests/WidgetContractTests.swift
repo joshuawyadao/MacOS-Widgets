@@ -2,6 +2,89 @@ import Foundation
 import XCTest
 
 final class WidgetContractTests: XCTestCase {
+    func testInstallationStatusRecognizesPreferredSignedPersonalInstall() {
+        let home = URL(fileURLWithPath: "/Users/friendly", isDirectory: true)
+        let bundle = home.appendingPathComponent("Applications/Desktop Widgets.app", isDirectory: true)
+        let refresh = home.appendingPathComponent("Library/Application Support/Desktop Widgets/Installer/Refresh Desktop Widgets.command")
+        let enable = home.appendingPathComponent("Library/Application Support/Desktop Widgets/Installer/Enable Automatic Refresh.command")
+        let disable = home.appendingPathComponent("Library/Application Support/Desktop Widgets/Installer/Disable Automatic Refresh.command")
+        let status = DesktopWidgetsInstallationStatus(
+            bundleURL: bundle,
+            infoDictionary: [
+                "CFBundleIdentifier": "io.desktopwidgets.personal.abc123de45.app",
+                "DesktopWidgetsDevelopmentTeam": "ABC123DE45",
+                "WidgetThemeAppGroupIdentifier": "ABC123DE45.io.desktopwidgets.personal.abc123de45.shared",
+                "DesktopWidgetsRefreshCommandPath": "$(HOME)/Library/Application Support/Desktop Widgets/Installer/Refresh Desktop Widgets.command",
+                "DesktopWidgetsEnableAutomaticRefreshCommandPath": "$(HOME)/Library/Application Support/Desktop Widgets/Installer/Enable Automatic Refresh.command",
+                "DesktopWidgetsDisableAutomaticRefreshCommandPath": "$(HOME)/Library/Application Support/Desktop Widgets/Installer/Disable Automatic Refresh.command",
+            ],
+            homeDirectory: home
+        )
+
+        XCTAssertTrue(status.isInPreferredLocation)
+        XCTAssertTrue(status.hasRequiredSigningConfiguration)
+        XCTAssertTrue(status.refreshCommandExists)
+        XCTAssertEqual(status.refreshCommandURL, refresh)
+        XCTAssertTrue(status.enableAutomaticRefreshCommandExists)
+        XCTAssertEqual(status.enableAutomaticRefreshCommandURL, enable)
+        XCTAssertTrue(status.disableAutomaticRefreshCommandExists)
+        XCTAssertEqual(status.disableAutomaticRefreshCommandURL, disable)
+        XCTAssertTrue(status.isReady)
+    }
+
+    func testInstallationStatusExplainsUnsignedOrMovedBuildsWithoutClaimingReady() {
+        let home = URL(fileURLWithPath: "/Users/friendly", isDirectory: true)
+        let status = DesktopWidgetsInstallationStatus(
+            bundleURL: URL(fileURLWithPath: "/tmp/DesktopWidgets.app"),
+            infoDictionary: ["CFBundleIdentifier": "com.example.DesktopWidgets"],
+            homeDirectory: home
+        )
+
+        XCTAssertFalse(status.isInPreferredLocation)
+        XCTAssertFalse(status.hasRequiredSigningConfiguration)
+        XCTAssertFalse(status.refreshCommandExists)
+        XCTAssertNil(status.refreshCommandURL)
+        XCTAssertFalse(status.isReady)
+    }
+
+    func testInstallationStatusUsesAccountRecordHomeOutsideSandboxContainer() {
+        let containerHome = URL(fileURLWithPath: "/Users/friendly/Library/Containers/example/Data")
+        let accountHome = DesktopWidgetsInstallationStatus.accountHomeDirectory(
+            userRecordHome: { "/Users/friendly" },
+            fallback: containerHome
+        )
+
+        XCTAssertEqual(accountHome.path, "/Users/friendly")
+    }
+
+    func testAutomaticRefreshStatusExplainsHealthyAndAttentionStates() {
+        let healthy = DesktopWidgetsAutomaticRefreshStatus(dictionary: [
+            "Enabled": true,
+            "State": "healthy",
+            "Message": "No rebuild is needed yet.",
+            "LastCheck": "2026-08-27T12:00:00Z",
+            "LastSuccess": "2026-08-26T12:00:00Z",
+            "ProfileExpiration": "2026-09-01T12:00:00Z",
+        ])
+
+        XCTAssertTrue(healthy.isEnabled)
+        XCTAssertEqual(healthy.state, .healthy)
+        XCTAssertEqual(healthy.title, "Automatic maintenance is ready")
+        XCTAssertEqual(healthy.lastSuccess, "2026-08-26T12:00:00Z")
+
+        let attention = DesktopWidgetsAutomaticRefreshStatus(dictionary: [
+            "Enabled": true,
+            "State": "needsAttention",
+            "Message": "Open Xcode.",
+        ])
+        XCTAssertEqual(attention.state, .needsAttention)
+        XCTAssertEqual(attention.title, "Automatic refresh needs attention")
+
+        let unavailable = DesktopWidgetsAutomaticRefreshStatus(dictionary: nil)
+        XCTAssertFalse(unavailable.isEnabled)
+        XCTAssertEqual(unavailable.state, .unavailable)
+    }
+
     func testCompanionAppNavigationKeepsEveryTaskReachableOnce() {
         let groupedDestinations = CompanionAppDestination.overview
             + CompanionAppDestination.customize
