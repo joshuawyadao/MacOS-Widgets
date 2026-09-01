@@ -131,7 +131,7 @@ struct WeatherLocation: Codable, Equatable, Hashable, Sendable {
     }
 
     var cacheIdentifier: String {
-        "latitude=\(latitude.bitPattern)|longitude=\(longitude.bitPattern)"
+        "latitude=\(latitude.bitPattern)|longitude=\(longitude.bitPattern)|location=\(displayName)|timezone=\(timeZoneIdentifier)"
     }
 
     static let portland = Self(
@@ -163,7 +163,8 @@ struct OpenMeteoWeatherService: WeatherServing {
         do {
             let resolvedUnit = unit.resolved(for: locale)
             let url = try Self.forecastURL(location: location, unit: resolvedUnit)
-            return try await coordinator.forecast(for: url.absoluteString) {
+            let requestKey = "\(url.absoluteString)|\(location.cacheIdentifier)"
+            return try await coordinator.forecast(for: requestKey) {
                 let data = try await data(from: url)
                 return try Self.decodeForecast(data: data, location: location, unit: resolvedUnit)
             }
@@ -403,7 +404,8 @@ struct WeatherSnapshotCache: Sendable {
     }
 
     func isFresh(_ snapshot: WeatherSnapshot, now: Date = .now) -> Bool {
-        now.timeIntervalSince(snapshot.fetchedAt) <= Self.maximumFreshAge
+        let age = now.timeIntervalSince(snapshot.fetchedAt)
+        return age >= 0 && age <= Self.maximumFreshAge
     }
 
     func load(

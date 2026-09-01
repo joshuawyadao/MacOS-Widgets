@@ -883,16 +883,20 @@ final class WeatherConfigurationTests: XCTestCase {
         let cache = WeatherSnapshotCache(directoryURL: root)
         let fresh = WeatherSnapshot.sample(now: now.addingTimeInterval(-15 * 60))
         let refreshable = WeatherSnapshot.sample(now: now.addingTimeInterval(-15 * 60 - 1))
+        let futureDated = WeatherSnapshot.sample(now: now.addingTimeInterval(1))
 
         try cache.save(fresh, city: "Fresh City")
         try cache.save(refreshable, city: "Refreshable City")
+        try cache.save(futureDated, city: "Future City")
 
         XCTAssertEqual(cache.loadFresh(city: "Fresh City", unit: .fahrenheit, now: now), fresh)
         XCTAssertNil(cache.loadFresh(city: "Refreshable City", unit: .fahrenheit, now: now))
+        XCTAssertNil(cache.loadFresh(city: "Future City", unit: .fahrenheit, now: now))
         XCTAssertEqual(
             cache.load(city: "Refreshable City", unit: .fahrenheit, now: now),
             refreshable
         )
+        XCTAssertEqual(cache.load(city: "Future City", unit: .fahrenheit, now: now), futureDated)
     }
 
     func testOlderCachedSnapshotsDecodeWithoutNewOptionalWeatherMetrics() throws {
@@ -1090,6 +1094,56 @@ final class WeatherConfigurationTests: XCTestCase {
             locale: Locale(identifier: "en_US")
         )
 
+        XCTAssertEqual(
+            outcome,
+            .failed(
+                message: "Weather is temporarily unavailable. Offline",
+                retryable: true
+            )
+        )
+    }
+
+    func testLoaderDoesNotReuseCacheAcrossDifferentNamesForIdenticalCoordinates() async throws {
+        let root = FileManager.default.temporaryDirectory
+            .appendingPathComponent(UUID().uuidString, isDirectory: true)
+        defer { try? FileManager.default.removeItem(at: root) }
+        let firstLocation = WeatherLocation(
+            name: "Springfield",
+            latitude: 39.7817,
+            longitude: -89.6501,
+            timeZoneIdentifier: "America/Chicago",
+            adminArea: "Illinois",
+            country: "United States"
+        )
+        let secondLocation = WeatherLocation(
+            name: "Springfield Metro",
+            latitude: firstLocation.latitude,
+            longitude: firstLocation.longitude,
+            timeZoneIdentifier: firstLocation.timeZoneIdentifier,
+            adminArea: "Sangamon County",
+            country: "United States"
+        )
+        let cache = WeatherSnapshotCache(directoryURL: root)
+
+        _ = await WeatherLoader(
+            service: StubWeatherService(result: .success(WeatherSnapshot.sample(now: .now))),
+            cache: cache
+        ).load(
+            location: firstLocation,
+            unit: .fahrenheit,
+            locale: Locale(identifier: "en_US")
+        )
+
+        let outcome = await WeatherLoader(
+            service: StubWeatherService(result: .failure(.requestFailed("Offline"))),
+            cache: cache
+        ).load(
+            location: secondLocation,
+            unit: .fahrenheit,
+            locale: Locale(identifier: "en_US")
+        )
+
+        XCTAssertNotEqual(firstLocation.cacheIdentifier, secondLocation.cacheIdentifier)
         XCTAssertEqual(
             outcome,
             .failed(
