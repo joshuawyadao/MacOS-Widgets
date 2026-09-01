@@ -1,44 +1,25 @@
 # Plan
 
-Address every actionable Codex review finding on PR #13 with test-backed, separately saved safety fixes, then re-run the complete merge-readiness gates.
+Prepare the widget-efficiency pull request for merge by addressing Brooks and Codex review feedback without increasing steady-state widget resource use.
 
 ## Scope
-- In: Personal Team installation and refresh reliability, signing preservation, concurrency safety, handoff privacy and completeness, bounded diagnostics, accurate status reporting, tests, documentation, and PR verification.
-- Out: New widget features, signing-capability changes, persistent background resource use, paid distribution, or rewriting feature-branch history.
+- In: Battery provider helper extraction, Calendar next-event formatter parameter simplification, weather cache correctness fixes, focused regression tests, full repository verification, and PR branch save.
+- Out: Refresh schedules, displayed or accessibility text, user documentation changes, configuration schemas, and additional performance work.
 
 ## Action items
-- [x] Preserve an existing ignored `Local.xcconfig` when creating the stable private installer copy, with migration and no-overwrite tests.
-- [x] Reclaim automatic-refresh locks only when their recorded owner process is gone, with active- and stale-lock tests.
-- [x] Exclude Xcode `xcuserdata` from handoff ZIPs and verify the archive cannot contain it.
-- [x] Rotate the installer diagnostic log before append so repeated scheduled failures stay bounded.
-- [x] Distinguish failures before versus after app replacement.
-- [x] Leave automatic maintenance unchanged during noninteractive installs unless the caller explicitly opts in.
-- [x] Publish automatic-refresh status through per-process temporary files and cover the concurrency-safe path.
-- [x] Reuse the saved `Local.xcconfig` Personal Team for unattended refreshes when multiple free teams exist.
-- [x] Include the default Xcode DerivedData root when migrating a legacy developer install so stale same-identifier registrations are removed.
-- [x] Keep installer `errexit` active while still capturing the redacted logging pipeline status.
-- [x] Publish refresh success only when the recomputed signing deadline moves outside the renewal window.
-- [x] Inherit the friendly failure trap inside installer functions while preserving classified Xcode diagnostics.
-- [x] Serialize scheduled and interactive installer runs through one stale-safe lock.
-- [x] Include project test sources in both the handoff and reusable installer copy.
-- [x] Reload automatic-maintenance status when the companion app becomes active.
-- [x] Reject all ignored secret patterns and output destinations inside packaged source trees.
-- [x] Force manual and scheduled refreshes to clean their old products before re-signing.
-- [x] Keep attention status accurate when local configuration disappears, after manual refresh, and during agent startup.
-- [x] Protect the lock-owner publication gap and validate profiled products before reporting healthy signing.
-- [x] Resolve the real account home outside the app sandbox and reveal configured helper locations without sandboxed file probing.
-- [x] Recover interrupted app replacements and allow maintenance to be disabled with damaged signing settings.
-- [x] Isolate packaging-test mutations in a temporary extracted handoff so tests cannot overwrite local secrets or Xcode state.
-- [x] Run focused checks after each fix, then the complete verifier and `git diff --check`.
-- [x] Push every feedback checkpoint and acknowledge each addressed Codex comment.
-
-## Final handoff gate
-Confirm the complete verifier, fresh Codex review, CI, and mergeability on the final pushed head. Report those operational results in the PR handoff without editing this plan again and invalidating the reviewed commit.
-
-## Evidence
-- The target-Mac Personal Team install and widget-gallery acceptance succeeded: the companion app launched and Desktop Widgets appeared in the macOS widget gallery.
-- Codex review findings were addressed as isolated commits with focused regression coverage and acknowledgements on the corresponding review comments.
-- Updated `main` is incorporated through merge commits so feature history remains intact.
+- [x] Extract the repeated Battery detail-selection and hardware-read decision into one provider helper used by snapshot and timeline generation.
+- [x] Remove the redundant Calendar next-event `timeZone` parameter and format with the supplied calendar's time zone.
+- [x] Confirm existing Battery visibility and Calendar localized-text tests cover the behavior-preserving refactor; add tests only if a coverage gap appears.
+- [x] Leave canonical widget guides unchanged because resource behavior and user-visible contracts do not change; retain this plan as the review-remediation record.
+- [x] Run focused Battery and Calendar tests, `./Scripts/verify-widgets.sh`, and `git diff --check`.
+- [x] Commit and push the Brooks fixes to `codex/widget-render-performance`, then re-check PR review, CI, and mergeability state.
+- [x] Reject future-dated weather snapshots as fresh so clock corrections cannot indefinitely suppress network refreshes.
+- [x] Include weather location presentation identity in cache and in-flight request keys so coordinate-identical selections cannot share the wrong displayed location.
+- [x] Run focused Weather tests, `./Scripts/verify-widgets.sh`, and `git diff --check`.
+- [x] Commit and push the Codex fixes, acknowledge the addressed review comments, and complete the final PR audit.
+- [x] Migrate validated coordinate-only cache entries to identity-aware keys so upgrades preserve the correct offline fallback.
+- [x] Retain 30 forecast hours so the 24-hour stale window can still supply all six visible hourly columns.
+- [x] Re-run focused and full verification, commit the final review fixes, and complete the current-head PR gates.
 
 ## Open questions
 - None.

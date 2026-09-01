@@ -241,29 +241,36 @@ enum WeatherValueFormatter {
     }
 
     static func weekday(_ date: Date, timeZone: TimeZone, locale: Locale = .autoupdatingCurrent) -> String {
-        formattedDate(date, pattern: "EEE", timeZone: timeZone, locale: locale)
+        weekdayLabels(for: [date], timeZone: timeZone, locale: locale).first ?? ""
     }
 
     static func hour(_ date: Date, timeZone: TimeZone, locale: Locale = .autoupdatingCurrent) -> String {
+        hourLabels(for: [date], timeZone: timeZone, locale: locale).first ?? ""
+    }
+
+    static func weekdayLabels(
+        for dates: [Date],
+        timeZone: TimeZone,
+        locale: Locale = .autoupdatingCurrent
+    ) -> [String] {
+        let formatter = DateFormatter()
+        formatter.calendar = Calendar(identifier: .gregorian)
+        formatter.locale = locale
+        formatter.timeZone = timeZone
+        formatter.dateFormat = "EEE"
+        return dates.map(formatter.string(from:))
+    }
+
+    static func hourLabels(
+        for dates: [Date],
+        timeZone: TimeZone,
+        locale: Locale = .autoupdatingCurrent
+    ) -> [String] {
         let formatter = DateFormatter()
         formatter.calendar = Calendar(identifier: .gregorian)
         formatter.locale = locale
         formatter.timeZone = timeZone
         formatter.setLocalizedDateFormatFromTemplate("j")
-        return formatter.string(from: date)
-    }
-
-    private static func formattedDate(
-        _ date: Date,
-        pattern: String,
-        timeZone: TimeZone,
-        locale: Locale
-    ) -> String {
-        let formatter = DateFormatter()
-        formatter.calendar = Calendar(identifier: .gregorian)
-        formatter.locale = locale
-        formatter.timeZone = timeZone
-        formatter.dateFormat = pattern
-        return formatter.string(from: date)
+        return dates.map(formatter.string(from:))
     }
 }

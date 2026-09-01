@@ -33,7 +33,7 @@ Event indicators and next-event timing are off by default. To enable either:
 
 If access was denied, the app provides an **Open Settings** button. A widget configured to show indicators displays a compact permission signifier until access is available.
 
-The extension queries only the bounded interval needed by the current view plus, when requested, a seven-day upcoming window. It immediately reduces matching events to per-date counts and the start time of the first ongoing or upcoming timed event. All-day events are skipped for the next-event line. Event titles, notes, locations, attendees, URLs, calendar names, and account details are never placed in the widget timeline or displayed. Data stays on the Mac and no network or analytics service is used.
+The extension queries only the bounded interval needed by the current view plus, when requested, a seven-day upcoming window. When those intervals overlap, one bounded EventKit query supplies both calculations; a far-away navigated month remains a separate query so the fetched range never expands across the gap. Matching events are immediately reduced to per-date counts, and the earliest ongoing or upcoming timed event is selected in one pass without sorting the full result. All-day events are skipped for the next-event line. Event titles, notes, locations, attendees, URLs, calendar names, and account details are never placed in the widget timeline or displayed. Data stays on the Mac and no network or analytics service is used.
 
 The next-event line appears in Day at every size, in Week on Medium and Large, and in Month on Large. Tighter combinations omit the line rather than shrinking the calendar below its readability budget. It says **Happening now**, a localized start time, **No timed events soon**, or an access status—never the event name.
 
@@ -44,6 +44,8 @@ Only Month view includes navigation arrows. Select the left or right arrow to mo
 Month navigation is capped at ten years in either direction. WidgetKit does not provide a placed-widget instance identifier to these button actions, so the displayed month is shared by all Calendar copies. Moving one Month copy refreshes every Calendar widget; its chosen view and event-indicator setting remain independent.
 
 Without event features, the next timeline refresh is requested for the next local midnight. With indicators or next-event timing enabled, the widget requests a refresh every 30 minutes so event changes can appear while still using bounded queries. Local calendar arithmetic keeps the midnight transition correct across daylight-saving changes; macOS owns actual scheduling and may delay or combine reloads.
+
+Calendar prepares only the selected Day, Week, or Month presentation for each render. A Month presentation builds its stable 42-date grid once and reuses one locale- and time-zone-aware formatter while producing headers, numerals, and accessibility labels. Next-event display and VoiceOver text likewise share one localized time result. The prepared presentation and typography style are then shared by every grid cell, and the today marker uses native vector composition without an extra offscreen drawing group, so SwiftUI does not repeat formatting, shared-preference reads, or unnecessary rasterization while building the view tree.
 
 ## Appearance and accessibility
 

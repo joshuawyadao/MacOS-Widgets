@@ -59,13 +59,24 @@ struct WeatherLoader: Sendable {
     func load(location: WeatherLocation, unit: WeatherTemperatureUnit, locale: Locale) async -> WeatherLoadOutcome {
         let resolvedUnit = unit.resolved(for: locale)
         let cacheKey = location.cacheIdentifier
+        let now = Date.now
+        let cached = cachedSnapshot(
+            for: location,
+            cacheKey: cacheKey,
+            unit: resolvedUnit,
+            now: now
+        )
+        if let cached, cache.isFresh(cached, now: now) {
+            return .fresh(cached)
+        }
+
         do {
             let snapshot = try await service.forecast(location: location, unit: unit, locale: locale)
             try? cache.save(snapshot, city: cacheKey)
             return .fresh(snapshot)
         } catch {
             let message = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
-            if let cached = cache.load(city: cacheKey, unit: resolvedUnit) {
+            if let cached {
                 return .stale(cached, message: message)
             }
             return .failed(
@@ -73,6 +84,52 @@ struct WeatherLoader: Sendable {
                 retryable: (error as? WeatherServiceError)?.isRetryable ?? true
             )
         }
+    }
+
+    private func cachedSnapshot(
+        for location: WeatherLocation,
+        cacheKey: String,
+        unit: WeatherResolvedUnit,
+        now: Date
+    ) -> WeatherSnapshot? {
+        if let snapshot = cache.load(city: cacheKey, unit: unit, now: now) {
+            return snapshot
+        }
+
+        let legacyKey = location.legacyCacheIdentifier
+        guard let legacySnapshot = cache.load(city: legacyKey, unit: unit, now: now),
+              legacySnapshot.locationName == location.displayName else {
+            return nil
+        }
+
+        do {
+            try cache.migrate(legacySnapshot, fromCity: legacyKey, toCity: cacheKey)
+        } catch {
+            // The validated in-memory fallback is still safe for this load.
+        }
+        return legacySnapshot
+    }
+}
+
+actor WeatherForecastRequestCoordinator {
+    static let shared = WeatherForecastRequestCoordinator()
+
+    private var inFlight: [String: Task<WeatherSnapshot, any Error>] = [:]
+
+    func forecast(
+        for key: String,
+        operation: @escaping @Sendable () async throws -> WeatherSnapshot
+    ) async throws -> WeatherSnapshot {
+        if let existing = inFlight[key] {
+            return try await existing.value
+        }
+
+        let task = Task {
+            try await operation()
+        }
+        inFlight[key] = task
+        defer { inFlight[key] = nil }
+        return try await task.value
     }
 }
 
@@ -103,6 +160,15 @@ struct WeatherLocation: Codable, Equatable, Hashable, Sendable {
     }
 
     var cacheIdentifier: String {
+        [
+            "latitude=\(latitude.bitPattern)",
+            "longitude=\(longitude.bitPattern)",
+            "location=\(displayName)",
+            "timezone=\(timeZoneIdentifier)",
+        ].joined(separator: "|")
+    }
+
+    var legacyCacheIdentifier: String {
         "latitude=\(latitude.bitPattern)|longitude=\(longitude.bitPattern)"
     }
 
@@ -118,19 +184,28 @@ struct WeatherLocation: Codable, Equatable, Hashable, Sendable {
 
 struct OpenMeteoWeatherService: WeatherServing {
     static let providerID = "open-meteo"
+    static let forecastHourCount = 30
 
     private let session: URLSession
+    private let coordinator: WeatherForecastRequestCoordinator
 
-    init(session: URLSession = .shared) {
+    init(
+        session: URLSession = .shared,
+        coordinator: WeatherForecastRequestCoordinator = .shared
+    ) {
         self.session = session
+        self.coordinator = coordinator
     }
 
     func forecast(location: WeatherLocation, unit: WeatherTemperatureUnit, locale: Locale) async throws -> WeatherSnapshot {
         do {
             let resolvedUnit = unit.resolved(for: locale)
             let url = try Self.forecastURL(location: location, unit: resolvedUnit)
-            let data = try await data(from: url)
-            return try Self.decodeForecast(data: data, location: location, unit: resolvedUnit)
+            let requestKey = "\(url.absoluteString)|\(location.cacheIdentifier)"
+            return try await coordinator.forecast(for: requestKey) {
+                let data = try await data(from: url)
+                return try Self.decodeForecast(data: data, location: location, unit: resolvedUnit)
+            }
         } catch let error as WeatherServiceError {
             throw error
         } catch {
@@ -165,6 +240,7 @@ struct OpenMeteoWeatherService: WeatherServing {
             URLQueryItem(name: "timezone", value: "auto"),
             URLQueryItem(name: "timeformat", value: "unixtime"),
             URLQueryItem(name: "forecast_days", value: "7"),
+            URLQueryItem(name: "forecast_hours", value: String(forecastHourCount)),
         ]
         guard let url = components.url else { throw WeatherServiceError.invalidResponse }
         return url
@@ -342,7 +418,8 @@ struct OpenMeteoLocationSearchService: WeatherLocationSearching {
 }
 
 struct WeatherSnapshotCache: Sendable {
-    private static let maximumStaleAge: TimeInterval = 24 * 60 * 60
+    static let maximumFreshAge: TimeInterval = 15 * 60
+    static let maximumStaleAge: TimeInterval = 24 * 60 * 60
     private static let maximumStoredEntries = 12
     private let directoryURL: URL
 
@@ -352,13 +429,34 @@ struct WeatherSnapshotCache: Sendable {
                 .appendingPathComponent("WeatherSnapshots", isDirectory: true)
     }
 
-    func load(city: String, unit: WeatherResolvedUnit) -> WeatherSnapshot? {
+    func loadFresh(
+        city: String,
+        unit: WeatherResolvedUnit,
+        now: Date = .now
+    ) -> WeatherSnapshot? {
+        guard let snapshot = load(city: city, unit: unit, now: now),
+              isFresh(snapshot, now: now) else {
+            return nil
+        }
+        return snapshot
+    }
+
+    func isFresh(_ snapshot: WeatherSnapshot, now: Date = .now) -> Bool {
+        let age = now.timeIntervalSince(snapshot.fetchedAt)
+        return age >= 0 && age <= Self.maximumFreshAge
+    }
+
+    func load(
+        city: String,
+        unit: WeatherResolvedUnit,
+        now: Date = .now
+    ) -> WeatherSnapshot? {
         let url = fileURL(city: city, unit: unit)
         guard let data = try? Data(contentsOf: url),
               let snapshot = try? JSONDecoder().decode(WeatherSnapshot.self, from: data) else {
             return nil
         }
-        guard Date.now.timeIntervalSince(snapshot.fetchedAt) <= Self.maximumStaleAge else {
+        guard now.timeIntervalSince(snapshot.fetchedAt) <= Self.maximumStaleAge else {
             try? FileManager.default.removeItem(at: url)
             return nil
         }
@@ -369,6 +467,14 @@ struct WeatherSnapshotCache: Sendable {
         try FileManager.default.createDirectory(at: directoryURL, withIntermediateDirectories: true)
         let data = try JSONEncoder().encode(snapshot)
         try data.write(to: fileURL(city: city, unit: snapshot.unit), options: .atomic)
+        pruneIfNeeded()
+    }
+
+    func migrate(_ snapshot: WeatherSnapshot, fromCity: String, toCity: String) throws {
+        try FileManager.default.createDirectory(at: directoryURL, withIntermediateDirectories: true)
+        let data = try JSONEncoder().encode(snapshot)
+        try data.write(to: fileURL(city: toCity, unit: snapshot.unit), options: .atomic)
+        try? FileManager.default.removeItem(at: fileURL(city: fromCity, unit: snapshot.unit))
         pruneIfNeeded()
     }
 

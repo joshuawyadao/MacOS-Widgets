@@ -26,8 +26,11 @@ Typography and Calendar permission controllers belong to the root view rather th
 - Present stale, constrained, unavailable, or action-required information with the shared compact status treatment when the layout has room.
 - Combine noninteractive summaries into concise VoiceOver labels and expose real controls as separate accessible elements.
 - Respect the Mac's locale, time zone, calendar, units, and first-weekday conventions wherever they apply.
+- Resolve shared typography preferences, family metrics, and widget-specific presentation data once at each widget root, then pass those immutable values through the render tree instead of rebuilding them in individual labels or grid cells.
 
 The shared primitives live in `Shared/Styling/WidgetTheme.swift` and `Shared/Styling/WidgetTypography.swift`. Widget-specific presentation metrics may still choose different hero sizes or grids, but should build on the common family density, surface treatment, and typography resolution rather than defining their own foreground, shadow, background, or preference storage behavior.
+
+The render-preparation rule is a performance boundary rather than a cache with independent lifetime. A new WidgetKit entry, family, locale, time zone, rendering mode, or applied typography selection creates a new resolved root value, preserving normal SwiftUI and WidgetKit invalidation behavior without global mutable formatter or presentation state.
 
 ## Typography
 

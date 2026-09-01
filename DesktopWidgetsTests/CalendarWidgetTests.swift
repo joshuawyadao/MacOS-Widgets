@@ -328,6 +328,39 @@ final class CalendarWidgetTests: XCTestCase {
         XCTAssertEqual(CalendarEventSnapshot(accessState: .denied, countsByDay: [:]).accessState, .denied)
     }
 
+    func testEventQueryPolicyCombinesOnlyOverlappingBoundedIntervals() {
+        let reference = Date(timeIntervalSince1970: 1_786_262_940)
+        let display = DateInterval(
+            start: reference.addingTimeInterval(-12 * 60 * 60),
+            end: reference.addingTimeInterval(24 * 60 * 60)
+        )
+        let upcoming = DateInterval(
+            start: reference,
+            end: reference.addingTimeInterval(7 * 86_400)
+        )
+
+        XCTAssertEqual(
+            CalendarEventQueryPolicy.combinedInterval(
+                displayInterval: display,
+                upcomingInterval: upcoming
+            ),
+            DateInterval(start: display.start, end: upcoming.end)
+        )
+
+        let navigatedMonth = DateInterval(
+            start: reference.addingTimeInterval(60 * 86_400),
+            duration: 42 * 86_400
+        )
+        XCTAssertNil(CalendarEventQueryPolicy.combinedInterval(
+            displayInterval: navigatedMonth,
+            upcomingInterval: upcoming
+        ))
+        XCTAssertNil(CalendarEventQueryPolicy.combinedInterval(
+            displayInterval: upcoming,
+            upcomingInterval: upcoming
+        ))
+    }
+
     func testNextEventTimingIgnoresAllDayAndEndedEventsWithoutReadingEventText() throws {
         let reference = Date(timeIntervalSince1970: 1_786_262_940)
         let query = DateInterval(start: reference, duration: 7 * 86_400)
@@ -377,6 +410,113 @@ final class CalendarWidgetTests: XCTestCase {
         XCTAssertEqual(timing.start, ongoing.start)
         XCTAssertEqual(timing.end, ongoing.end)
         XCTAssertTrue(timing.isOngoing)
+    }
+
+    func testNextEventTimingFindsTheEarliestEligibleEventWithoutInputOrdering() throws {
+        let reference = Date(timeIntervalSince1970: 1_786_262_940)
+        let query = DateInterval(start: reference, duration: 7 * 86_400)
+        let later = CalendarEventInterval(
+            start: reference.addingTimeInterval(7_200),
+            end: reference.addingTimeInterval(10_800)
+        )
+        let earliest = CalendarEventInterval(
+            start: reference.addingTimeInterval(1_800),
+            end: reference.addingTimeInterval(3_600)
+        )
+
+        let timing = try XCTUnwrap(CalendarEventCounter.nextTiming(
+            for: [later, earliest],
+            after: reference,
+            within: query
+        ))
+
+        XCTAssertEqual(timing.start, earliest.start)
+        XCTAssertEqual(timing.end, earliest.end)
+        XCTAssertFalse(timing.isOngoing)
+    }
+
+    func testNextEventTextPreparesDisplayAndAccessibilityFromOneLocalizedTime() throws {
+        let calendar = gregorianCalendar(firstWeekday: 1)
+        let start = try XCTUnwrap(calendar.date(from: DateComponents(
+            year: 2026,
+            month: 8,
+            day: 9,
+            hour: 15,
+            minute: 30
+        )))
+        let snapshot = CalendarEventSnapshot(
+            accessState: .available,
+            countsByDay: [:],
+            nextEvent: CalendarNextEventTiming(
+                start: start,
+                end: start.addingTimeInterval(60 * 60),
+                isOngoing: false
+            )
+        )
+
+        let presentation = CalendarNextEventTextPresentation(
+            snapshot: snapshot,
+            calendar: calendar,
+            locale: Locale(identifier: "en_US")
+        )
+        let formatter = DateFormatter()
+        formatter.calendar = calendar
+        formatter.locale = Locale(identifier: "en_US")
+        formatter.timeZone = calendar.timeZone
+        formatter.setLocalizedDateFormatFromTemplate("jm")
+        let expectedTime = formatter.string(from: start)
+
+        XCTAssertEqual(presentation.displayText, "Next \(expectedTime)")
+        XCTAssertEqual(presentation.accessibilityText, "Next calendar event at \(expectedTime)")
+    }
+
+    func testNextEventTextPreservesEmptyAndPermissionStates() {
+        let calendar = gregorianCalendar(firstWeekday: 1)
+        let cases: [(CalendarEventSnapshot, String, String)] = [
+            (
+                CalendarEventSnapshot(
+                    accessState: .available,
+                    countsByDay: [:],
+                    nextEvent: CalendarNextEventTiming(
+                        start: Date(timeIntervalSince1970: 1_786_262_940),
+                        end: Date(timeIntervalSince1970: 1_786_266_540),
+                        isOngoing: true
+                    )
+                ),
+                "Event now",
+                "A calendar event is happening now"
+            ),
+            (
+                CalendarEventSnapshot(accessState: .available, countsByDay: [:]),
+                "No timed events soon",
+                "No timed events in the next seven days"
+            ),
+            (
+                CalendarEventSnapshot(accessState: .requiresPermission, countsByDay: [:]),
+                "Enable Calendar access",
+                "Enable Calendar access in the Desktop Widgets app"
+            ),
+            (
+                CalendarEventSnapshot(accessState: .denied, countsByDay: [:]),
+                "Calendar access off",
+                "Calendar access is turned off"
+            ),
+            (
+                .disabled,
+                "Next event unavailable",
+                "Next event time is unavailable"
+            ),
+        ]
+
+        for (snapshot, displayText, accessibilityText) in cases {
+            let presentation = CalendarNextEventTextPresentation(
+                snapshot: snapshot,
+                calendar: calendar,
+                locale: Locale(identifier: "en_US")
+            )
+            XCTAssertEqual(presentation.displayText, displayText)
+            XCTAssertEqual(presentation.accessibilityText, accessibilityText)
+        }
     }
 
     func testNextEventTimeCanBeEnabledWithoutEventIndicators() {

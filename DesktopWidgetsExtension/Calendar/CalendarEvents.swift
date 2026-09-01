@@ -94,17 +94,38 @@ enum CalendarEventCounter {
         after referenceDate: Date,
         within query: DateInterval
     ) -> CalendarNextEventTiming? {
-        intervals
-            .filter { !$0.isAllDay && $0.end > referenceDate && $0.start < query.end }
-            .sorted { $0.start < $1.start }
-            .first
-            .map {
-                CalendarNextEventTiming(
-                    start: $0.start,
-                    end: $0.end,
-                    isOngoing: $0.start <= referenceDate
-                )
+        var earliest: CalendarEventInterval?
+        for interval in intervals where
+            !interval.isAllDay && interval.end > referenceDate && interval.start < query.end {
+            if let current = earliest, current.start <= interval.start {
+                continue
             }
+            earliest = interval
+        }
+
+        return earliest.map {
+            CalendarNextEventTiming(
+                start: $0.start,
+                end: $0.end,
+                isOngoing: $0.start <= referenceDate
+            )
+        }
+    }
+}
+
+enum CalendarEventQueryPolicy {
+    static func combinedInterval(
+        displayInterval: DateInterval,
+        upcomingInterval: DateInterval
+    ) -> DateInterval? {
+        guard displayInterval != upcomingInterval,
+              displayInterval.intersects(upcomingInterval) else {
+            return nil
+        }
+        return DateInterval(
+            start: min(displayInterval.start, upcomingInterval.start),
+            end: max(displayInterval.end, upcomingInterval.end)
+        )
     }
 }
 
@@ -121,33 +142,22 @@ struct SystemCalendarEventReader {
         switch EKEventStore.authorizationStatus(for: .event) {
         case .fullAccess:
             let store = EKEventStore()
-            let predicate = store.predicateForEvents(
-                withStart: interval.start,
-                end: interval.end,
-                calendars: nil
-            )
-            let eventIntervals = store.events(matching: predicate).map {
-                CalendarEventInterval(
-                    start: $0.startDate,
-                    end: $0.endDate,
-                    isAllDay: $0.isAllDay
-                )
-            }
+            let eventIntervals: [CalendarEventInterval]
             let upcomingEventIntervals: [CalendarEventInterval]
             if let upcomingInterval, upcomingInterval != interval {
-                let upcomingPredicate = store.predicateForEvents(
-                    withStart: upcomingInterval.start,
-                    end: upcomingInterval.end,
-                    calendars: nil
-                )
-                upcomingEventIntervals = store.events(matching: upcomingPredicate).map {
-                    CalendarEventInterval(
-                        start: $0.startDate,
-                        end: $0.endDate,
-                        isAllDay: $0.isAllDay
-                    )
+                if let combinedInterval = CalendarEventQueryPolicy.combinedInterval(
+                    displayInterval: interval,
+                    upcomingInterval: upcomingInterval
+                ) {
+                    let combinedEvents = events(in: combinedInterval, store: store)
+                    eventIntervals = combinedEvents
+                    upcomingEventIntervals = combinedEvents
+                } else {
+                    eventIntervals = events(in: interval, store: store)
+                    upcomingEventIntervals = events(in: upcomingInterval, store: store)
                 }
             } else {
+                eventIntervals = events(in: interval, store: store)
                 upcomingEventIntervals = eventIntervals
             }
             return CalendarEventSnapshot(
@@ -167,6 +177,24 @@ struct SystemCalendarEventReader {
             return CalendarEventSnapshot(accessState: .requiresPermission, countsByDay: [:])
         default:
             return CalendarEventSnapshot(accessState: .denied, countsByDay: [:])
+        }
+    }
+
+    private func events(
+        in interval: DateInterval,
+        store: EKEventStore
+    ) -> [CalendarEventInterval] {
+        let predicate = store.predicateForEvents(
+            withStart: interval.start,
+            end: interval.end,
+            calendars: nil
+        )
+        return store.events(matching: predicate).map {
+            CalendarEventInterval(
+                start: $0.startDate,
+                end: $0.endDate,
+                isAllDay: $0.isAllDay
+            )
         }
     }
 }

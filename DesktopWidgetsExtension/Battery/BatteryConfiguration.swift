@@ -39,6 +39,10 @@ struct BatteryDetailSelection: Equatable, Sendable {
     let selectedCount: Int
     let limit: Int
 
+    var requiresHardwareMetrics: Bool {
+        visibleDetails.contains(.health) || visibleDetails.contains(.cycles)
+    }
+
     var hiddenCount: Int {
         max(0, selectedCount - visibleDetails.count)
     }

@@ -131,7 +131,7 @@ struct CalendarWidgetView: View {
         familyOverride ?? environmentFamily
     }
 
-    private var typography: WidgetTypographyStyle {
+    private var resolvedTypography: WidgetTypographyStyle {
         let stored = WidgetTypographyStore.live.style(for: .calendar)
         return WidgetTypographyStyle(
             resolution: typographyOverride ?? stored.resolution,
@@ -146,60 +146,112 @@ struct CalendarWidgetView: View {
         return calendar
     }
 
-    private var resolvedView: CalendarResolvedView {
-        entry.configuration.resolvedView(for: family)
-    }
-
-    private var monthMetrics: CalendarWidgetLayoutMetrics {
-        CalendarWidgetLayoutMetrics(family: family)
-    }
-
-    private var displayDate: Date {
-        calendar.date(byAdding: .month, value: entry.monthOffset, to: entry.date) ?? entry.date
-    }
-
-    private var monthPresentation: CalendarMonthPresentation {
-        CalendarMonthPresentation(
-            displayDate: displayDate,
-            today: entry.date,
+    var body: some View {
+        ResolvedCalendarWidgetView(
+            entry: entry,
+            family: family,
+            renderingMode: renderingMode,
+            locale: locale,
+            timeZone: timeZone,
             calendar: calendar,
-            locale: locale
+            typography: resolvedTypography
         )
     }
+}
 
-    private var weekPresentation: CalendarWeekPresentation {
-        CalendarWeekPresentation(
-            date: entry.date,
-            today: entry.date,
-            calendar: calendar,
-            locale: locale
-        )
-    }
+private enum CalendarWidgetPresentation {
+    case day(CalendarDayFocusPresentation)
+    case week(CalendarWeekPresentation)
+    case month(CalendarMonthPresentation)
+}
 
-    private var dayPresentation: CalendarDayFocusPresentation {
-        CalendarDayFocusPresentation(
-            date: entry.date,
-            calendar: calendar,
-            locale: locale
-        )
-    }
+private struct ResolvedCalendarWidgetView: View {
+    let entry: CalendarEntry
+    let family: WidgetFamily
+    let renderingMode: WidgetRenderingMode
+    let calendar: Calendar
+    let typography: WidgetTypographyStyle
+    let resolvedView: CalendarResolvedView
+    let monthMetrics: CalendarWidgetLayoutMetrics
+    let columns: [GridItem]
+    let presentation: CalendarWidgetPresentation
+    let showsNextEventLine: Bool
+    let nextEventText: CalendarNextEventTextPresentation?
 
-    private var columns: [GridItem] {
-        Array(repeating: GridItem(.flexible(minimum: 0), spacing: 0), count: 7)
+    init(
+        entry: CalendarEntry,
+        family: WidgetFamily,
+        renderingMode: WidgetRenderingMode,
+        locale: Locale,
+        timeZone: TimeZone,
+        calendar: Calendar,
+        typography: WidgetTypographyStyle
+    ) {
+        self.entry = entry
+        self.family = family
+        self.renderingMode = renderingMode
+        self.calendar = calendar
+        self.typography = typography
+        let resolvedView = entry.configuration.resolvedView(for: family)
+        self.resolvedView = resolvedView
+        self.monthMetrics = CalendarWidgetLayoutMetrics(family: family)
+        self.columns = Array(repeating: GridItem(.flexible(minimum: 0), spacing: 0), count: 7)
+        let supportsNextEventLine = switch resolvedView {
+        case .day: true
+        case .week: family != .systemSmall
+        case .month: family == .systemLarge
+        }
+        let shouldShowNextEventLine = entry.configuration.showNextEventTime && supportsNextEventLine
+        self.showsNextEventLine = shouldShowNextEventLine
+        self.nextEventText = shouldShowNextEventLine
+            ? CalendarNextEventTextPresentation(
+                snapshot: entry.events,
+                calendar: calendar,
+                locale: locale
+            )
+            : nil
+
+        switch resolvedView {
+        case .day:
+            self.presentation = .day(CalendarDayFocusPresentation(
+                date: entry.date,
+                calendar: calendar,
+                locale: locale
+            ))
+        case .week:
+            self.presentation = .week(CalendarWeekPresentation(
+                date: entry.date,
+                today: entry.date,
+                calendar: calendar,
+                locale: locale
+            ))
+        case .month:
+            let displayDate = calendar.date(
+                byAdding: .month,
+                value: entry.monthOffset,
+                to: entry.date
+            ) ?? entry.date
+            self.presentation = .month(CalendarMonthPresentation(
+                displayDate: displayDate,
+                today: entry.date,
+                calendar: calendar,
+                locale: locale
+            ))
+        }
     }
 
     var body: some View {
         Group {
-            switch resolvedView {
-            case .day: dayView
-            case .week: weekView
-            case .month: monthView
+            switch presentation {
+            case let .day(dayPresentation): dayView(dayPresentation)
+            case let .week(weekPresentation): weekView(weekPresentation)
+            case let .month(monthPresentation): monthView(monthPresentation)
             }
         }
         .widgetSurface(renderingMode: renderingMode)
     }
 
-    private var dayView: some View {
+    private func dayView(_ dayPresentation: CalendarDayFocusPresentation) -> some View {
         VStack(
             alignment: .leading,
             spacing: typography.verticalSpacing(family == .systemLarge ? 10 : 4)
@@ -261,7 +313,7 @@ struct CalendarWidgetView: View {
             }
         }
         .accessibilityElement(children: .combine)
-        .accessibilityLabel(dayAccessibilityLabel)
+        .accessibilityLabel(dayAccessibilityLabel(dayPresentation))
     }
 
     private var dayEventSummary: some View {
@@ -301,18 +353,18 @@ struct CalendarWidgetView: View {
         .padding(.vertical, typography.supportingTextVerticalPadding)
     }
 
-    private var dayAccessibilityLabel: String {
+    private func dayAccessibilityLabel(_ dayPresentation: CalendarDayFocusPresentation) -> String {
         let count = entry.events.count(on: entry.date, calendar: calendar)
         let dayLabel = CalendarDayFocusAccessibility.label(
             dateLabel: dayPresentation.accessibilityLabel,
             accessState: entry.configuration.showEvents ? entry.events.accessState : .disabled,
             eventCount: count
         )
-        guard entry.configuration.showNextEventTime else { return dayLabel }
-        return "\(dayLabel), \(nextEventAccessibilityText)"
+        guard let nextEventText else { return dayLabel }
+        return "\(dayLabel), \(nextEventText.accessibilityText)"
     }
 
-    private var weekView: some View {
+    private func weekView(_ weekPresentation: CalendarWeekPresentation) -> some View {
         VStack(spacing: typography.verticalSpacing(family == .systemLarge ? 14 : 8)) {
             HStack {
                 Text(weekPresentation.headerText)
@@ -399,18 +451,18 @@ struct CalendarWidgetView: View {
         .accessibilityAddTraits(day.isToday ? .isSelected : [])
     }
 
-    private var monthView: some View {
+    private func monthView(_ monthPresentation: CalendarMonthPresentation) -> some View {
         VStack(spacing: typography.verticalSpacing(monthMetrics.sectionSpacing)) {
-            monthHeader
-            weekdayHeader
-            monthGrid
+            monthHeader(monthPresentation)
+            weekdayHeader(monthPresentation)
+            monthGrid(monthPresentation)
             if showsNextEventLine {
                 nextEventLine
             }
         }
     }
 
-    private var monthHeader: some View {
+    private func monthHeader(_ monthPresentation: CalendarMonthPresentation) -> some View {
         HStack(spacing: typography.horizontalSpacing(4)) {
             Button(intent: PreviousCalendarMonthIntent()) {
                 Image(systemName: "arrow.left")
@@ -424,7 +476,7 @@ struct CalendarWidgetView: View {
             Spacer(minLength: typography.horizontalSpacing(2))
 
             Button(intent: CurrentCalendarMonthIntent()) {
-                Text(monthTitle)
+                Text(monthTitle(monthPresentation))
                     .font(
                         typography.displayFont(
                             size: monthMetrics.headerFontSize,
@@ -454,16 +506,16 @@ struct CalendarWidgetView: View {
         }
     }
 
-    private var monthTitle: String {
+    private func monthTitle(_ monthPresentation: CalendarMonthPresentation) -> String {
         let month = monthMetrics.usesCompactMonth
             ? monthPresentation.abbreviatedMonthText
             : monthPresentation.monthText
         return "\(month)   \(monthPresentation.yearText)"
     }
 
-    private var weekdayHeader: some View {
+    private func weekdayHeader(_ monthPresentation: CalendarMonthPresentation) -> some View {
         LazyVGrid(columns: columns, spacing: 0) {
-            ForEach(Array(monthWeekdayTexts.enumerated()), id: \.offset) { _, weekday in
+            ForEach(Array(monthWeekdayTexts(monthPresentation).enumerated()), id: \.offset) { _, weekday in
                 Text(weekday)
                     .font(
                         typography.supportingFont(
@@ -485,13 +537,13 @@ struct CalendarWidgetView: View {
         }
     }
 
-    private var monthWeekdayTexts: [String] {
+    private func monthWeekdayTexts(_ monthPresentation: CalendarMonthPresentation) -> [String] {
         monthMetrics.usesCompactWeekdays
             ? monthPresentation.compactWeekdayTexts
             : monthPresentation.weekdayTexts
     }
 
-    private var monthGrid: some View {
+    private func monthGrid(_ monthPresentation: CalendarMonthPresentation) -> some View {
         LazyVGrid(columns: columns, spacing: typography.verticalSpacing(monthMetrics.rowSpacing)) {
             ForEach(monthPresentation.days) { day in
                 monthDay(day)
@@ -603,7 +655,6 @@ struct CalendarWidgetView: View {
                     markerEventDots(marker, color: .black, size: dotSize)
                 }
                 .frame(width: diameter, height: diameter)
-                .drawingGroup(opaque: false, colorMode: .nonLinear)
         case .outlined:
             Circle()
                 .stroke(Color.primary, lineWidth: max(1.5, diameter * 0.07))
@@ -669,66 +720,16 @@ struct CalendarWidgetView: View {
         }
     }
 
-    private var showsNextEventLine: Bool {
-        guard entry.configuration.showNextEventTime else { return false }
-        return switch resolvedView {
-        case .day:
-            true
-        case .week:
-            family != .systemSmall
-        case .month:
-            family == .systemLarge
-        }
-    }
-
+    @ViewBuilder
     private var nextEventLine: some View {
-        WidgetStatusLine(
-            text: nextEventDisplayText,
-            systemImage: "calendar.badge.clock",
-            accessibilityText: nextEventAccessibilityText,
-            typography: typography
-        )
-    }
-
-    private var nextEventDisplayText: String {
-        switch entry.events.accessState {
-        case .available:
-            guard let nextEvent = entry.events.nextEvent else { return "No timed events soon" }
-            return nextEvent.isOngoing ? "Event now" : "Next \(formattedEventTime(nextEvent.start))"
-        case .requiresPermission:
-            return "Enable Calendar access"
-        case .denied:
-            return "Calendar access off"
-        case .disabled:
-            return "Next event unavailable"
+        if let nextEventText {
+            WidgetStatusLine(
+                text: nextEventText.displayText,
+                systemImage: "calendar.badge.clock",
+                accessibilityText: nextEventText.accessibilityText,
+                typography: typography
+            )
         }
-    }
-
-    private var nextEventAccessibilityText: String {
-        switch entry.events.accessState {
-        case .available:
-            guard let nextEvent = entry.events.nextEvent else {
-                return "No timed events in the next seven days"
-            }
-            return nextEvent.isOngoing
-                ? "A calendar event is happening now"
-                : "Next calendar event at \(formattedEventTime(nextEvent.start))"
-        case .requiresPermission:
-            return "Enable Calendar access in the Desktop Widgets app"
-        case .denied:
-            return "Calendar access is turned off"
-        case .disabled:
-            return "Next event time is unavailable"
-        }
-    }
-
-    private func formattedEventTime(_ date: Date) -> String {
-        let formatter = DateFormatter()
-        formatter.calendar = calendar
-        formatter.locale = locale
-        formatter.timeZone = timeZone
-        formatter.setLocalizedDateFormatFromTemplate("jm")
-        return formatter.string(from: date)
     }
 
     private func dayAccessibilityLabel(

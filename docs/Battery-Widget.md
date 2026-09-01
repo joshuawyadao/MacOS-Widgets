@@ -37,7 +37,7 @@ WidgetKit requests a new system reading after five minutes. macOS owns actual re
 
 ## Data source and privacy
 
-The extension reads the internal power source through Apple's local IOKit power-source API. When selected, it also reads `AppleSmartBattery` registry capacity and cycle values, normalizes them, and discards invalid values. It does not request a permission, use the network, store battery history, identify the device, or inspect Bluetooth and other accessory batteries.
+The extension reads the internal power source through Apple's local IOKit power-source API. It reads `AppleSmartBattery` registry capacity and cycle values only when Health or Cycle Count is actually visible after the configured widget family's detail limit, then normalizes those values and discards invalid data. Small widgets and configurations whose visible cards do not include either diagnostic skip that registry access. The widget does not request a permission, use the network, store battery history, identify the device, or inspect Bluetooth and other accessory batteries.
 
 The time value is an operating-system estimate based on current conditions. Workload, display brightness, charging behavior, temperature, and recent power changes can make it fluctuate or disappear temporarily. When the charger is connected, macOS normally reports time to empty as zero because the Mac is not discharging; the widget does not fabricate an unplugged runtime from that state.
 

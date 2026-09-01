@@ -28,27 +28,58 @@ struct WeatherWidgetView: View {
         familyOverride ?? environmentFamily
     }
 
-    private var layout: WeatherWidgetLayoutMetrics {
-        WeatherWidgetLayoutMetrics(family: family)
-    }
-
-    private var presentation: WeatherWidgetPresentation {
-        WeatherWidgetPresentation(
-            date: entry.date,
-            configuration: entry.configuration,
-            snapshot: entry.snapshot,
-            state: entry.state,
-            family: family,
-            locale: locale
-        )
-    }
-
-    private var typography: WidgetTypographyStyle {
+    private var resolvedTypography: WidgetTypographyStyle {
         let stored = WidgetTypographyStore.live.style(for: .weather)
         return WidgetTypographyStyle(
             resolution: typographyOverride ?? stored.resolution,
             coverage: coverageOverride ?? stored.coverage
         )
+    }
+
+    var body: some View {
+        ResolvedWeatherWidgetView(
+            entry: entry,
+            family: family,
+            renderingMode: renderingMode,
+            presentation: WeatherWidgetPresentation(
+                date: entry.date,
+                configuration: entry.configuration,
+                snapshot: entry.snapshot,
+                state: entry.state,
+                family: family,
+                locale: locale
+            ),
+            typography: resolvedTypography
+        )
+    }
+}
+
+private struct ResolvedWeatherWidgetView: View {
+    let entry: WeatherEntry
+    let family: WidgetFamily
+    let renderingMode: WidgetRenderingMode
+    let presentation: WeatherWidgetPresentation
+    let typography: WidgetTypographyStyle
+    let layout: WeatherWidgetLayoutMetrics
+    let forecastTitles: [String]
+    let forecastAccessibilityLabels: [String]
+
+    init(
+        entry: WeatherEntry,
+        family: WidgetFamily,
+        renderingMode: WidgetRenderingMode,
+        presentation: WeatherWidgetPresentation,
+        typography: WidgetTypographyStyle
+    ) {
+        self.entry = entry
+        self.family = family
+        self.renderingMode = renderingMode
+        self.presentation = presentation
+        self.typography = typography
+        self.layout = WeatherWidgetLayoutMetrics(family: family)
+        let forecastTitles = presentation.forecastTitles
+        self.forecastTitles = forecastTitles
+        self.forecastAccessibilityLabels = presentation.forecastAccessibilityLabels(titles: forecastTitles)
     }
 
     var body: some View {
@@ -155,11 +186,11 @@ struct WeatherWidgetView: View {
         ) {
             ForEach(Array(days.enumerated()), id: \.offset) { index, day in
                 forecastColumn(
-                    title: presentation.forecastTitles[index],
+                    title: forecastTitles[index],
                     condition: day.condition,
                     values: presentation.metricValues(for: day),
                     isCurrent: index == 0,
-                    accessibilityLabel: presentation.forecastAccessibilityLabels[index]
+                    accessibilityLabel: forecastAccessibilityLabels[index]
                 )
                 .frame(maxWidth: .infinity)
             }
@@ -178,11 +209,11 @@ struct WeatherWidgetView: View {
         ) {
             ForEach(Array(hours.enumerated()), id: \.offset) { index, hour in
                 forecastColumn(
-                    title: presentation.forecastTitles[index],
+                    title: forecastTitles[index],
                     condition: hour.condition,
                     values: presentation.metricValues(for: hour),
                     isCurrent: index == 0,
-                    accessibilityLabel: presentation.forecastAccessibilityLabels[index]
+                    accessibilityLabel: forecastAccessibilityLabels[index]
                 )
                 .frame(maxWidth: .infinity)
             }
