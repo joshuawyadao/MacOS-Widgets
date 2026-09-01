@@ -1022,6 +1022,33 @@ final class WeatherConfigurationTests: XCTestCase {
         )
     }
 
+    func testLoaderRetainsDecodedStaleFallbackAcrossAFailedRefresh() async throws {
+        let root = FileManager.default.temporaryDirectory
+            .appendingPathComponent(UUID().uuidString, isDirectory: true)
+        defer { try? FileManager.default.removeItem(at: root) }
+        let snapshot = WeatherSnapshot.sample(
+            now: .now.addingTimeInterval(-WeatherSnapshotCache.maximumFreshAge - 1)
+        )
+        let cache = WeatherSnapshotCache(directoryURL: root)
+        try cache.save(snapshot, city: WeatherLocation.portland.cacheIdentifier)
+        let loader = WeatherLoader(
+            service: RemovingWeatherService(cacheDirectory: root),
+            cache: cache
+        )
+
+        let outcome = await loader.load(
+            location: .portland,
+            unit: .fahrenheit,
+            locale: Locale(identifier: "en_US")
+        )
+
+        XCTAssertFalse(FileManager.default.fileExists(atPath: root.path))
+        XCTAssertEqual(
+            outcome,
+            .stale(snapshot, message: "Weather is temporarily unavailable. Offline")
+        )
+    }
+
     func testLoaderDoesNotReuseCacheAcrossSameNamedCoordinates() async throws {
         let root = FileManager.default.temporaryDirectory
             .appendingPathComponent(UUID().uuidString, isDirectory: true)
@@ -1303,6 +1330,19 @@ private actor DelayedWeatherOperation {
         requestCount += 1
         try await Task.sleep(nanoseconds: 50_000_000)
         return WeatherSnapshot.sample(now: .now)
+    }
+}
+
+private struct RemovingWeatherService: WeatherServing {
+    let cacheDirectory: URL
+
+    func forecast(
+        location: WeatherLocation,
+        unit: WeatherTemperatureUnit,
+        locale: Locale
+    ) async throws -> WeatherSnapshot {
+        try FileManager.default.removeItem(at: cacheDirectory)
+        throw WeatherServiceError.requestFailed("Offline")
     }
 }
 

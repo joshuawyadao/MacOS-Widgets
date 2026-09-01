@@ -3,8 +3,7 @@ import IOKit
 import IOKit.ps
 
 struct SystemBatteryReader {
-    func snapshot() -> BatterySnapshot? {
-        let hardware = hardwareMetrics()
+    func snapshot(includeHardwareMetrics: Bool) -> BatterySnapshot? {
         guard let powerSourcesInfo = IOPSCopyPowerSourcesInfo()?.takeRetainedValue(),
               let powerSources = IOPSCopyPowerSourcesList(powerSourcesInfo)?.takeRetainedValue() as? [CFTypeRef]
         else {
@@ -19,7 +18,8 @@ struct SystemBatteryReader {
             }
 
             if let snapshot = BatteryPowerSourceParser.snapshot(from: rawDescription) {
-                return snapshot.adding(hardware)
+                guard includeHardwareMetrics else { return snapshot }
+                return snapshot.adding(hardwareMetrics())
             }
         }
 

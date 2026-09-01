@@ -1,20 +1,20 @@
 # Plan
 
-Reduce Weather network/decoding work and Calendar event-processing overhead while preserving current refresh schedules, visible content, privacy boundaries, and fallback behavior. Prefer short-lived reuse and bounded queries so smoother updates do not create resident background work or consume more battery.
+Finish the low-resource widget pass by avoiding Battery diagnostics that cannot be displayed, retaining one decoded Weather fallback through a failed refresh, and removing redundant Calendar formatting and offscreen composition. Preserve every refresh interval, visible state, privacy boundary, and configuration contract.
 
 ## Scope
-- In: 15-minute fresh Weather cache reuse, in-flight Open-Meteo request coalescing, a 24-hour hourly forecast payload with seven daily forecasts, overlapping Calendar query consolidation, linear next-event selection, focused tests, and Weather/Calendar documentation.
-- Out: More frequent WidgetKit refreshes, always-on performance logging, global long-lived presentation caches, visual-effect changes, App Intent migrations, or changes to displayed data and accessibility output.
+- In: visible-detail-driven Battery hardware reads, single-read Weather stale fallback, prepared Calendar next-event text, removal of the Calendar today-marker drawing group, focused tests, and canonical Battery/Weather/Calendar documentation.
+- Out: refresh-frequency changes, persistent monitoring, new caches, visual redesign, App Intent migrations, or changes to displayed and accessibility text.
 
 ## Action items
-- [x] Add a fresh-cache path that reuses only matching city/unit snapshots no older than 15 minutes while retaining the 24-hour stale fallback after failures.
-- [x] Coalesce simultaneous identical Open-Meteo forecasts in memory without retaining completed tasks or affecting different locations and units.
-- [x] Limit Open-Meteo hourly data to 24 forecast hours while preserving seven daily forecasts and the existing timeline/view horizon.
-- [x] Consolidate overlapping Calendar display and upcoming intervals into one bounded EventKit query, while keeping disjoint navigated-month intervals separate.
-- [x] Replace Calendar next-event sorting with a single-pass earliest eligible event selection.
-- [x] Extend Weather and Calendar tests for freshness boundaries, request reuse, request parameters, query planning, event ordering, and existing fallback behavior.
-- [x] Update `docs/Weather-Widget.md` and `docs/Calendar-Widget.md` with the resource-efficiency behavior and unchanged privacy/refresh contracts.
-- [x] Run focused tests, `./Scripts/verify-widgets.sh`, `git diff --check`, and a final concurrency/localization/privacy review.
+- [x] Derive Battery hardware-reading requirements from the details visible for the configured widget family and skip `AppleSmartBattery` registry access otherwise.
+- [x] Retain one decoded Weather cache candidate across the refresh attempt so offline fallback does not reread and redecode the same file.
+- [x] Prepare Calendar next-event display and accessibility strings together with one locale-aware formatter per render.
+- [x] Remove the Calendar today marker's unnecessary offscreen `drawingGroup` while preserving its composition and render coverage.
+- [x] Extend Battery, Weather, and Calendar unit tests for visible diagnostic requirements, retained fallback behavior, and next-event text states.
+- [x] Update `docs/Battery-Widget.md`, `docs/Weather-Widget.md`, and `docs/Calendar-Widget.md` with the final resource-efficiency contracts.
+- [x] Run focused suites, `./Scripts/verify-widgets.sh`, `git diff --check`, and a final refresh/privacy/render review.
+- [x] Commit and push the completed plan to `codex/widget-render-performance` with the save-branch workflow.
 
 ## Open questions
 - None.

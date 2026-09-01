@@ -435,6 +435,92 @@ final class CalendarWidgetTests: XCTestCase {
         XCTAssertFalse(timing.isOngoing)
     }
 
+    func testNextEventTextPreparesDisplayAndAccessibilityFromOneLocalizedTime() throws {
+        let calendar = gregorianCalendar(firstWeekday: 1)
+        let start = try XCTUnwrap(calendar.date(from: DateComponents(
+            year: 2026,
+            month: 8,
+            day: 9,
+            hour: 15,
+            minute: 30
+        )))
+        let snapshot = CalendarEventSnapshot(
+            accessState: .available,
+            countsByDay: [:],
+            nextEvent: CalendarNextEventTiming(
+                start: start,
+                end: start.addingTimeInterval(60 * 60),
+                isOngoing: false
+            )
+        )
+
+        let presentation = CalendarNextEventTextPresentation(
+            snapshot: snapshot,
+            calendar: calendar,
+            locale: Locale(identifier: "en_US"),
+            timeZone: calendar.timeZone
+        )
+        let formatter = DateFormatter()
+        formatter.calendar = calendar
+        formatter.locale = Locale(identifier: "en_US")
+        formatter.timeZone = calendar.timeZone
+        formatter.setLocalizedDateFormatFromTemplate("jm")
+        let expectedTime = formatter.string(from: start)
+
+        XCTAssertEqual(presentation.displayText, "Next \(expectedTime)")
+        XCTAssertEqual(presentation.accessibilityText, "Next calendar event at \(expectedTime)")
+    }
+
+    func testNextEventTextPreservesEmptyAndPermissionStates() {
+        let calendar = gregorianCalendar(firstWeekday: 1)
+        let cases: [(CalendarEventSnapshot, String, String)] = [
+            (
+                CalendarEventSnapshot(
+                    accessState: .available,
+                    countsByDay: [:],
+                    nextEvent: CalendarNextEventTiming(
+                        start: Date(timeIntervalSince1970: 1_786_262_940),
+                        end: Date(timeIntervalSince1970: 1_786_266_540),
+                        isOngoing: true
+                    )
+                ),
+                "Event now",
+                "A calendar event is happening now"
+            ),
+            (
+                CalendarEventSnapshot(accessState: .available, countsByDay: [:]),
+                "No timed events soon",
+                "No timed events in the next seven days"
+            ),
+            (
+                CalendarEventSnapshot(accessState: .requiresPermission, countsByDay: [:]),
+                "Enable Calendar access",
+                "Enable Calendar access in the Desktop Widgets app"
+            ),
+            (
+                CalendarEventSnapshot(accessState: .denied, countsByDay: [:]),
+                "Calendar access off",
+                "Calendar access is turned off"
+            ),
+            (
+                .disabled,
+                "Next event unavailable",
+                "Next event time is unavailable"
+            ),
+        ]
+
+        for (snapshot, displayText, accessibilityText) in cases {
+            let presentation = CalendarNextEventTextPresentation(
+                snapshot: snapshot,
+                calendar: calendar,
+                locale: Locale(identifier: "en_US"),
+                timeZone: calendar.timeZone
+            )
+            XCTAssertEqual(presentation.displayText, displayText)
+            XCTAssertEqual(presentation.accessibilityText, accessibilityText)
+        }
+    }
+
     func testNextEventTimeCanBeEnabledWithoutEventIndicators() {
         let configuration = CalendarConfigurationIntent()
         configuration.showEvents = false

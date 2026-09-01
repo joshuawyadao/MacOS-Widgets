@@ -59,7 +59,9 @@ struct WeatherLoader: Sendable {
     func load(location: WeatherLocation, unit: WeatherTemperatureUnit, locale: Locale) async -> WeatherLoadOutcome {
         let resolvedUnit = unit.resolved(for: locale)
         let cacheKey = location.cacheIdentifier
-        if let cached = cache.loadFresh(city: cacheKey, unit: resolvedUnit) {
+        let now = Date.now
+        let cached = cache.load(city: cacheKey, unit: resolvedUnit, now: now)
+        if let cached, cache.isFresh(cached, now: now) {
             return .fresh(cached)
         }
 
@@ -69,7 +71,7 @@ struct WeatherLoader: Sendable {
             return .fresh(snapshot)
         } catch {
             let message = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
-            if let cached = cache.load(city: cacheKey, unit: resolvedUnit) {
+            if let cached {
                 return .stale(cached, message: message)
             }
             return .failed(
@@ -394,10 +396,14 @@ struct WeatherSnapshotCache: Sendable {
         now: Date = .now
     ) -> WeatherSnapshot? {
         guard let snapshot = load(city: city, unit: unit, now: now),
-              now.timeIntervalSince(snapshot.fetchedAt) <= Self.maximumFreshAge else {
+              isFresh(snapshot, now: now) else {
             return nil
         }
         return snapshot
+    }
+
+    func isFresh(_ snapshot: WeatherSnapshot, now: Date = .now) -> Bool {
+        now.timeIntervalSince(snapshot.fetchedAt) <= Self.maximumFreshAge
     }
 
     func load(

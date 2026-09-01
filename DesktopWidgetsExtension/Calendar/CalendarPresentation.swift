@@ -27,6 +27,50 @@ struct CalendarDayMarkerPresentation: Equatable, Sendable {
     }
 }
 
+struct CalendarNextEventTextPresentation: Equatable, Sendable {
+    let displayText: String
+    let accessibilityText: String
+
+    init(
+        snapshot: CalendarEventSnapshot,
+        calendar: Calendar,
+        locale: Locale,
+        timeZone: TimeZone
+    ) {
+        switch snapshot.accessState {
+        case .available:
+            guard let nextEvent = snapshot.nextEvent else {
+                displayText = "No timed events soon"
+                accessibilityText = "No timed events in the next seven days"
+                return
+            }
+            guard !nextEvent.isOngoing else {
+                displayText = "Event now"
+                accessibilityText = "A calendar event is happening now"
+                return
+            }
+
+            let formatter = DateFormatter()
+            formatter.calendar = calendar
+            formatter.locale = locale
+            formatter.timeZone = timeZone
+            formatter.setLocalizedDateFormatFromTemplate("jm")
+            let timeText = formatter.string(from: nextEvent.start)
+            displayText = "Next \(timeText)"
+            accessibilityText = "Next calendar event at \(timeText)"
+        case .requiresPermission:
+            displayText = "Enable Calendar access"
+            accessibilityText = "Enable Calendar access in the Desktop Widgets app"
+        case .denied:
+            displayText = "Calendar access off"
+            accessibilityText = "Calendar access is turned off"
+        case .disabled:
+            displayText = "Next event unavailable"
+            accessibilityText = "Next event time is unavailable"
+        }
+    }
+}
+
 enum CalendarDayFocusAccessibility {
     static func label(
         dateLabel: String,

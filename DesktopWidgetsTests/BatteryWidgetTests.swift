@@ -30,16 +30,19 @@ final class BatteryWidgetTests: XCTestCase {
         XCTAssertEqual(small.visibleDetails, [])
         XCTAssertEqual(small.limit, 0)
         XCTAssertEqual(small.hiddenCount, 4)
+        XCTAssertFalse(small.requiresHardwareMetrics)
 
         let medium = BatteryDetailSelection(configuration: configuration, family: .systemMedium)
         XCTAssertEqual(medium.visibleDetails, [.status, .updated])
         XCTAssertEqual(medium.limit, 2)
         XCTAssertEqual(medium.hiddenCount, 2)
+        XCTAssertFalse(medium.requiresHardwareMetrics)
 
         let large = BatteryDetailSelection(configuration: configuration, family: .systemLarge)
         XCTAssertEqual(large.visibleDetails, [.power, .status, .estimate, .updated])
         XCTAssertEqual(large.limit, 6)
         XCTAssertEqual(large.hiddenCount, 0)
+        XCTAssertFalse(large.requiresHardwareMetrics)
     }
 
     func testLargeFamilyCanShowAllSixDetails() {
@@ -51,6 +54,31 @@ final class BatteryWidgetTests: XCTestCase {
 
         XCTAssertEqual(selection.visibleDetails, BatteryDetail.allCases)
         XCTAssertEqual(selection.hiddenCount, 0)
+        XCTAssertTrue(selection.requiresHardwareMetrics)
+    }
+
+    func testHardwareMetricsAreRequestedOnlyWhenDiagnosticsAreVisible() {
+        let configuration = BatteryConfigurationIntent()
+        configuration.showHealth = true
+        configuration.showCycles = true
+
+        XCTAssertFalse(
+            BatteryDetailSelection(
+                configuration: configuration,
+                family: .systemSmall
+            ).requiresHardwareMetrics
+        )
+
+        configuration.showPower = false
+        configuration.showStatus = false
+        configuration.showEstimate = false
+        configuration.showUpdated = false
+        XCTAssertTrue(
+            BatteryDetailSelection(
+                configuration: configuration,
+                family: .systemMedium
+            ).requiresHardwareMetrics
+        )
     }
 
     func testMediumUsesTheNextEnabledDetailsAndAllowsAnEmptySelection() {

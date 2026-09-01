@@ -169,14 +169,14 @@ private struct ResolvedCalendarWidgetView: View {
     let entry: CalendarEntry
     let family: WidgetFamily
     let renderingMode: WidgetRenderingMode
-    let locale: Locale
-    let timeZone: TimeZone
     let calendar: Calendar
     let typography: WidgetTypographyStyle
     let resolvedView: CalendarResolvedView
     let monthMetrics: CalendarWidgetLayoutMetrics
     let columns: [GridItem]
     let presentation: CalendarWidgetPresentation
+    let showsNextEventLine: Bool
+    let nextEventText: CalendarNextEventTextPresentation?
 
     init(
         entry: CalendarEntry,
@@ -190,14 +190,27 @@ private struct ResolvedCalendarWidgetView: View {
         self.entry = entry
         self.family = family
         self.renderingMode = renderingMode
-        self.locale = locale
-        self.timeZone = timeZone
         self.calendar = calendar
         self.typography = typography
         let resolvedView = entry.configuration.resolvedView(for: family)
         self.resolvedView = resolvedView
         self.monthMetrics = CalendarWidgetLayoutMetrics(family: family)
         self.columns = Array(repeating: GridItem(.flexible(minimum: 0), spacing: 0), count: 7)
+        let supportsNextEventLine = switch resolvedView {
+        case .day: true
+        case .week: family != .systemSmall
+        case .month: family == .systemLarge
+        }
+        let shouldShowNextEventLine = entry.configuration.showNextEventTime && supportsNextEventLine
+        self.showsNextEventLine = shouldShowNextEventLine
+        self.nextEventText = shouldShowNextEventLine
+            ? CalendarNextEventTextPresentation(
+                snapshot: entry.events,
+                calendar: calendar,
+                locale: locale,
+                timeZone: timeZone
+            )
+            : nil
 
         switch resolvedView {
         case .day:
@@ -348,8 +361,8 @@ private struct ResolvedCalendarWidgetView: View {
             accessState: entry.configuration.showEvents ? entry.events.accessState : .disabled,
             eventCount: count
         )
-        guard entry.configuration.showNextEventTime else { return dayLabel }
-        return "\(dayLabel), \(nextEventAccessibilityText)"
+        guard let nextEventText else { return dayLabel }
+        return "\(dayLabel), \(nextEventText.accessibilityText)"
     }
 
     private func weekView(_ weekPresentation: CalendarWeekPresentation) -> some View {
@@ -643,7 +656,6 @@ private struct ResolvedCalendarWidgetView: View {
                     markerEventDots(marker, color: .black, size: dotSize)
                 }
                 .frame(width: diameter, height: diameter)
-                .drawingGroup(opaque: false, colorMode: .nonLinear)
         case .outlined:
             Circle()
                 .stroke(Color.primary, lineWidth: max(1.5, diameter * 0.07))
@@ -709,66 +721,16 @@ private struct ResolvedCalendarWidgetView: View {
         }
     }
 
-    private var showsNextEventLine: Bool {
-        guard entry.configuration.showNextEventTime else { return false }
-        return switch resolvedView {
-        case .day:
-            true
-        case .week:
-            family != .systemSmall
-        case .month:
-            family == .systemLarge
-        }
-    }
-
+    @ViewBuilder
     private var nextEventLine: some View {
-        WidgetStatusLine(
-            text: nextEventDisplayText,
-            systemImage: "calendar.badge.clock",
-            accessibilityText: nextEventAccessibilityText,
-            typography: typography
-        )
-    }
-
-    private var nextEventDisplayText: String {
-        switch entry.events.accessState {
-        case .available:
-            guard let nextEvent = entry.events.nextEvent else { return "No timed events soon" }
-            return nextEvent.isOngoing ? "Event now" : "Next \(formattedEventTime(nextEvent.start))"
-        case .requiresPermission:
-            return "Enable Calendar access"
-        case .denied:
-            return "Calendar access off"
-        case .disabled:
-            return "Next event unavailable"
+        if let nextEventText {
+            WidgetStatusLine(
+                text: nextEventText.displayText,
+                systemImage: "calendar.badge.clock",
+                accessibilityText: nextEventText.accessibilityText,
+                typography: typography
+            )
         }
-    }
-
-    private var nextEventAccessibilityText: String {
-        switch entry.events.accessState {
-        case .available:
-            guard let nextEvent = entry.events.nextEvent else {
-                return "No timed events in the next seven days"
-            }
-            return nextEvent.isOngoing
-                ? "A calendar event is happening now"
-                : "Next calendar event at \(formattedEventTime(nextEvent.start))"
-        case .requiresPermission:
-            return "Enable Calendar access in the Desktop Widgets app"
-        case .denied:
-            return "Calendar access is turned off"
-        case .disabled:
-            return "Next event time is unavailable"
-        }
-    }
-
-    private func formattedEventTime(_ date: Date) -> String {
-        let formatter = DateFormatter()
-        formatter.calendar = calendar
-        formatter.locale = locale
-        formatter.timeZone = timeZone
-        formatter.setLocalizedDateFormatFromTemplate("jm")
-        return formatter.string(from: date)
     }
 
     private func dayAccessibilityLabel(
