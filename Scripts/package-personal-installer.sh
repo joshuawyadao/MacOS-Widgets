@@ -24,6 +24,11 @@ readonly PACKAGE_ITEMS=(
     "Installation Guide.md"
     "README.md"
 )
+readonly RECIPIENT_EXCLUDED_ITEMS=(
+    "docs/App-Icon-Concepts.md"
+    "docs/Implementation-Plan.md"
+    "docs/images/app-icon-concepts"
+)
 
 for item in "${PACKAGE_ITEMS[@]}"; do
     case "$OUTPUT_PATH" in
@@ -60,6 +65,18 @@ copy_item() {
 for item in "${PACKAGE_ITEMS[@]}"; do
     copy_item "$item"
 done
+for item in "${RECIPIENT_EXCLUDED_ITEMS[@]}"; do
+    excluded_path="$PAYLOAD_ROOT/$item"
+    case "$excluded_path" in
+    "$PAYLOAD_ROOT"/*)
+        /bin/rm -rf -- "$excluded_path"
+        ;;
+    *)
+        echo "Refusing unexpected recipient-exclusion path: $excluded_path" >&2
+        exit 1
+        ;;
+    esac
+done
 
 while IFS= read -r local_artifact; do
     case "$local_artifact" in
@@ -83,12 +100,20 @@ done < <(/usr/bin/find "$PAYLOAD_ROOT" \( \
 \) -prune -print)
 
 /usr/bin/printf '%s\n' \
-    'Desktop Widgets personal installation handoff' \
+    'DESKTOP WIDGETS — START HERE' \
     '' \
-    'Start with Installation Guide.md.' \
-    'The installer includes optional low-resource automatic maintenance plus manual enable, disable, and refresh commands.' \
-    'No Apple Account, Team ID, certificate, provisioning profile, build product, diagnostic log, or Git history is included.' \
-    > "$PAYLOAD_ROOT/Package Contents.txt"
+    'Already have Xcode installed and signed in? Double-click Install Desktop Widgets.command now.' \
+    '' \
+    'First time:' \
+    '1. Install Xcode from the Mac App Store and open it once.' \
+    '2. In Xcode > Settings > Accounts, add your Apple Account.' \
+    '3. Double-click Install Desktop Widgets.command and press Return to enable easy automatic maintenance.' \
+    '4. When Desktop Widgets opens, Control-click the desktop > Edit Widgets, search for Desktop Widgets, and add the widgets you want.' \
+    '' \
+    'Then open Appearance in the app, choose your Weather city when editing that widget, and enable Calendar only if you want private event timing.' \
+    'If anything stops, open Installation Guide.md for the matching fix.' \
+    'The installer never asks for or stores your Apple password.' \
+    > "$PAYLOAD_ROOT/START HERE.txt"
 
 if /usr/bin/find "$PAYLOAD_ROOT" \( \
     -name '.git' -o \
@@ -111,7 +136,7 @@ fi
 
 /bin/mkdir -p "$(/usr/bin/dirname "$OUTPUT_PATH")"
 /bin/rm -f -- "$OUTPUT_PATH"
-/usr/bin/ditto -c -k --sequesterRsrc --keepParent "$PAYLOAD_ROOT" "$OUTPUT_PATH"
+/usr/bin/ditto -c -k --norsrc --noextattr --noqtn --noacl --keepParent "$PAYLOAD_ROOT" "$OUTPUT_PATH"
 
 echo "Created a clean handoff package:"
 echo "$OUTPUT_PATH"

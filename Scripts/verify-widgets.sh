@@ -64,6 +64,7 @@ readonly SIGNING_CONFIGURATION="$PROJECT_ROOT/Config/Signing.xcconfig"
 readonly APP_ASSET_CATALOG="$PROJECT_ROOT/DesktopWidgetsApp/Resources/Assets.xcassets"
 readonly APP_ICON_SET="$APP_ASSET_CATALOG/AppIcon.appiconset"
 readonly APP_ICON_MANIFEST="$APP_ICON_SET/Contents.json"
+readonly RELEASE_MARKETING_VERSION="1.0.0"
 SELECTED_DEVELOPER_DIR="$(resolve_developer_dir)"
 readonly SELECTED_DEVELOPER_DIR
 readonly VERIFY_DIRECTORY="$(mktemp -d "${TMPDIR:-/tmp}/desktop-widgets-verify.XXXXXX")"
@@ -167,6 +168,11 @@ if [[ "$APP_ICON_SETTING_COUNT" != "2" ]]; then
     echo "FAIL: Expected the app Debug and Release configurations to compile AppIcon" >&2
     exit 1
 fi
+readonly RELEASE_VERSION_SETTING_COUNT="$(grep -c "MARKETING_VERSION = $RELEASE_MARKETING_VERSION;" "$PROJECT_PATH/project.pbxproj")"
+if [[ "$RELEASE_VERSION_SETTING_COUNT" != "6" ]]; then
+    echo "FAIL: Expected every build configuration to use marketing version $RELEASE_MARKETING_VERSION" >&2
+    exit 1
+fi
 require_file "$APP_ASSET_CATALOG/Contents.json" "companion-app asset catalog metadata"
 require_file "$APP_ICON_MANIFEST" "companion-app icon-set metadata"
 for icon_contract in \
@@ -238,6 +244,10 @@ require_contains "$PROJECT_ROOT/DesktopWidgetsApp/Views/HelpAndPrivacyPage.swift
 require_contains "$INSTALL_GUIDE" "Enable Automatic Refresh.command" "automatic maintenance enable guidance"
 require_contains "$INSTALL_GUIDE" "automatic-refresh.log" "automatic maintenance diagnostics guidance"
 require_contains "$INSTALL_GUIDE" "profile-free" "Xcode profile-free Personal Team guidance"
+require_contains "$INSTALL_GUIDE" "Make it yours" "post-install personalization guidance"
+require_contains "$INSTALL_GUIDE" "select your city" "Weather city personalization guidance"
+require_contains "$INSTALL_GUIDE" "Calendar access is optional" "optional Calendar guidance"
+require_contains "$FRIENDLY_INSTALL_SCRIPT" "Make it yours" "installer completion personalization guidance"
 require_contains "$FRIENDLY_INSTALL_LIBRARY" "desktop_widgets_validate_required_entitlements" "complete signed-entitlement validation"
 require_contains "$FRIENDLY_INSTALL_SCRIPT" "profile-free macOS Apple Development signatures" "profile-free signing acceptance after validation"
 require_contains "$AUTOMATIC_REFRESH_LIBRARY" "DESKTOP_WIDGETS_PROFILELESS_RENEWAL_SECONDS=604800" "conservative profile-free renewal deadline"
@@ -283,6 +293,13 @@ require_file "$APP_ICON_RESOURCE" "compiled companion-app icon"
 require_file "$EXTENSION_INFO" "embedded WidgetKit extension"
 require_file "$EXTENSION_BINARY" "widget extension executable"
 require_file "$APP_INTENTS_METADATA" "App Intents metadata"
+
+readonly APP_RELEASE_VERSION="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' "$APP_PATH/Contents/Info.plist")"
+readonly EXTENSION_RELEASE_VERSION="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' "$EXTENSION_INFO")"
+if [[ "$APP_RELEASE_VERSION" != "$RELEASE_MARKETING_VERSION" || "$EXTENSION_RELEASE_VERSION" != "$RELEASE_MARKETING_VERSION" ]]; then
+    echo "FAIL: App and extension must both report release version $RELEASE_MARKETING_VERSION" >&2
+    exit 1
+fi
 
 readonly EXTENSION_POINT="$(/usr/libexec/PlistBuddy -c "Print :NSExtension:NSExtensionPointIdentifier" "$EXTENSION_INFO")"
 if [[ "$EXTENSION_POINT" != "com.apple.widgetkit-extension" ]]; then

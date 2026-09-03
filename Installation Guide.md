@@ -10,9 +10,17 @@ You do not need to know how to code. The setup command handles the build, instal
 4. Quit Xcode. In this folder, double-click **Install Desktop Widgets.command**.
 5. When asked about automatic maintenance, press Return to choose **Yes**. This is the recommended choice.
 6. When the app opens, Control-click the desktop, choose **Edit Widgets**, search for **Desktop Widgets**, and drag the widgets you want into place.
-7. Open **Appearance** in the Desktop Widgets app to choose a style.
+7. Use the short **Make it yours** checklist below.
 
 Apple requires you to place widgets yourself. Desktop Widgets cannot automatically arrange your desktop.
+
+## Make it yours
+
+- Open **Appearance** in the Desktop Widgets app to choose one coordinated style for every widget.
+- Control-click a placed Weather widget, choose **Edit Widget**, and select your city and preferred details.
+- Calendar access is optional. Enable it from **Home** or **Calendar** in the app only if you want private event dots, counts, or next-event timing.
+
+Each placed widget keeps its own choices, so you can add multiple sizes or configurations without changing the others.
 
 ## Automatic maintenance
 

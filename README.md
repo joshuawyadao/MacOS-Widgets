@@ -7,7 +7,7 @@
 
 A native SwiftUI companion app and WidgetKit extension for four configurable desktop widgets: **Time & Date**, **Weather**, **Battery**, and **Calendar**. The project favors local data, explicit permissions, accessible presentation, and free Personal Team builds over subscriptions or a hosted backend.
 
-> **Project status:** Source-first personal project. Build locally with Xcode and a free Apple Personal Team; no pre-signed binary is distributed.
+> **Project status:** Version 1.0 source-first personal release. Build locally with Xcode and a free Apple Personal Team; no pre-signed binary is distributed.
 
 ![Time & Date, Weather, Battery, and Calendar widgets rendered in a two-by-two showcase](docs/images/widgets-preview.png)
 
@@ -74,7 +74,7 @@ For a non-developer, start with [Installation Guide.md](Installation%20Guide.md)
 
 The installer never requests, prints, or stores an Apple password or authentication token. It writes bounded redacted logs under `~/Library/Logs/Desktop Widgets`, keeps its reusable source under `~/Library/Application Support/Desktop Widgets/Installer`, and uses the existing guarded runtime refresh that never unregisters unrelated extensions. **Enable Automatic Refresh.command** and **Disable Automatic Refresh.command** safely control only Desktop Widgets' own user schedule; the manual refresher always remains available.
 
-Run **Package Desktop Widgets for Another Mac.command** to create a clean handoff ZIP without Git history, build products, local signing settings, certificates, profiles, or logs. A future paid Developer ID/notarization route is documented separately in [Paid distribution path](docs/Paid-Distribution-Path.md); it is not implemented or required here.
+Run **Package Desktop Widgets for Another Mac.command** to create a clean handoff ZIP that leads with `START HERE.txt` and excludes Git history, internal implementation plans, icon-review artifacts, build products, local signing settings, certificates, profiles, and logs. A future paid Developer ID/notarization route is documented separately in [Paid distribution path](docs/Paid-Distribution-Path.md); it is not implemented or required here.
 
 Existing Time & Date, Battery, and Calendar widget identities and configurations remain compatible. The Weather build-15 identity still requires replacing only older build-14 Weather copies. Appearance themes, App Intent schemas, per-widget options, and existing placed widgets remain unchanged whenever macOS can preserve them under the stable local bundle identifiers.
 

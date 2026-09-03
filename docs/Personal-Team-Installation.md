@@ -61,4 +61,4 @@ A failed renewal is retried at the next daily check. The user is notified at mos
 
 ## Handoff packaging
 
-Run `Package Desktop Widgets for Another Mac.command` or `Scripts/package-personal-installer.sh`. The resulting `Desktop-Widgets-Personal-Installer.zip` contains the source, project, guide, installer, manual refresher, and automatic-maintenance enable/disable commands required on the other Mac. It intentionally excludes Git metadata, `Local.xcconfig`, certificates, profiles, build products, and logs.
+Run `Package Desktop Widgets for Another Mac.command` or `Scripts/package-personal-installer.sh`. The resulting `Desktop-Widgets-Personal-Installer.zip` leads with `START HERE.txt` and contains the source, project, guide, installer, manual refresher, and automatic-maintenance enable/disable commands required on the other Mac. It intentionally excludes Git metadata, internal implementation plans and icon-review artifacts, `Local.xcconfig`, certificates, profiles, build products, and logs.
