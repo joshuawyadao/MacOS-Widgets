@@ -13,7 +13,7 @@ Finish the free personal-handoff path for Desktop Widgets by promoting the build
 - [x] Make installer completion and `Installation Guide.md` explain the immediate add, appearance, Weather city, optional Calendar, and automatic-maintenance actions in plain language.
 - [x] Extend package regression tests for `START HERE.txt`, production app-icon resources, version metadata, and excluded internal design artifacts.
 - [x] Run targeted shell/package tests, the complete `./Scripts/verify-widgets.sh` gate, `git diff --check`, and generate the final ignored handoff ZIP.
-- [ ] Review the scoped diff, commit and push `codex/desktop-widget-app-icons`, then run the PR review cycle through green CI and merge-ready status.
+- [x] Review the scoped diff, commit and push `codex/desktop-widget-app-icons`, then run the PR review cycle through green CI and merge-ready status.
 
 ## Open questions
 - None.
