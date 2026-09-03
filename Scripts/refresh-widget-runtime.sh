@@ -9,6 +9,7 @@ readonly PKILL_COMMAND="${WIDGET_REFRESH_PKILL_COMMAND:-/usr/bin/pkill}"
 readonly ID_COMMAND="${WIDGET_REFRESH_ID_COMMAND:-/usr/bin/id}"
 readonly PLISTBUDDY_COMMAND="${WIDGET_REFRESH_PLISTBUDDY_COMMAND:-/usr/libexec/PlistBuddy}"
 readonly DERIVED_DATA_ROOTS="${WIDGET_REFRESH_DERIVED_DATA_ROOTS:-${WIDGET_REFRESH_DERIVED_DATA_ROOT:-${HOME}/Library/Developer/Xcode/DerivedData}}"
+readonly HISTORIC_DEFAULT_EXTENSION_BUNDLE_IDENTIFIER="com.joshuawyadao.DesktopWidgets.Widgets"
 
 if [[ -z "$APP_PATH" || ! -d "$EXTENSION_PATH" ]]; then
     echo "Widget runtime refresh skipped: built extension not found at $EXTENSION_PATH" >&2
@@ -66,16 +67,31 @@ unregister_stale_development_copies() {
     done <<< "$registrations"
 }
 
+legacy_extension_bundle_identifiers() {
+    local current_identifier="$1"
+
+    /usr/bin/printf '%s\n' "$HISTORIC_DEFAULT_EXTENSION_BUNDLE_IDENTIFIER"
+    case "$current_identifier" in
+    io.desktopwidgets.personal.*.app.widgets)
+        /usr/bin/printf '%s\n' "${current_identifier%.app.widgets}.widgets"
+        ;;
+    esac
+}
+
 readonly CURRENT_EXTENSION_PATH="$(canonical_directory "$EXTENSION_PATH")"
 readonly EXTENSION_BUNDLE_IDENTIFIER="$("$PLISTBUDDY_COMMAND" -c 'Print :CFBundleIdentifier' "$CURRENT_EXTENSION_PATH/Contents/Info.plist")"
 
 # Xcode replaces the extension executable in place, but chronod can keep the old
 # process and descriptor alive. Multiple Xcode worktrees can also register the
-# same bundle identifier from different DerivedData directories. Remove only
-# those stale development registrations, then register the current bundle and
-# restart the current user's widget daemon. Installed copies outside DerivedData
-# and all placed-widget configuration remain untouched.
+# same or a retired Desktop Widgets bundle identifier from different DerivedData
+# directories. Remove only those stale development registrations, then register
+# the current bundle and restart the current user's widget daemon. Installed
+# copies outside DerivedData and all placed-widget configuration remain untouched.
 unregister_stale_development_copies "$CURRENT_EXTENSION_PATH" "$EXTENSION_BUNDLE_IDENTIFIER"
+while IFS= read -r legacy_identifier; do
+    [[ -n "$legacy_identifier" && "$legacy_identifier" != "$EXTENSION_BUNDLE_IDENTIFIER" ]] || continue
+    unregister_stale_development_copies "$CURRENT_EXTENSION_PATH" "$legacy_identifier"
+done < <(legacy_extension_bundle_identifiers "$EXTENSION_BUNDLE_IDENTIFIER")
 "$PKILL_COMMAND" -x DesktopWidgetsExtension 2>/dev/null || true
 "$PLUGINKIT_COMMAND" -a "$CURRENT_EXTENSION_PATH"
 "$PKILL_COMMAND" -x -u "$("$ID_COMMAND" -u)" chronod 2>/dev/null || true

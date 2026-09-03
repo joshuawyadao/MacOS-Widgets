@@ -1,19 +1,18 @@
 # Plan
 
-Finish the free personal-handoff path for Desktop Widgets by promoting the build to 1.0, reducing gift-package clutter, and making the first-run and maintenance instructions immediately actionable for a non-developer. Strengthen regression coverage for the handoff contents and version contract, generate the final ZIP, then publish the branch through the full PR review cycle.
+Close the iconless upgrade path discovered during real installation by teaching the widget-runtime refresh to remove known legacy Desktop Widgets registrations from DerivedData even when the current Personal Team build uses a newer bundle identifier. Preserve the existing exact-path safety boundary, add a focused regression test, update the runtime documentation, then re-run the PR review and CI gates.
 
 ## Scope
-- In: Version 1.0 build metadata, a prominent package-only `START HERE.txt`, concise post-install personalization guidance, exclusion of internal planning/icon-review artifacts from the gift ZIP, package and release verification, final ZIP generation, branch save, and PR shepherding.
-- Out: Paid Developer ID/notarization, actions on the recipient's Mac, personalized city/theme choices that require her preferences, and non-user-facing Calendar/Weather presentation refactors.
+- In: Legacy Desktop Widgets extension-ID cleanup under configured DerivedData roots, current/external registration preservation, focused shell coverage, runtime-refresh documentation, full verification, branch save, and PR re-review.
+- Out: Deleting DerivedData products, unregistering apps outside DerivedData, changing current Personal Team identifiers, removing placed widgets or preferences, and paid distribution.
 
 ## Action items
-- [x] Set app, extension, and test build configurations to marketing version 1.0.0 and verify the built app/extension expose the same release version.
-- [x] Replace the package's internal `Package Contents.txt` note with a prominent `START HERE.txt` that leads with the one-click installer and four short setup steps.
-- [x] Exclude implementation plans, app-icon review documentation, and unselected concept images from the recipient ZIP while keeping production icon resources intact.
-- [x] Make installer completion and `Installation Guide.md` explain the immediate add, appearance, Weather city, optional Calendar, and automatic-maintenance actions in plain language.
-- [x] Extend package regression tests for `START HERE.txt`, production app-icon resources, version metadata, and excluded internal design artifacts.
-- [x] Run targeted shell/package tests, the complete `./Scripts/verify-widgets.sh` gate, `git diff --check`, and generate the final ignored handoff ZIP.
-- [x] Review the scoped diff, commit and push `codex/desktop-widget-app-icons`, then run the PR review cycle through green CI and merge-ready status.
+- [x] Extend `Scripts/refresh-widget-runtime.sh` with the known pre-installer extension identifier and query it separately when the current extension uses a Personal Team identifier.
+- [x] Preserve the current extension path and every matching registration outside the configured DerivedData roots.
+- [x] Update `Scripts/test-refresh-widget-runtime.sh` with separate current-ID and legacy-ID registrations that reproduce the observed blank legacy gallery entry.
+- [x] Update the canonical runtime-refresh notes in `docs/Personal-Team-Installation.md` and `docs/Weather-Widget.md`.
+- [x] Run the focused runtime-refresh test, shell syntax checks, a live legacy-registration migration check, the complete `./Scripts/verify-widgets.sh` gate, `git diff --check`, and regenerate the ignored handoff ZIP.
+- [x] Prepare the scoped Brooks fix for branch save and fresh Codex review, CI Verify, review-thread, and mergeability checks.
 
 ## Open questions
 - None.

@@ -47,7 +47,7 @@ The generated widget-extension identifier begins with the generated host-app ide
 
 The stable source copy lives at `~/Library/Application Support/Desktop Widgets/Installer`, build intermediates live beside it, the app installs at `~/Applications/Desktop Widgets.app`, and redacted logs live under `~/Library/Logs/Desktop Widgets`.
 
-The runtime refresh delegates to `Scripts/refresh-widget-runtime.sh`. Its stale-registration guard unregisters only other matching Desktop Widgets development extensions under the selected DerivedData root. It never unregisters unrelated extensions, removes unrelated apps, or deletes placed-widget configuration.
+The runtime refresh delegates to `Scripts/refresh-widget-runtime.sh`. Its stale-registration guard unregisters other matching Desktop Widgets development extensions under the selected DerivedData roots, including the historic default identifier and the pre-correction Personal Team identifier. That migration cleanup prevents an older iconless gallery entry from surviving beside the current installation. It never unregisters extensions outside DerivedData, removes apps or build products, or deletes placed-widget configuration.
 
 ## Automatic maintenance
 
