@@ -37,9 +37,18 @@ is_stale_development_registration() {
     return 1
 }
 
-unregister_stale_development_copies() {
+is_legacy_registration_to_remove() {
+    local registered_path="$1"
+    local current_path="$2"
+
+    [[ "$registered_path" == "$current_path" ]] && return 0
+    is_stale_development_registration "$registered_path" "$current_path"
+}
+
+unregister_matching_copies() {
     local current_path="$1"
     local bundle_identifier="$2"
+    local path_predicate="$3"
     local registrations
     local line
     local registered_path
@@ -55,7 +64,7 @@ unregister_stale_development_copies() {
             if [[ -d "$comparison_path" ]]; then
                 comparison_path="$(canonical_directory "$comparison_path")"
             fi
-            if is_stale_development_registration "$comparison_path" "$current_path"; then
+            if "$path_predicate" "$comparison_path" "$current_path"; then
                 if "$PLUGINKIT_COMMAND" -r "$registered_path"; then
                     echo "Unregistered stale Desktop Widgets extension at $registered_path"
                 else
@@ -87,10 +96,10 @@ readonly EXTENSION_BUNDLE_IDENTIFIER="$("$PLISTBUDDY_COMMAND" -c 'Print :CFBundl
 # directories. Remove only those stale development registrations, then register
 # the current bundle and restart the current user's widget daemon. Installed
 # copies outside DerivedData and all placed-widget configuration remain untouched.
-unregister_stale_development_copies "$CURRENT_EXTENSION_PATH" "$EXTENSION_BUNDLE_IDENTIFIER"
+unregister_matching_copies "$CURRENT_EXTENSION_PATH" "$EXTENSION_BUNDLE_IDENTIFIER" is_stale_development_registration
 while IFS= read -r legacy_identifier; do
     [[ -n "$legacy_identifier" && "$legacy_identifier" != "$EXTENSION_BUNDLE_IDENTIFIER" ]] || continue
-    unregister_stale_development_copies "$CURRENT_EXTENSION_PATH" "$legacy_identifier"
+    unregister_matching_copies "$CURRENT_EXTENSION_PATH" "$legacy_identifier" is_legacy_registration_to_remove
 done < <(legacy_extension_bundle_identifiers "$EXTENSION_BUNDLE_IDENTIFIER")
 "$PKILL_COMMAND" -x DesktopWidgetsExtension 2>/dev/null || true
 "$PLUGINKIT_COMMAND" -a "$CURRENT_EXTENSION_PATH"

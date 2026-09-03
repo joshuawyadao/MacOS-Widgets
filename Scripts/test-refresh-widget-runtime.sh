@@ -68,7 +68,9 @@ printf '%s\n' \
 
 printf '%s\n' \
     "     $OLD_PERSONAL_BUNDLE_IDENTIFIER(0.1.0)" \
-    "                 Path = $OLD_PERSONAL_EXTENSION" > "$REGISTRATION_DIRECTORY/$OLD_PERSONAL_BUNDLE_IDENTIFIER.txt"
+    "                 Path = $OLD_PERSONAL_EXTENSION" \
+    "     $OLD_PERSONAL_BUNDLE_IDENTIFIER(0.1.0)" \
+    "                 Path = $CURRENT_EXTENSION" > "$REGISTRATION_DIRECTORY/$OLD_PERSONAL_BUNDLE_IDENTIFIER.txt"
 
 printf '%s\n' \
     '#!/bin/bash' \
@@ -121,12 +123,28 @@ reject_command() {
     fi
 }
 
+require_command_count() {
+    local expected="$1"
+    local expected_count="$2"
+    local description="$3"
+    local actual_count
+
+    actual_count="$(grep -Fxc -- "$expected" "$COMMAND_LOG")"
+    if [[ "$actual_count" != "$expected_count" ]]; then
+        echo "FAIL: $description" >&2
+        echo "Expected $expected_count occurrence(s): $expected" >&2
+        echo "Recorded commands:" >&2
+        /bin/cat "$COMMAND_LOG" >&2
+        exit 1
+    fi
+}
+
 require_command $'-r\t'"$STALE_EXTENSION" "stale DerivedData extension was not unregistered"
 require_command $'-r\t'"$SECOND_ROOT_EXTENSION" "stale extension under the second DerivedData root was not unregistered"
 require_command $'-r\t'"$HISTORIC_DEFAULT_EXTENSION" "historic default-ID extension was not unregistered"
 require_command $'-r\t'"$OLD_PERSONAL_EXTENSION" "old Personal Team ID extension was not unregistered"
+require_command_count $'-r\t'"$CURRENT_EXTENSION" 1 "the legacy same-path record should be removed without unregistering the current-ID record"
 require_command $'-a\t'"$CURRENT_EXTENSION" "current extension was not registered"
-reject_command $'-r\t'"$CURRENT_EXTENSION" "current extension must never be unregistered"
 reject_command $'-r\t'"$EXTERNAL_EXTENSION" "extension outside DerivedData must remain registered"
 reject_command $'-r\t'"$EXTERNAL_LEGACY_EXTENSION" "legacy extension outside DerivedData must remain registered"
 
