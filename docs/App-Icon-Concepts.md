@@ -1,15 +1,15 @@
 # App Icon Concepts
 
-Desktop Widgets currently has no companion-app asset catalog or configured app-icon set. The existing `DesktopWidgetsExtension/Resources/Assets.xcassets` catalog belongs only to the widget extension, so the companion app has no icon to contribute when macOS lists its widgets.
+Desktop Widgets originally had no companion-app asset catalog or configured app-icon set. The existing `DesktopWidgetsExtension/Resources/Assets.xcassets` catalog belongs only to the widget extension, so the companion app previously had no icon to contribute when macOS listed its widgets.
 
-This document records four review concepts generated on September 3, 2026. They are exploration assets, not production icon resources. After one direction is selected, the follow-up implementation should refine that source, create the app target's asset catalog and icon set, configure the app-icon build setting, then verify the built app and widget gallery presentation.
+This document records four review concepts generated on September 3, 2026. **02 — Layered Dashboard** was selected for production and now supplies the app target's complete macOS icon set. The other files remain review artifacts rather than compiled resources.
 
 ## Concepts
 
 | Concept | Preview | Best quality | Tradeoff |
 | --- | --- | --- | --- |
 | 01 — Widget Quartet | ![Four widget tiles for time, weather, battery, and calendar](images/app-icon-concepts/01-widget-quartet.png) | Most explicit representation of all four widgets | More detail to preserve at the smallest sizes |
-| 02 — Layered Dashboard | ![Layered time, weather, and calendar widget cards](images/app-icon-concepts/02-layered-dashboard.png) | Best expression of customizable, stackable widgets | The overlap makes the outline busier |
+| **02 — Layered Dashboard (selected)** | ![Layered time, weather, and calendar widget cards](images/app-icon-concepts/02-layered-dashboard.png) | Best expression of customizable, stackable widgets | The overlap makes the outline busier |
 | 03 — Modular Orbits | ![Four colorful circular widget modules](images/app-icon-concepts/03-modular-orbits.png) | Friendliest color balance and clearest four-part system | Similar information density to the quartet concept |
 | 04 — Focus Card | ![A large clock widget card with a weather card behind it](images/app-icon-concepts/04-focus-card.png) | Strongest silhouette and best 32–64 px recognition | Represents the product category more than the complete widget set |
 
@@ -97,12 +97,8 @@ Constraints: no text, no letters, no numbers, no logos, no trademarks, no waterm
 Avoid: literal analog-clock numerals, tiny UI details, excessive gloss, photorealism, clutter
 ```
 
-## Follow-up after selection
+## Production integration
 
-1. Refine the chosen concept with one targeted visual pass if needed.
-2. Add a companion-app asset catalog and `AppIcon` set to the app target.
-3. Configure the app target to compile `AppIcon` as its application icon.
-4. Extend repository verification to assert the built app contains the icon resources.
-5. Build the unsigned Release app and visually confirm the icon in Finder and the macOS widget gallery.
+The selected 1024 × 1024 review source is preserved at `docs/images/app-icon-concepts/02-layered-dashboard.png`. Production representations from 16 × 16 through 1024 × 1024 live in `DesktopWidgetsApp/Resources/Assets.xcassets/AppIcon.appiconset`.
 
-No Swift behavior, configuration schema, privacy contract, or widget presentation changes in this exploration, so automated test files and the canonical widget guides do not need updates yet.
+The `DesktopWidgets` app target compiles the new catalog with `AppIcon` in both Debug and Release. `Scripts/verify-widgets.sh` validates every source representation and requires the unsigned Release app to contain the compiled `AppIcon.icns` resource. No Swift behavior, configuration schema, privacy contract, or widget presentation changed, so Swift test files and the canonical widget guides do not need updates.

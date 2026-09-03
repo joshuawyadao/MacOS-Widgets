@@ -1,20 +1,19 @@
 # Plan
 
-Create a focused app-icon exploration for Desktop Widgets so the companion app can gain a recognizable identity in the macOS widget gallery. Generate four distinct, small-size-friendly concepts rooted in the existing indigo, navy, and white visual system, preserve the prompts and selection guidance, and defer Xcode target wiring until a concept is selected.
+Promote the selected Layered Dashboard concept into the Desktop Widgets companion app so macOS can display a distinctive icon in Finder and the widget gallery. Add a complete macOS icon set to an app-only asset catalog, wire it into both app build configurations, and make release verification fail if the compiled icon disappears.
 
 ## Scope
-- In: Four square app-icon concept PNGs, a documented concept comparison and prompt record, asset validation, and a saved feature branch.
-- Out: Selecting a final concept, producing the complete production icon set, adding a companion-app asset catalog, or changing Xcode app-icon build settings.
+- In: Production size variants derived from concept 02, the companion-app asset catalog and Xcode settings, release-bundle verification, selection documentation, full repository verification, and branch save.
+- Out: Redesigning the selected artwork, changing widget rendering, adding branding inside the companion app, or removing the unselected concept files.
 
 ## Action items
-- [x] Confirm the existing widget palette, visual motifs, companion-app resource setup, and macOS build verification path.
-- [x] Generate four original 1024 × 1024 icon concepts with strong silhouettes, no text, and distinct visual directions.
-- [x] Inspect the generated concepts at full and reduced size, refining any candidate that loses clarity or violates the visual constraints.
-- [x] Save every reviewable concept under `docs/images/app-icon-concepts/` with stable descriptive filenames.
-- [x] Add `docs/App-Icon-Concepts.md` with a comparison, selection criteria, exact generation prompts, and the implementation step that follows selection.
-- [x] Record why executable tests and canonical behavior docs do not change during this visual exploration.
-- [x] Validate image formats and dimensions, run `git diff --check`, and review the scoped diff.
-- [x] Commit and push `codex/desktop-widget-app-icons` for review.
+- [x] Create `DesktopWidgetsApp/Resources/Assets.xcassets/AppIcon.appiconset` with the standard 16, 32, 128, 256, 512, and 1024 px macOS representations derived from concept 02.
+- [x] Add the app-only asset catalog to the `DesktopWidgets` resources phase and set `ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon` for Debug and Release.
+- [x] Extend `Scripts/verify-widgets.sh` to require the source icon contract and the compiled Release app icon resource.
+- [x] Update `docs/App-Icon-Concepts.md` to mark Layered Dashboard as selected and record the completed integration.
+- [x] Inspect the smallest generated representations for legibility and validate every PNG's dimensions and format.
+- [x] Run the targeted shell syntax check, `./Scripts/verify-widgets.sh`, and `git diff --check`.
+- [x] Review the scoped diff, commit the production icon and completed plan, and push `codex/desktop-widget-app-icons`.
 
 ## Open questions
 - None.

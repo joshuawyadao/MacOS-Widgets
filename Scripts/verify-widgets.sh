@@ -61,6 +61,9 @@ readonly DISABLE_AUTOMATIC_REFRESH_COMMAND="$PROJECT_ROOT/Disable Automatic Refr
 readonly PACKAGE_COMMAND="$PROJECT_ROOT/Package Desktop Widgets for Another Mac.command"
 readonly INSTALL_GUIDE="$PROJECT_ROOT/Installation Guide.md"
 readonly SIGNING_CONFIGURATION="$PROJECT_ROOT/Config/Signing.xcconfig"
+readonly APP_ASSET_CATALOG="$PROJECT_ROOT/DesktopWidgetsApp/Resources/Assets.xcassets"
+readonly APP_ICON_SET="$APP_ASSET_CATALOG/AppIcon.appiconset"
+readonly APP_ICON_MANIFEST="$APP_ICON_SET/Contents.json"
 SELECTED_DEVELOPER_DIR="$(resolve_developer_dir)"
 readonly SELECTED_DEVELOPER_DIR
 readonly VERIFY_DIRECTORY="$(mktemp -d "${TMPDIR:-/tmp}/desktop-widgets-verify.XXXXXX")"
@@ -159,6 +162,35 @@ require_contains "$SIGNING_CONFIGURATION" 'DESKTOP_WIDGETS_ENABLE_AUTOMATIC_REFR
 require_contains "$SIGNING_CONFIGURATION" 'DESKTOP_WIDGETS_DISABLE_AUTOMATIC_REFRESH_COMMAND_PATH =' "automatic refresh disable-helper setting"
 require_contains "$PROJECT_PATH/project.pbxproj" 'PRODUCT_BUNDLE_IDENTIFIER = "$(DESKTOP_WIDGETS_APP_BUNDLE_IDENTIFIER)";' "locally configurable app bundle identifier"
 require_contains "$PROJECT_PATH/project.pbxproj" 'PRODUCT_BUNDLE_IDENTIFIER = "$(DESKTOP_WIDGETS_EXTENSION_BUNDLE_IDENTIFIER)";' "locally configurable extension bundle identifier"
+readonly APP_ICON_SETTING_COUNT="$(grep -c 'ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;' "$PROJECT_PATH/project.pbxproj")"
+if [[ "$APP_ICON_SETTING_COUNT" != "2" ]]; then
+    echo "FAIL: Expected the app Debug and Release configurations to compile AppIcon" >&2
+    exit 1
+fi
+require_file "$APP_ASSET_CATALOG/Contents.json" "companion-app asset catalog metadata"
+require_file "$APP_ICON_MANIFEST" "companion-app icon-set metadata"
+for icon_contract in \
+    "$APP_ICON_SET/AppIcon-16.png:16" \
+    "$APP_ICON_SET/AppIcon-16@2x.png:32" \
+    "$APP_ICON_SET/AppIcon-32.png:32" \
+    "$APP_ICON_SET/AppIcon-32@2x.png:64" \
+    "$APP_ICON_SET/AppIcon-128.png:128" \
+    "$APP_ICON_SET/AppIcon-128@2x.png:256" \
+    "$APP_ICON_SET/AppIcon-256.png:256" \
+    "$APP_ICON_SET/AppIcon-256@2x.png:512" \
+    "$APP_ICON_SET/AppIcon-512.png:512" \
+    "$APP_ICON_SET/AppIcon-512@2x.png:1024"; do
+    icon_path="${icon_contract%:*}"
+    expected_size="${icon_contract##*:}"
+    require_file "$icon_path" "companion-app icon representation"
+    require_contains "$APP_ICON_MANIFEST" "$(basename "$icon_path")" "companion-app icon manifest entry"
+    actual_width="$(sips -g pixelWidth "$icon_path" 2>/dev/null | awk '/pixelWidth:/ { print $2 }')"
+    actual_height="$(sips -g pixelHeight "$icon_path" 2>/dev/null | awk '/pixelHeight:/ { print $2 }')"
+    if [[ "$actual_width" != "$expected_size" || "$actual_height" != "$expected_size" ]]; then
+        echo "FAIL: Expected $(basename "$icon_path") to be ${expected_size}x${expected_size}, found ${actual_width}x${actual_height}" >&2
+        exit 1
+    fi
+done
 require_contains "$PROJECT_ROOT/DesktopWidgetsApp/DesktopWidgetsApp.entitlements" 'com.apple.security.application-groups' "app typography App Group entitlement"
 require_contains "$PROJECT_ROOT/DesktopWidgetsApp/DesktopWidgetsApp.entitlements" '$(WIDGET_THEME_APP_GROUP)' "app shared typography group"
 require_contains "$PROJECT_ROOT/DesktopWidgetsExtension/DesktopWidgetsExtension.entitlements" 'com.apple.security.application-groups' "extension typography App Group entitlement"
@@ -238,6 +270,7 @@ DEVELOPER_DIR="$SELECTED_DEVELOPER_DIR" xcodebuild build -quiet \
     CODE_SIGNING_ALLOWED=NO
 
 readonly APP_PATH="$DERIVED_DATA_PATH/Build/Products/Release/DesktopWidgets.app"
+readonly APP_ICON_RESOURCE="$APP_PATH/Contents/Resources/AppIcon.icns"
 readonly EXTENSION_PATH="$APP_PATH/Contents/PlugIns/DesktopWidgetsExtension.appex"
 readonly EXTENSION_INFO="$EXTENSION_PATH/Contents/Info.plist"
 readonly EXTENSION_BINARY="$EXTENSION_PATH/Contents/MacOS/DesktopWidgetsExtension"
@@ -246,6 +279,7 @@ readonly EXTENSION_STRINGS="$VERIFY_DIRECTORY/extension-strings.txt"
 
 echo "[3/3] Checking the embedded extension, widget identities, and editor metadata"
 require_file "$APP_PATH/Contents/Info.plist" "Release app bundle"
+require_file "$APP_ICON_RESOURCE" "compiled companion-app icon"
 require_file "$EXTENSION_INFO" "embedded WidgetKit extension"
 require_file "$EXTENSION_BINARY" "widget extension executable"
 require_file "$APP_INTENTS_METADATA" "App Intents metadata"
