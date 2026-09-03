@@ -1,25 +1,18 @@
 # Plan
 
-Prepare the widget-efficiency pull request for merge by addressing Brooks and Codex review feedback without increasing steady-state widget resource use.
+Close the iconless upgrade path discovered during real installation and Codex review by teaching the widget-runtime refresh to remove known legacy Desktop Widgets registrations from DerivedData or from a retired database record at the exact current extension path. Preserve the safety boundary for every other installed path, add focused regression coverage, update the runtime documentation, then re-run the PR review and CI gates.
 
 ## Scope
-- In: Battery provider helper extraction, Calendar next-event formatter parameter simplification, weather cache correctness fixes, focused regression tests, full repository verification, and PR branch save.
-- Out: Refresh schedules, displayed or accessibility text, user documentation changes, configuration schemas, and additional performance work.
+- In: Legacy Desktop Widgets extension-ID cleanup under configured DerivedData roots and at the exact current extension path, external registration preservation, focused shell coverage, runtime-refresh documentation, full verification, branch save, and PR re-review.
+- Out: Deleting DerivedData products, unregistering apps outside DerivedData, changing current Personal Team identifiers, removing placed widgets or preferences, and paid distribution.
 
 ## Action items
-- [x] Extract the repeated Battery detail-selection and hardware-read decision into one provider helper used by snapshot and timeline generation.
-- [x] Remove the redundant Calendar next-event `timeZone` parameter and format with the supplied calendar's time zone.
-- [x] Confirm existing Battery visibility and Calendar localized-text tests cover the behavior-preserving refactor; add tests only if a coverage gap appears.
-- [x] Leave canonical widget guides unchanged because resource behavior and user-visible contracts do not change; retain this plan as the review-remediation record.
-- [x] Run focused Battery and Calendar tests, `./Scripts/verify-widgets.sh`, and `git diff --check`.
-- [x] Commit and push the Brooks fixes to `codex/widget-render-performance`, then re-check PR review, CI, and mergeability state.
-- [x] Reject future-dated weather snapshots as fresh so clock corrections cannot indefinitely suppress network refreshes.
-- [x] Include weather location presentation identity in cache and in-flight request keys so coordinate-identical selections cannot share the wrong displayed location.
-- [x] Run focused Weather tests, `./Scripts/verify-widgets.sh`, and `git diff --check`.
-- [x] Commit and push the Codex fixes, acknowledge the addressed review comments, and complete the final PR audit.
-- [x] Migrate validated coordinate-only cache entries to identity-aware keys so upgrades preserve the correct offline fallback.
-- [x] Retain 30 forecast hours so the 24-hour stale window can still supply all six visible hourly columns.
-- [x] Re-run focused and full verification, commit the final review fixes, and complete the current-head PR gates.
+- [x] Extend `Scripts/refresh-widget-runtime.sh` with the known pre-installer extension identifier and query it separately when the current extension uses a Personal Team identifier.
+- [x] Remove a known retired-ID database record at the exact current extension path immediately before re-registering the current ID, while preserving every other matching registration outside the configured DerivedData roots.
+- [x] Update `Scripts/test-refresh-widget-runtime.sh` with separate current-ID and legacy-ID registrations, including the same-path upgrade case identified by Codex.
+- [x] Update the canonical runtime-refresh notes in `docs/Personal-Team-Installation.md` and `docs/Weather-Widget.md`.
+- [x] Run the focused runtime-refresh test, shell syntax checks, a live legacy-registration migration check, the complete `./Scripts/verify-widgets.sh` gate, `git diff --check`, and regenerate the ignored handoff ZIP.
+- [x] Prepare the scoped Brooks fix for branch save and fresh Codex review, CI Verify, review-thread, and mergeability checks.
 
 ## Open questions
 - None.

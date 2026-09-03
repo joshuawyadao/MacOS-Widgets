@@ -432,6 +432,8 @@ echo
 echo "Desktop Widgets is ready."
 echo "To add one: Control-click the desktop > Edit Widgets > search for Desktop Widgets."
 echo "macOS requires you to place widgets yourself; the app cannot arrange the desktop."
+echo "Make it yours: use Appearance in the app, then Control-click a placed Weather widget > Edit Widget to choose your city."
+echo "Calendar access is optional and can be enabled later from the app."
 echo "When enabled, automatic maintenance checks briefly each day and refreshes near free-signing expiration."
 echo "Refresh Desktop Widgets.command remains the manual fallback."
 echo "Diagnostic log: $DIAGNOSTIC_LOG"

@@ -281,6 +281,9 @@ assert_equal "$before_refresh" "$after_refresh" "repeated refresh should not chu
 assert_contains "$first_refresh_output" "DRY RUN: install" "existing installation refresh should use the safe dry-run install path"
 assert_contains "$second_refresh_output" "Desktop Widgets is ready" "a repeated refresh should remain successful"
 assert_contains "$second_refresh_output" "clear any previous automatic-maintenance warning" "manual refresh should clear stale maintenance attention after success"
+assert_contains "$install_dry_run_output" "Make it yours" "first installation should explain the next personalization step"
+assert_contains "$install_dry_run_output" "choose your city" "first installation should explain Weather personalization"
+assert_contains "$install_dry_run_output" "Calendar access is optional" "first installation should keep Calendar permission optional"
 
 /bin/mkdir -p "$TEST_ROOT/Support/AutomaticRefresh/run.lock"
 /usr/bin/printf '%s\n' "$$" > "$TEST_ROOT/Support/AutomaticRefresh/run.lock/owner.pid"
