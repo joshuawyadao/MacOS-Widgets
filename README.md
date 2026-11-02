@@ -140,6 +140,8 @@ The generator runs the focused rendering test, writes build intermediates to tem
 
 ## Documentation
 
+- [Project learning reference and historical snapshots](docs/Project-Catchup.md)
+- [Visual project-catchup template](docs/Project-Catchup-Template.md)
 - [Widget design system](docs/Widget-Design-System.md)
 - [Time & Date widget](docs/Time-And-Date-Widget.md)
 - [Weather widget](docs/Weather-Widget.md)
