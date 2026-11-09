@@ -25,6 +25,14 @@ jobs:
       - name: Check out repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
+      - name: Test installer and release safety
+        run: |
+          Scripts/test-personal-installation.sh
+          Scripts/test-automatic-refresh.sh
+          Scripts/test-package-personal-installer.sh
+          Scripts/test-refresh-widget-runtime.sh
+          Scripts/test-release-notarized-dmg.sh
+
       - name: Run configuration tests
         run: >-
           xcodebuild test
@@ -53,3 +61,15 @@ jobs:
           -destination 'platform=macOS'
           -derivedDataPath "$RUNNER_TEMP/DesktopWidgetsRelease"
           CODE_SIGNING_ALLOWED=NO
+
+      - name: Archive unsigned Developer ID configuration
+        run: |
+          xcodebuild archive -quiet \
+            -project DesktopWidgets.xcodeproj -scheme DesktopWidgets \
+            -configuration Release -destination 'generic/platform=macOS' \
+            -xcconfig Config/DeveloperID.xcconfig \
+            -archivePath "$RUNNER_TEMP/DesktopWidgetsDistribution.xcarchive" \
+            -derivedDataPath "$RUNNER_TEMP/DesktopWidgetsDistribution" \
+            DEVELOPMENT_TEAM=ABC123DE45 CODE_SIGNING_ALLOWED=NO
+          /usr/libexec/PlistBuddy -c 'Print :DesktopWidgetsDistributionChannel' \
+            "$RUNNER_TEMP/DesktopWidgetsDistribution.xcarchive/Products/Applications/DesktopWidgets.app/Contents/Info.plist" | /usr/bin/grep -qx developer-id

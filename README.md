@@ -5,9 +5,9 @@
 [![Swift 6](https://img.shields.io/badge/Swift-6-F05138?logo=swift&logoColor=white)](https://www.swift.org/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
-A native SwiftUI companion app and WidgetKit extension for four configurable desktop widgets: **Time & Date**, **Weather**, **Battery**, and **Calendar**. The project favors local data, explicit permissions, accessible presentation, and free Personal Team builds over subscriptions or a hosted backend.
+A native SwiftUI companion app and WidgetKit extension for four configurable desktop widgets: **Time & Date**, **Weather**, **Battery**, and **Calendar**. The project favors local data, explicit permissions, accessible presentation, and straightforward Mac installation over subscriptions or a hosted backend.
 
-> **Project status:** Version 1.0 source-first personal release. Build locally with Xcode and a free Apple Personal Team; no pre-signed binary is distributed.
+> **Project status:** Version 1.0 with a Developer ID notarized disk-image release workflow and a separate Personal Team source installer. A downloadable binary is ready only after signing, notarization, and the release acceptance checks succeed.
 
 ![Time & Date, Weather, Battery, and Calendar widgets rendered in a two-by-two showcase](docs/images/widgets-preview.png)
 
@@ -53,17 +53,23 @@ DesktopWidgetsApp/        Companion app, onboarding, settings, and permission fl
 DesktopWidgetsExtension/  Widget bundle and four independent widget modules
 Shared/                   Models, styling, and utilities shared by both targets
 DesktopWidgetsTests/      Behavior, contract, and rendering smoke tests
-Scripts/                  Personal Team setup, runtime refresh, and verification
+Scripts/                  Release packaging, Personal Team setup, and verification
 docs/                     Widget and design-system documentation
 ```
 
+## Notarized download and manual updates
+
+Recipients of a notarized `.dmg` drag **Desktop Widgets.app** into **Applications**, open it once, and add widgets through the desktop’s **Edit Widgets** menu. No Xcode, developer sign-in, or weekly rebuilding is needed. For an update, quit the app and replace it in the same Applications folder; keep the widgets and app data.
+
+Before switching from the source installer, disable its automatic refresh and compare the installed app’s signing team and identifiers. Matching identities preserve settings where possible; different Apple teams cannot share the same App Group. See the [installation guide](Installation%20Guide.md) for migration and [Developer ID release guide](docs/Paid-Distribution-Path.md) for signing, notarization, packaging and acceptance checks. No automatic updater is included.
+
 ## Friendly personal installation
 
-Weather's searchable City control needs a registered development identity, and shared appearance preferences need the same signed App Group on the app and widget extension. An ad-hoc **Sign to Run Locally** build is not sufficient.
+For source builds, Weather's searchable City control needs a registered development identity, and shared appearance preferences need the same signed App Group on the app and widget extension. An ad-hoc **Sign to Run Locally** build is not sufficient.
 
 Apple’s current macOS capability table lists App Groups and App Sandbox for no-cost Apple Developer accounts, but this repository does not treat documentation alone as proof that a particular Personal Team works. `Install Desktop Widgets.command` builds with Xcode automatic provisioning and refuses to install unless the app and extension have valid Apple Development signatures from the selected team and contain the complete required sandbox, App Group, Calendar, and extension-network entitlement contract. If Xcode embeds provisioning profiles, they must also grant the expected Team ID and App Group. Xcode 26.6 may validly omit profiles for this macOS entitlement set. See [Personal Team installation](docs/Personal-Team-Installation.md) for the feasibility evidence and signed validation results.
 
-For a non-developer, start with [Installation Guide.md](Installation%20Guide.md):
+For the separate source-build workflow, follow the Personal Team section of [Installation Guide.md](Installation%20Guide.md):
 
 1. Install and open full Xcode once.
 2. Add an Apple Account in **Xcode → Settings → Accounts**.

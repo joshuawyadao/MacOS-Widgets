@@ -117,6 +117,7 @@ if [[ ! -x "$RUNTIME_REFRESH_TEST" ]]; then
     exit 1
 fi
 /bin/bash -n "$RUNTIME_REFRESH_TEST"
+"$PROJECT_ROOT/Scripts/test-release-notarized-dmg.sh"
 "$RUNTIME_REFRESH_TEST"
 
 for executable in \
