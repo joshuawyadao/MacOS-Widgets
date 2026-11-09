@@ -305,4 +305,24 @@ redacted="$(echo 'account person@example.com token=super-secret' | desktop_widge
 assert_contains "$redacted" "[redacted Apple Account]" "diagnostic logging should redact Apple Account addresses"
 [[ "$redacted" != *"super-secret"* ]] || fail "diagnostic logging should redact credential-like values"
 
+release_fixture="$TEST_ROOT/Released.app"
+/bin/mkdir -p "$release_fixture/Contents"
+/usr/bin/plutil -create xml1 "$release_fixture/Contents/Info.plist"
+/usr/bin/plutil -insert DesktopWidgetsDistributionChannel -string developer-id "$release_fixture/Contents/Info.plist"
+desktop_widgets_is_developer_id_release "$release_fixture" || fail "release metadata should prevent development downgrades"
+/usr/bin/plutil -replace DesktopWidgetsDistributionChannel -string development "$release_fixture/Contents/Info.plist"
+if desktop_widgets_is_developer_id_release "$release_fixture"; then
+    fail "an unsigned development fixture is not a Developer ID release"
+fi
+fake_codesign="$TEST_ROOT/release-codesign"
+/usr/bin/printf '%s\n' '#!/bin/bash' 'echo "Authority=Developer ID Application: Example (ABC123DE45)" >&2' > "$fake_codesign"
+/bin/chmod +x "$fake_codesign"
+desktop_widgets_is_developer_id_release "$release_fixture" "$fake_codesign" || fail "Developer ID authority should protect older releases without channel metadata"
+/usr/bin/plutil -replace DesktopWidgetsDistributionChannel -string developer-id "$release_fixture/Contents/Info.plist"
+if DESKTOP_WIDGETS_HOME="$TEST_HOME" DESKTOP_WIDGETS_INSTALL_DESTINATION="$release_fixture" \
+    /bin/bash "$INSTALLATION_SCRIPT" refresh > "$TEST_ROOT/release-guard.log" 2>&1; then
+    fail "a refresh must refuse to replace a Developer ID release"
+fi
+assert_contains "$(/bin/cat "$TEST_ROOT/release-guard.log")" "Developer ID release is installed here" "release guard should stop before Xcode or local settings are needed"
+
 echo "PASS: Personal installation parsing, configuration, safety, failures, and idempotent refresh behavior are covered."

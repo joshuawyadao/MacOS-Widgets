@@ -278,6 +278,10 @@ install_built_app() {
         return 0
     fi
 
+    if desktop_widgets_is_developer_id_release "$destination"; then
+        echo "A Developer ID release is installed here. Update it with the signed download; refusing to replace it with a development build." >&2
+        return 1
+    fi
     /bin/mkdir -p "$(/usr/bin/dirname "$destination")"
     desktop_widgets_recover_interrupted_install "$destination"
     /bin/rm -rf -- "$staging"
@@ -344,6 +348,11 @@ desktop_widgets_run() {
 echo "Desktop Widgets — friendly ${MODE}"
 echo "Nothing here asks for, prints, or stores your Apple password or token."
 echo "Diagnostic log: $DIAGNOSTIC_LOG"
+
+if desktop_widgets_is_developer_id_release "$INSTALL_DESTINATION"; then
+    echo "A Developer ID release is installed here. Disable automatic refresh and use the signed download for updates." >&2
+    return 1
+fi
 
 step 1 "Preparing the reusable installer"
 sync_installation_source

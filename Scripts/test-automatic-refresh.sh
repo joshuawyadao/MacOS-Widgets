@@ -314,4 +314,17 @@ assert_equal "missing-local-configuration" "$(desktop_widgets_automatic_status_v
 [[ -s "$NOTIFICATION_LOG" ]] || fail "missing local configuration should notify the user"
 /bin/mv "$TEST_ROOT/Local.xcconfig.missing" "$LOCAL_CONFIGURATION"
 
+release_fixture="$TEST_ROOT/Released.app"
+/bin/mkdir -p "$release_fixture/Contents"
+/usr/bin/plutil -create xml1 "$release_fixture/Contents/Info.plist"
+/usr/bin/plutil -insert DesktopWidgetsDistributionChannel -string developer-id "$release_fixture/Contents/Info.plist"
+: > "$NOTIFICATION_LOG"
+: > "$REFRESH_LOG"
+DESKTOP_WIDGETS_HOME="$TEST_HOME" DESKTOP_WIDGETS_INSTALL_DESTINATION="$release_fixture" \
+    DESKTOP_WIDGETS_NOTIFICATION_COMMAND="$TEST_ROOT/fake-notification.sh" \
+    DESKTOP_WIDGETS_TEST_NOTIFICATION_LOG="$NOTIFICATION_LOG" \
+    /bin/bash "$AUTOMATIC_SCRIPT"
+[[ ! -s "$NOTIFICATION_LOG" ]] || fail "a release must not trigger renewal notifications"
+[[ ! -s "$REFRESH_LOG" ]] || fail "a release must not trigger a development rebuild"
+
 echo "PASS: Automatic refresh thresholds, no-op behavior, low-resource LaunchAgent, idempotency, failures, and exact-target safety are covered."

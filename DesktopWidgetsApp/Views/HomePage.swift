@@ -13,7 +13,9 @@ struct HomePage: View {
         ) {
             header
             installationCard
-            automaticMaintenanceCard
+            if !installationStatus.isDeveloperIDRelease {
+                automaticMaintenanceCard
+            }
             shortcuts
             readyWidgets
             setupGuide
@@ -95,12 +97,16 @@ struct HomePage: View {
                 .frame(width: 38)
 
             VStack(alignment: .leading, spacing: 5) {
-                Text(status.isReady ? "Installed and ready" : "Finish the friendly setup")
+                Text(status.isReady ? "Installed and ready" : (status.isDeveloperIDRelease ? "Move to Applications" : "Finish the friendly setup"))
                     .font(.headline)
 
-                Text(status.isReady
-                     ? "Desktop Widgets is in your Applications folder and has the shared signing setup its widgets need."
-                     : "Double-click Install Desktop Widgets.command in the folder you received. It will explain any one-time Xcode step.")
+                Text(status.isDeveloperIDRelease
+                     ? (status.isReady
+                        ? "Desktop Widgets is installed. Add your widgets from the desktop’s Edit Widgets menu."
+                        : "Drag Desktop Widgets from the download into Applications, then open that installed copy before adding widgets.")
+                     : (status.isReady
+                        ? "Desktop Widgets is in your Applications folder and has the shared signing setup its widgets need."
+                        : "Double-click Install Desktop Widgets.command in the folder you received. It will explain any one-time Xcode step."))
                     .font(.callout)
                     .foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
@@ -215,13 +221,17 @@ struct HomePage: View {
         VStack(alignment: .leading, spacing: 12) {
             SectionTitle(
                 title: "Your setup checklist",
-                subtitle: "The installer handles the technical work. macOS leaves placement and style up to you."
+                subtitle: installationStatus.isDeveloperIDRelease
+                    ? "Install the app, then choose your widgets and style."
+                    : "The installer handles the technical work. macOS leaves placement and style up to you."
             )
 
             SetupStep(
                 number: 1,
                 title: "Install once",
-                detail: "Double-click Install Desktop Widgets.command. If asked, add your Apple Account in Xcode; the installer never sees your password."
+                detail: installationStatus.isDeveloperIDRelease
+                    ? "Open the downloaded disk image, drag Desktop Widgets into Applications, and open it there."
+                    : "Double-click Install Desktop Widgets.command. If asked, add your Apple Account in Xcode; the installer never sees your password."
             )
 
             SetupStep(
@@ -238,8 +248,10 @@ struct HomePage: View {
 
             SetupStep(
                 number: 4,
-                title: "Let maintenance stay easy",
-                detail: "Choose automatic maintenance during installation. A tiny daily check exits immediately unless free signing has less than 48 hours left. Refresh Desktop Widgets.command remains the manual fallback if Xcode ever needs attention."
+                title: installationStatus.isDeveloperIDRelease ? "Update when you choose" : "Let maintenance stay easy",
+                detail: installationStatus.isDeveloperIDRelease
+                    ? "When you receive a newer version, quit Desktop Widgets and replace the app in the same Applications folder. Keep your placed widgets and settings; no weekly rebuild or developer sign-in is needed."
+                    : "Choose automatic maintenance during installation. A tiny daily check exits immediately unless free signing has less than 48 hours left. Refresh Desktop Widgets.command remains the manual fallback if Xcode ever needs attention."
             )
         }
     }
