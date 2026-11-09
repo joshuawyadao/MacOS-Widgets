@@ -78,4 +78,17 @@ For future manual updates, quit the app and replace it in the same folder, keepi
 
 ## Verification record
 
-This branch adds release tooling and automated safety checks. A Developer ID signed/notarized artifact and the clean-Mac checklist remain pending until the account prerequisites are available. Record actual release evidence here when those steps are completed; do not treat mocked notarization or unsigned archives as Apple approval.
+### 2026-11-09 — first notarized release
+
+Version **1.0.0 (21)** was archived and exported with Developer ID signing using the installed app’s existing identifiers. Both Apple submissions were **Accepted**, with no issues in their notarization logs:
+
+- App: `09cacb3a-553b-4c29-9ad8-6668f6877195`.
+- Disk image: `16a3dfd2-c5da-4146-a696-6c439ca596a0`.
+- Artifact: `Desktop-Widgets-1.0.0-21.dmg`, 4,837,252 bytes.
+- SHA-256: `715dd385f029f940ef30c54c27ee1efc8fe4355e91d6f1779f1df2f6ed79b26f`.
+
+Read-only inspection of the final image passed image-integrity and strict signature checks, Gatekeeper assessments of the app and image, validation of both stapled tickets, app/extension Team and shared-group consistency, sandbox/Calendar/network entitlements, hardened runtime, timestamps, matching versions, and both arm64/x86_64 slices with macOS 14 minimum. The image contains the app, Applications shortcut and recipient instructions. Source-installer paths are blank in the release. The installed app and shared data were not replaced, launched, or modified by this release workflow.
+
+The first signed archive exposed that `-xcconfig` values override command-line settings; the release script now generates a resolved configuration and regression tests check actual Xcode settings for both targets. Mocked release success/failure and identity-preservation tests also passed.
+
+**Still pending:** installation through the real delivery channel on a clean Mac, live widget discovery/theme/permissions checks, and replacement of an older installed release. Notarization and read-only validation do not establish those runtime outcomes. Keep their acceptance checklist entries open until tested.
