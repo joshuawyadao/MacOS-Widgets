@@ -31,7 +31,7 @@ jobs:
           Scripts/test-automatic-refresh.sh
           Scripts/test-package-personal-installer.sh
           Scripts/test-refresh-widget-runtime.sh
-          Scripts/test-release-notarized-dmg.sh
+          RELEASE_TEST_REAL_XCODEBUILD=1 Scripts/test-release-notarized-dmg.sh
 
       - name: Run configuration tests
         run: >-

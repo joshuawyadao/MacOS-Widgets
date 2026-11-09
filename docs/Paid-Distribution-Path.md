@@ -27,6 +27,8 @@ The existing `<TEAM>.<group>` macOS App Group format is supported without portal
 
 ## Build the release
 
+Before releasing, run `RELEASE_TEST_REAL_XCODEBUILD=1 Scripts/test-release-notarized-dmg.sh`. This exercises the mocked release/failure paths and asks Xcode to resolve the generated configuration for both targets without signing or uploading. CI runs this regression check too.
+
 From the repository root, run the command with your actual Team ID, Keychain identity name and profile:
 
 ```sh
@@ -40,7 +42,7 @@ Scripts/release-notarized-dmg.sh \
 
 For a new installation replace `--existing-app ...` with `--new-install`. For future updates use `--identities-file ...` with the previous manifest. Increment `CURRENT_PROJECT_VERSION` for both production targets and set the same `MARKETING_VERSION` on both before making an update. The tool checks matching versions/builds, but choosing a newer version is the release provider’s responsibility.
 
-`Config/DeveloperID.xcconfig` isolates release behavior from local development. The release command explicitly supplies team, identity and bundle/group values, sets the `developer-id` channel, and clears all source-installer helper paths. Personal Team development keeps its own setup and guidance.
+`Config/DeveloperID.xcconfig` isolates release behavior from local development. The release command generates a temporary resolved xcconfig that includes the base release settings and then assigns the reviewed team, certificate fingerprint, app/extension/group identities, `developer-id` channel and empty helper paths. This ordering matters: an Xcode `-xcconfig` file overrides command-line build settings, so placing those identity values only on the command line can leave the archive without a team or silently use the defaults. The certificate fingerprint is also supplied to export signing. Personal Team development keeps its own setup and guidance.
 
 The tool archives both CPU architectures, exports with Developer ID signing, validates the app and nested widget signatures, entitlements, identity, timestamp, hardened runtime, and matching versions, then notarizes and staples the app. It creates a read-only `.dmg` containing **Desktop Widgets.app**, an Applications shortcut and installation/update instructions, signs and notarizes the image, staples its ticket and checks Gatekeeper. Only successful output is published alongside a nonsecret `.identities.plist` manifest. Never distribute a temporary or failed build as an approved release. If a release process is force-killed, its `<output>.release-lock` directory may remain; remove only that empty lock after confirming the original process has stopped, or choose a new output path. Failure diagnostics are saved beside the requested output when archive, export, or notarization fails.
 

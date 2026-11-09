@@ -74,7 +74,9 @@ else
 fi
 [[ "$APP_ID" =~ ^[A-Za-z0-9.-]+$ && "$EXT_ID" == "$APP_ID".* && "$GROUP" == "$TEAM".* && "$EXT_ID" =~ ^[A-Za-z0-9.-]+$ && "$GROUP" =~ ^[A-Za-z0-9.-]+$ ]] || { echo 'Invalid identifiers' >&2; exit 1; }
 
-if ! "$RELEASE_SECURITY" find-identity -v -p codesigning | /usr/bin/grep -Fq "\"$IDENTITY\""; then
+IDENTITY_RECORD="$("$RELEASE_SECURITY" find-identity -v -p codesigning | /usr/bin/grep -F "\"$IDENTITY\"" | /usr/bin/head -n 1)" || true
+CERT_SHA="$(/usr/bin/printf '%s\n' "$IDENTITY_RECORD" | /usr/bin/sed -nE 's/^[[:space:]]*[0-9]+\) ([A-Fa-f0-9]{40}) \".*\"$/\1/p')"
+if [[ ! "$CERT_SHA" =~ ^[A-Fa-f0-9]{40}$ ]]; then
     echo "Developer ID Application certificate and private key are unavailable in Keychain" >&2
     exit 1
 fi
@@ -116,12 +118,26 @@ trap cleanup EXIT
     exit 1
 }
 ARCHIVE="$TMP/DesktopWidgets.xcarchive"
-run_logged archive "$RELEASE_XCODEBUILD" archive -project "$ROOT/DesktopWidgets.xcodeproj" -scheme DesktopWidgets -configuration Release -destination 'generic/platform=macOS' -archivePath "$ARCHIVE" -derivedDataPath "$TMP/DerivedData" -xcconfig "$ROOT/Config/DeveloperID.xcconfig" "DEVELOPMENT_TEAM=$TEAM" "CODE_SIGN_IDENTITY=$IDENTITY" "DESKTOP_WIDGETS_APP_BUNDLE_IDENTIFIER=$APP_ID" "DESKTOP_WIDGETS_EXTENSION_BUNDLE_IDENTIFIER=$EXT_ID" "WIDGET_THEME_APP_GROUP=$GROUP" DESKTOP_WIDGETS_DISTRIBUTION_CHANNEL=developer-id 'DESKTOP_WIDGETS_REFRESH_COMMAND_PATH=' 'DESKTOP_WIDGETS_ENABLE_AUTOMATIC_REFRESH_COMMAND_PATH=' 'DESKTOP_WIDGETS_DISABLE_AUTOMATIC_REFRESH_COMMAND_PATH='
+# Xcode gives -xcconfig higher precedence than build-setting arguments. Append
+# the reviewed identity after all development includes so Local.xcconfig cannot
+# override the distribution Team, identifiers, certificate, or helper paths.
+RESOLVED_CONFIG="$TMP/DeveloperID.resolved.xcconfig"
+{
+    /usr/bin/printf '#include "%s/Config/DeveloperID.xcconfig"\n' "$ROOT"
+    /usr/bin/printf 'DEVELOPMENT_TEAM = %s\n' "$TEAM"
+    /usr/bin/printf 'CODE_SIGN_STYLE = Manual\nCODE_SIGN_IDENTITY = %s\n' "$CERT_SHA"
+    /usr/bin/printf 'DESKTOP_WIDGETS_APP_BUNDLE_IDENTIFIER = %s\n' "$APP_ID"
+    /usr/bin/printf 'DESKTOP_WIDGETS_EXTENSION_BUNDLE_IDENTIFIER = %s\n' "$EXT_ID"
+    /usr/bin/printf 'WIDGET_THEME_APP_GROUP = %s\n' "$GROUP"
+    /usr/bin/printf 'DESKTOP_WIDGETS_DISTRIBUTION_CHANNEL = developer-id\n'
+    /usr/bin/printf 'DESKTOP_WIDGETS_REFRESH_COMMAND_PATH =\nDESKTOP_WIDGETS_ENABLE_AUTOMATIC_REFRESH_COMMAND_PATH =\nDESKTOP_WIDGETS_DISABLE_AUTOMATIC_REFRESH_COMMAND_PATH =\n'
+} > "$RESOLVED_CONFIG"
+run_logged archive "$RELEASE_XCODEBUILD" archive -project "$ROOT/DesktopWidgets.xcodeproj" -scheme DesktopWidgets -configuration Release -destination 'generic/platform=macOS' -archivePath "$ARCHIVE" -derivedDataPath "$TMP/DerivedData" -xcconfig "$RESOLVED_CONFIG"
 
 /usr/bin/plutil -create xml1 "$TMP/ExportOptions.plist"
 /usr/bin/plutil -insert method -string developer-id "$TMP/ExportOptions.plist"
 /usr/bin/plutil -insert signingStyle -string manual "$TMP/ExportOptions.plist"
-/usr/bin/plutil -insert signingCertificate -string "$IDENTITY" "$TMP/ExportOptions.plist"
+/usr/bin/plutil -insert signingCertificate -string "$CERT_SHA" "$TMP/ExportOptions.plist"
 /usr/bin/plutil -insert teamID -string "$TEAM" "$TMP/ExportOptions.plist"
 run_logged export "$RELEASE_XCODEBUILD" -exportArchive -archivePath "$ARCHIVE" -exportPath "$TMP/export" -exportOptionsPlist "$TMP/ExportOptions.plist"
 APP="$TMP/export/DesktopWidgets.app"
@@ -180,7 +196,7 @@ Before installing, run Disable Automatic Refresh.command from the old installer.
 This release has no automatic updater and needs no weekly rebuilding. For a newer version, use the signed download supplied by the release provider.
 INSTRUCTIONS
 "$RELEASE_HDIUTIL" create -volname 'Desktop Widgets' -srcfolder "$TMP/disk" -format UDZO -ov "$TMP/Desktop-Widgets.dmg"
-"$RELEASE_CODESIGN" --force --timestamp --sign "$IDENTITY" "$TMP/Desktop-Widgets.dmg"
+"$RELEASE_CODESIGN" --force --timestamp --sign "$CERT_SHA" "$TMP/Desktop-Widgets.dmg"
 "$RELEASE_CODESIGN" --verify --strict "$TMP/Desktop-Widgets.dmg"
 run_logged dmg-notary "$RELEASE_XCRUN" notarytool submit "$TMP/Desktop-Widgets.dmg" --keychain-profile "$PROFILE" --wait --output-format json
 desktop_widgets_require_accepted_notarization "$TMP/dmg-notary.log" DMG || { /usr/bin/ditto "$TMP/dmg-notary.log" "$DIAGNOSTICS"; exit 1; }

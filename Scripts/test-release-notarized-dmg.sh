@@ -21,9 +21,17 @@ printf '%s %s\n' "$kind" "$*" >> "$MOCK_LOG"
 case "$kind" in
 mock-security)
     [[ "${MOCK_FAIL:-}" != missing-certificate ]] || exit 0
-    echo '1) AABB "Developer ID Application: Example"';;
+    echo '1) 0123456789ABCDEF0123456789ABCDEF01234567 "Developer ID Application: Example"';;
 mock-xcodebuild)
     if [[ "${1:-}" == archive ]]; then
+        args=("$@")
+        for ((i=0; i<${#args[@]}; i++)); do
+            if [[ "${args[i]}" == -xcconfig ]]; then
+                cp "${args[i+1]}" "$MOCK_LOG.resolved.xcconfig"
+                break
+            fi
+        done
+        [[ -s "$MOCK_LOG.resolved.xcconfig" ]]
         [[ "${MOCK_FAIL:-}" != archive ]]
     else
         [[ "${MOCK_FAIL:-}" != export ]] || exit 1
@@ -159,8 +167,11 @@ export MOCK_LOG="$TMP/preserve.log" MOCK_FAIL=success
 export MOCK_LOG="$TMP/replay.log"
 "$SCRIPT" --team ABC123DE45 --identity 'Developer ID Application: Example' --notary-profile test --output "$TMP/replay.dmg" --identities-file "$TMP/preserve.identities.plist" > "$TMP/out" 2>&1
 /usr/bin/cmp "$TMP/preserve.identities.plist" "$TMP/replay.identities.plist"
-/usr/bin/grep -Fq 'DESKTOP_WIDGETS_APP_BUNDLE_IDENTIFIER=io.desktopwidgets.personal.abc123de45.app' "$MOCK_LOG"
-/usr/bin/grep -Fq 'WIDGET_THEME_APP_GROUP=ABC123DE45.io.desktopwidgets.personal.abc123de45.shared' "$MOCK_LOG"
+/usr/bin/grep -Fq 'DESKTOP_WIDGETS_APP_BUNDLE_IDENTIFIER = io.desktopwidgets.personal.abc123de45.app' "$MOCK_LOG.resolved.xcconfig"
+/usr/bin/grep -Fq 'WIDGET_THEME_APP_GROUP = ABC123DE45.io.desktopwidgets.personal.abc123de45.shared' "$MOCK_LOG.resolved.xcconfig"
+/usr/bin/grep -Fq 'DEVELOPMENT_TEAM = ABC123DE45' "$MOCK_LOG.resolved.xcconfig"
+/usr/bin/grep -Fq 'CODE_SIGN_IDENTITY = 0123456789ABCDEF0123456789ABCDEF01234567' "$MOCK_LOG.resolved.xcconfig"
+/usr/bin/grep -Fq 'DESKTOP_WIDGETS_DISTRIBUTION_CHANNEL = developer-id' "$MOCK_LOG.resolved.xcconfig"
 
 # Ambiguous identity selection, a missing argument and cross-team manifests
 # must fail before any Apple tool, build or upload is invoked.
@@ -180,4 +191,24 @@ for mode in ambiguous missing-value cross-team; do
     fi
     [[ ! -s "$MOCK_LOG" && ! -e "$TMP/preflight-$mode.dmg" ]]
 done
+if [[ "${RELEASE_TEST_REAL_XCODEBUILD:-0}" == 1 ]]; then
+    # This only resolves settings. It never builds, signs, or uploads anything.
+    for target in DesktopWidgets DesktopWidgetsExtension; do
+        target_settings="$TMP/$target.settings.txt"
+        /usr/bin/xcodebuild -showBuildSettings \
+            -project "$ROOT/DesktopWidgets.xcodeproj" -target "$target" \
+            -configuration Release -xcconfig "$TMP/replay.log.resolved.xcconfig" \
+            > "$target_settings" 2> "$TMP/$target.xcodebuild-settings.log"
+        [[ -s "$target_settings" ]]
+        /usr/bin/grep -Fq 'DEVELOPMENT_TEAM = ABC123DE45' "$target_settings"
+        /usr/bin/grep -Fq 'WIDGET_THEME_APP_GROUP = ABC123DE45.io.desktopwidgets.personal.abc123de45.shared' "$target_settings"
+        /usr/bin/grep -Fq 'DESKTOP_WIDGETS_DISTRIBUTION_CHANNEL = developer-id' "$target_settings"
+        if [[ "$target" == DesktopWidgets ]]; then
+            expected_id=io.desktopwidgets.personal.abc123de45.app
+        else
+            expected_id=io.desktopwidgets.personal.abc123de45.app.widgets
+        fi
+        /usr/bin/grep -Fq "PRODUCT_BUNDLE_IDENTIFIER = $expected_id" "$target_settings"
+    done
+fi
 echo 'Release workflow tests passed'
