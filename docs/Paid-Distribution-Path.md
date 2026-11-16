@@ -29,6 +29,8 @@ The existing `<TEAM>.<group>` macOS App Group format is supported without portal
 
 Before releasing, run `RELEASE_TEST_REAL_XCODEBUILD=1 Scripts/test-release-notarized-dmg.sh`. This exercises the mocked release/failure paths and asks Xcode to resolve the generated configuration for both targets without signing or uploading. CI runs this regression check too.
 
+CI runs this check, the unsigned Release build, and the unsigned Developer ID archive for ready pull requests, pushes to `main`, and manual dispatches. The mocked tests check that same-team app and widget identifiers and App Groups are preserved across an existing signed app and a prior manifest, and that cross-team inputs fail before a build or upload. They do not establish that a signed update installs or preserves live settings on another Mac.
+
 From the repository root, run the command with your actual Team ID, Keychain identity name and profile:
 
 ```sh
@@ -67,7 +69,8 @@ For future manual updates, quit the app and replace it in the same folder, keepi
 - [ ] Download the final image through the real delivery channel on a clean Mac/user account without Xcode or developer credentials. Open it, drag into Applications, confirm the normal first-open prompt, eject the image and launch the installed app.
 - [ ] All four widgets appear in Edit Widgets without development registration scripts. Place each; verify theme changes reach them.
 - [ ] Calendar denied, granted and revoked states work; Weather city search, offline state and attribution work; Battery handles unavailable hardware cleanly.
-- [ ] Test replacing a previous release: settings and placed widgets survive when identities match. Test the previous source-installer migration with its schedule disabled; verify no duplicate gallery entries or renewal prompts.
+- [ ] Test replacing a previous release with the same signing team, app/extension IDs and App Group: settings and placed widgets survive.
+- [ ] Test migration from the previous source installer with its schedule disabled. If the signed teams differ, use a fresh installation, restore recorded settings and widget choices manually, and verify no duplicate gallery entries or renewal prompts.
 - [ ] Test on the recipient’s macOS version and architecture. Record which machines were actually tested; a universal archive alone does not verify every supported OS.
 
 ## References
@@ -92,3 +95,5 @@ Read-only inspection of the final image passed image-integrity and strict signat
 The first signed archive exposed that `-xcconfig` values override command-line settings; the release script now generates a resolved configuration and regression tests check actual Xcode settings for both targets. Mocked release success/failure and identity-preservation tests also passed.
 
 **Still pending:** installation through the real delivery channel on a clean Mac, live widget discovery/theme/permissions checks, and replacement of an older installed release. Notarization and read-only validation do not establish those runtime outcomes. Keep their acceptance checklist entries open until tested.
+
+The clean-recipient installation, compatible-identity upgrade with settings and placed-widget retention, and any cross-team source-installer migration remain **unverified manual release gates**. For a cross-team migration, use the fresh-install path and record settings/widget choices before switching; the script's rejection of mismatched teams only proves that it refuses an unsafe automatic preservation attempt. Do not mark any of these gates complete based on CI, the 2026-11-09 notarization record, or this documentation update.

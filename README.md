@@ -134,7 +134,7 @@ The script:
 3. Builds a fresh unsigned Release app and embedded widget extension.
 4. Verifies widget identities, App Intents schemas, sandbox entitlements, privacy strings, shared App Group metadata, and key configuration fields.
 
-GitHub-hosted macOS verification runs for non-draft pull requests and manual dispatches. Draft pull requests do not reserve a macOS runner; marking one ready for review starts the complete test, coverage, and Release-build gate. A newer update to the same pull request cancels superseded work, and merging does not repeat the same full suite on `main`. Use the Actions tab's manual **CI Verify** dispatch whenever a hosted rerun is needed.
+GitHub-hosted macOS verification runs for non-draft pull requests, pushes to `main`, and manual dispatches. Draft pull requests do not reserve a macOS runner; marking one ready for review starts the complete test, coverage, and unsigned Release-build/archive gate. A newer update to the same pull request cancels superseded work. A merge runs the same gate on the resulting `main` commit. Use the Actions tab's manual **CI Verify** dispatch whenever a hosted rerun is needed. These checks do not sign, notarize, install, or launch a release on the recipient's Mac; the [release acceptance checklist](docs/Paid-Distribution-Path.md#release-acceptance-checklist) remains a separate manual gate.
 
 Regenerate the privacy-safe README showcase after a relevant visual change:
 
