@@ -12,11 +12,11 @@ Preserve release tooling coverage and verify post-merge changes while tracking r
 - [x] Add main push verification alongside PR/manual checks while preserving unsigned Release/archive and mocked release coverage.
 - [x] Reuse existing identity/team/App Group tests; add cases only if a concrete uncovered contract is found.
 - [x] Run safe mocked release/shell/repository checks without signing credentials, install or widget reload.
-- [ ] Update distribution acceptance status and README, then save and push the isolated release-workstream branch.
+- [x] Update distribution acceptance status and README, then save and push the isolated release-workstream branch.
 
 ## Discovery notes
 - Baseline: `94d5bba9405abdbc7a742b7d8744e3a616cca355` (`codex/notarized-dmg-release`), isolated from the original checkout.
 - Existing in-progress changes in original project folders remain untouched.
 - Missing hosting/account capabilities are reported as concrete limitations; they are not permission to weaken required checks.
 - Existing mocked release and installer/refresh regression scripts passed. No new identity test was added because the current script covers same-team identity replay, cross-team rejection, signed-app team/App Group mismatch, and resolved Xcode settings.
-- README and distribution acceptance guidance are updated; recipient installation, compatible-identity upgrade, and cross-team migration remain manual and unverified. Final save/push is owned by the parent task.
+- README and distribution acceptance guidance are updated; recipient installation, compatible-identity upgrade, and cross-team migration remain manual and unverified. The isolated branch is saved and pushed. Hosted configuration tests, Release build, unsigned archive and aggregate CI Verify passed: https://github.com/joshuawyadao/MacOS-Widgets/actions/runs/43938720957 .
