@@ -25,6 +25,11 @@ readonly SECURITY_COMMAND="${DESKTOP_WIDGETS_SECURITY_COMMAND:-/usr/bin/security
 readonly NOTIFICATION_COMMAND="${DESKTOP_WIDGETS_NOTIFICATION_COMMAND:-/usr/bin/osascript}"
 readonly CURRENT_EPOCH="${DESKTOP_WIDGETS_AUTOMATIC_NOW_EPOCH:-$(/bin/date '+%s')}"
 
+# A stale development schedule must be harmless after switching to the download.
+if desktop_widgets_is_developer_id_release "$INSTALL_DESTINATION"; then
+    exit 0
+fi
+
 /bin/mkdir -p "$AUTOMATIC_ROOT" "$LOG_DIRECTORY"
 desktop_widgets_automatic_rotate_log "$AUTOMATIC_LOG"
 

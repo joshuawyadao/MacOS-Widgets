@@ -11,7 +11,11 @@ struct HelpAndPrivacyPage: View {
             subtitle: "Find editing help, permission controls, data details, and quick troubleshooting."
         ) {
             helpGuide
-            installationHelp
+            if DesktopWidgetsInstallationStatus.current().isDeveloperIDRelease {
+                releaseInstallationHelp
+            } else {
+                installationHelp
+            }
 
             VStack(alignment: .leading, spacing: 12) {
                 SectionTitle(
@@ -24,6 +28,21 @@ struct HelpAndPrivacyPage: View {
             weatherDataTip
             GlassBackgroundTip()
         }
+    }
+
+    private var releaseInstallationHelp: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            SectionTitle(
+                title: "Installation & updates",
+                subtitle: "Updates are installed manually when you receive a new download."
+            )
+            Text("Keep Desktop Widgets in Applications. After installing, open it once, then Control-click the desktop and choose Edit Widgets.")
+            Text("To update, quit Desktop Widgets, open the new disk image, and replace the app in the same Applications folder. Leave your widgets on the desktop and keep your settings. Open the updated app, then eject the disk image.")
+            Text("If you previously used the Xcode installer, disable its automatic refresh before switching. When the signing account or app identifiers change, you may need to add the widgets again and reapply your appearance choices.")
+            Text("This download does not need weekly rebuilding or developer sign-in. The version number in the app’s About window helps you compare downloads.")
+                .foregroundStyle(.secondary)
+        }
+        .font(.callout)
     }
 
     private var installationHelp: some View {

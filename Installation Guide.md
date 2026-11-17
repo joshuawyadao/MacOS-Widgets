@@ -1,5 +1,38 @@
 # Install Desktop Widgets on Your Mac
 
+## Install from a notarized download
+
+Requires macOS 14 or later. Before installing over a previous Xcode/source build, follow **Switching from the source installer** below.
+
+1. Download the `.dmg` from the person providing your release and open it.
+2. Drag **Desktop Widgets.app** onto **Applications**. Open the installed app from Applications, rather than running it inside the disk image.
+3. Confirm the normal macOS first-open prompt, then eject the disk image.
+4. Control-click the desktop, choose **Edit Widgets**, search for **Desktop Widgets**, and add the widgets you want.
+5. Open **Appearance** to choose a coordinated style. Edit a Weather widget to choose your city. Calendar access is optional.
+
+This version needs no Xcode, developer-account sign-in, scheduled rebuild, or weekly renewal. If macOS cannot verify the app, ask the sender for a correctly signed and notarized download instead of disabling security checks.
+
+## Manual updates
+
+Compare the version/build in **Desktop Widgets → About DesktopWidgets** (the menu title may use the product name) with the supplied release notes. Quit the app, open the new disk image, then replace **the existing app in the same Applications folder**. If your current copy is in your home folder’s Applications, replace it there instead of creating a second copy in `/Applications`. Open the updated app and eject the disk image.
+
+Leave placed widgets and app data in place. Releases with the same signing team, app ID, extension ID, widget kinds and shared-settings group offer the best continuity. If widgets remain stale, reopen the app and give macOS time to update them before considering removal. Keep the prior release download for rollback; do not run two installed copies together.
+
+## Switching from the source installer
+
+Do this once before installing the notarized version:
+
+1. Run **Disable Automatic Refresh.command** from the previous installer, or the saved copy in `~/Library/Application Support/Desktop Widgets/Installer`. This unloads only Desktop Widgets’ old refresh schedule. It keeps widgets and preferences.
+2. Quit Desktop Widgets. Ask the release provider to compare the signing team and identifiers of your installed app with the release; a build signed by your own free account may have a different identity from the provider’s release.
+3. If the identities match, replace the app in its current Applications folder. If they differ, note your theme and widget choices first. Move the old app out of Applications to a backup location before installing the new one; you may need to re-add widgets, reapply appearance choices, and grant Calendar access again. Do not delete anything from Library/Containers or Library/Group Containers.
+4. Stop using the old Install/Refresh/Enable Automatic Refresh commands. Updates now arrive as signed downloads.
+
+New development helpers refuse to overwrite Developer ID releases. Older saved helper copies do not have that protection, so disabling the old schedule remains necessary. Container data is never automatically copied across Apple teams.
+
+## Personal Team source installation
+
+The following sections apply only to building the separate development version from source.
+
 You do not need to know how to code. The setup command handles the build, installation, and widget refresh for you.
 
 ## First time

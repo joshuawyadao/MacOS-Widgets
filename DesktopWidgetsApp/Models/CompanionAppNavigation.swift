@@ -47,8 +47,10 @@ enum CompanionAppDestination: String, CaseIterable, Hashable, Identifiable {
 }
 
 struct DesktopWidgetsInstallationStatus: Equatable {
+    let isDeveloperIDRelease: Bool
     let bundleURL: URL
     let expectedBundleURL: URL
+    let userApplicationsDirectory: URL
     let bundleIdentifier: String
     let teamIdentifier: String
     let appGroupIdentifier: String
@@ -65,8 +67,13 @@ struct DesktopWidgetsInstallationStatus: Equatable {
         homeDirectory: URL
     ) {
         self.bundleURL = bundleURL.standardizedFileURL
-        expectedBundleURL = homeDirectory
-            .appendingPathComponent("Applications", isDirectory: true)
+        let release = infoDictionary["DesktopWidgetsDistributionChannel"] as? String == "developer-id"
+        isDeveloperIDRelease = release
+        userApplicationsDirectory = homeDirectory.appendingPathComponent("Applications", isDirectory: true).standardizedFileURL
+        let applicationsDirectory = release
+            ? URL(fileURLWithPath: "/Applications", isDirectory: true)
+            : homeDirectory.appendingPathComponent("Applications", isDirectory: true)
+        expectedBundleURL = applicationsDirectory
             .appendingPathComponent("Desktop Widgets.app", isDirectory: true)
             .standardizedFileURL
         bundleIdentifier = infoDictionary["CFBundleIdentifier"] as? String ?? "Unknown"
@@ -77,7 +84,7 @@ struct DesktopWidgetsInstallationStatus: Equatable {
             let configuredPath = (infoDictionary[key] as? String ?? "")
                 .replacingOccurrences(of: "$(HOME)", with: homeDirectory.path)
                 .replacingOccurrences(of: "$HOME", with: homeDirectory.path)
-            guard !configuredPath.isEmpty else { return (nil, false) }
+            guard !release, !configuredPath.isEmpty else { return (nil, false) }
             let commandURL = URL(fileURLWithPath: configuredPath).standardizedFileURL
             // The sandbox cannot reliably stat helpers in the account's
             // Library. A configured URL is still safe to reveal in Finder,
@@ -119,7 +126,13 @@ struct DesktopWidgetsInstallationStatus: Equatable {
     }
 
     var isInPreferredLocation: Bool {
-        bundleURL == expectedBundleURL
+        if !isDeveloperIDRelease { return bundleURL == expectedBundleURL }
+        let applicationsDirectories = [
+            URL(fileURLWithPath: "/Applications", isDirectory: true),
+            userApplicationsDirectory
+        ]
+        return bundleURL.pathExtension == "app"
+            && applicationsDirectories.contains(bundleURL.deletingLastPathComponent())
     }
 
     var hasRequiredSigningConfiguration: Bool {

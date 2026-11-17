@@ -329,3 +329,17 @@ desktop_widgets_classify_build_failure() {
         echo "Xcode could not build Desktop Widgets. See the redacted diagnostic log for the final error."
     fi
 }
+
+# A development refresh must never downgrade an installed distribution build.
+# Check metadata as well as the signature so a copied/re-signed release remains protected.
+desktop_widgets_is_developer_id_release() {
+    local bundle_path="$1"
+    local codesign_command="${2:-/usr/bin/codesign}"
+    local channel
+    local authority
+    [[ -d "$bundle_path" ]] || return 1
+    channel="$(/usr/libexec/PlistBuddy -c 'Print :DesktopWidgetsDistributionChannel' "$bundle_path/Contents/Info.plist" 2>/dev/null || true)"
+    [[ "$channel" != "developer-id" ]] || return 0
+    authority="$("$codesign_command" -dv --verbose=4 "$bundle_path" 2>&1 | /usr/bin/sed -n 's/^Authority=//p' | /usr/bin/head -n 1)"
+    [[ "$authority" == Developer\ ID\ Application:* ]]
+}

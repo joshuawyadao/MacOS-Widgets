@@ -1,5 +1,7 @@
 # Personal Team installation
 
+This is the development/source-build workflow. For the notarized download, use [the installation guide](../Installation%20Guide.md) and [Developer ID release operations](Paid-Distribution-Path.md). Disable the old automatic refresh before switching; retain app data and compare signing identities first. Current helpers refuse to overwrite a Developer ID release, but older saved helpers must still be disabled.
+
 ## Feasibility result
 
 Desktop Widgets requires a signed macOS host app and WidgetKit extension with:

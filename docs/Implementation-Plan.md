@@ -1,23 +1,22 @@
 # Plan
 
-Restore the supplied Desktop Widgets learning reference, preserve its historical evidence, and save the documentation to a feature branch under the user's subsequent GitHub save request.
+Preserve release tooling coverage and verify post-merge changes while tracking recipient acceptance separately.
 
 ## Scope
-- In: A verbatim dated context snapshot, the supplied visual template, a living reference with dated restoration notes, README links, project-specific learning guidance in `AGENTS.md`, and a documentation commit/push to `codex/restore-project-learning-reference`.
-- Out: Application, test, configuration, or script changes; hypothetical improvements; profiling; signing, enrollment, automation, application publication, pull requests, or merges. On November 2, 2026, the user explicitly authorized creating a feature branch and saving these documentation changes to GitHub, superseding the initial local-only Git constraint.
+- In: Scoped CI enforcement, automated validation, meaningful orchestration regressions, and canonical verification documentation for MacOS Widgets.
+- Out: Product feature changes, deployment, paid services or account changes, personal data, physical-device operation, and release signing/publishing.
 
 ## Action items
-- [x] Read the supplied Markdown files, `README.md`, documentation conventions, existing plan, and relevant skill guidance; identify the test/CI setup without running application suites.
-- [x] Compare repository identity, HEAD, and initial working-tree status against the recorded `7d2ce82758b7c893fab1d8da05b527214fc23665` baseline. Preserve the prior completed implementation plan through its [pinned historical version](https://github.com/joshuawyadao/MacOS-Widgets/blob/7d2ce82758b7c893fab1d8da05b527214fc23665/docs/Implementation-Plan.md).
-- [x] Copy the supplied context verbatim to `docs/Project-Catchup-Snapshot-2026-11-02.md` and the template verbatim to `docs/Project-Catchup-Template.md`.
-- [x] Create `docs/Project-Catchup.md` with a short visual map, historical/current evidence separation, learning log, snapshot index, and update policy.
-- [x] Add `AGENTS.md` guidance to read the reference first and add README documentation links, without changing global skills.
-- [x] Verify both copies byte-for-byte, local Markdown links/anchors and code fences, preserved baseline metadata, and `git diff --check`; confirm only documentation changed. Both copies matched; 27 local links/anchors and structure/whitespace checks passed across six Markdown files. Test files and application suites are unnecessary because executable behavior is unchanged.
-- [x] Complete the original restoration locally and unstaged, with no commits, pushes, publication, or PRs at that stage; HEAD was detached at the historical baseline.
-- [x] Record the subsequent November 2 GitHub save authorization, confirm repository access and push permission, and create `codex/restore-project-learning-reference` from the recorded baseline.
-- [x] Recheck the six documentation files after recording the save authorization: both imports remain exact, 27 local links/anchors pass, and Markdown structure/whitespace and documentation scope checks pass.
+- [x] Read Paid-Distribution-Path and installation docs plus current release and CI regression checks.
+- [x] Confirm CI Verify remains required by the existing ruleset.
+- [x] Add main push verification alongside PR/manual checks while preserving unsigned Release/archive and mocked release coverage.
+- [x] Reuse existing identity/team/App Group tests; add cases only if a concrete uncovered contract is found.
+- [x] Run safe mocked release/shell/repository checks without signing credentials, install or widget reload.
+- [x] Update distribution acceptance status and README, then save and push the isolated release-workstream branch.
 
-The authorized Git save uses `save-branch`: stage only these six documentation files, commit, push `codex/restore-project-learning-reference`, and verify that the remote branch matches local HEAD. Git records the resulting commit and upstream state; the historical restoration note does not imply a current local-only constraint.
-
-## Open questions
-- None.
+## Discovery notes
+- Baseline: `94d5bba9405abdbc7a742b7d8744e3a616cca355` (`codex/notarized-dmg-release`), isolated from the original checkout.
+- Existing in-progress changes in original project folders remain untouched.
+- Missing hosting/account capabilities are reported as concrete limitations; they are not permission to weaken required checks.
+- Existing mocked release and installer/refresh regression scripts passed. No new identity test was added because the current script covers same-team identity replay, cross-team rejection, signed-app team/App Group mismatch, and resolved Xcode settings.
+- README and distribution acceptance guidance are updated; recipient installation, compatible-identity upgrade, and cross-team migration remain manual and unverified. The isolated branch is saved and pushed. Hosted configuration tests, Release build, unsigned archive and aggregate CI Verify passed: https://github.com/joshuawyadao/MacOS-Widgets/actions/runs/43938720957 .

@@ -47,6 +47,51 @@ final class WidgetContractTests: XCTestCase {
         XCTAssertFalse(status.isReady)
     }
 
+    func testDeveloperIDReleaseSupportsBothApplicationsFoldersAndHidesDevelopmentHelpers() {
+        let home = URL(fileURLWithPath: "/Users/friendly", isDirectory: true)
+        let info: [String: Any] = [
+            "DesktopWidgetsDistributionChannel": "developer-id",
+            "CFBundleIdentifier": "com.joshuawyadao.DesktopWidgets",
+            "DesktopWidgetsDevelopmentTeam": "ABC123DE45",
+            "WidgetThemeAppGroupIdentifier": "ABC123DE45.com.joshuawyadao.desktop-widgets",
+            // Stale helper metadata must never expose development maintenance in a release.
+            "DesktopWidgetsRefreshCommandPath": "/tmp/Refresh.command",
+            "DesktopWidgetsEnableAutomaticRefreshCommandPath": "/tmp/Enable.command",
+            "DesktopWidgetsDisableAutomaticRefreshCommandPath": "/tmp/Disable.command",
+        ]
+        for path in ["/Applications/Desktop Widgets.app", "/Users/friendly/Applications/Desktop Widgets.app"] {
+            let status = DesktopWidgetsInstallationStatus(
+                bundleURL: URL(fileURLWithPath: path), infoDictionary: info, homeDirectory: home
+            )
+            XCTAssertTrue(status.isDeveloperIDRelease)
+            XCTAssertTrue(status.isReady)
+            XCTAssertFalse(status.refreshCommandExists)
+            XCTAssertNil(status.refreshCommandURL)
+            XCTAssertNil(status.enableAutomaticRefreshCommandURL)
+            XCTAssertNil(status.disableAutomaticRefreshCommandURL)
+        }
+        for path in ["/Volumes/Desktop Widgets/Desktop Widgets.app", "/tmp/Desktop Widgets.app"] {
+            let status = DesktopWidgetsInstallationStatus(
+                bundleURL: URL(fileURLWithPath: path), infoDictionary: info, homeDirectory: home
+            )
+            XCTAssertFalse(status.isReady, "A downloaded image or temporary build is not an installed app")
+            XCTAssertEqual(status.expectedBundleURL.path, "/Applications/Desktop Widgets.app")
+        }
+    }
+
+    func testDevelopmentBuildStillRequiresPersonalInstallationLocation() {
+        let status = DesktopWidgetsInstallationStatus(
+            bundleURL: URL(fileURLWithPath: "/Applications/Desktop Widgets.app"),
+            infoDictionary: [
+                "DesktopWidgetsDevelopmentTeam": "ABC123DE45",
+                "WidgetThemeAppGroupIdentifier": "ABC123DE45.shared",
+            ],
+            homeDirectory: URL(fileURLWithPath: "/Users/friendly")
+        )
+        XCTAssertFalse(status.isDeveloperIDRelease)
+        XCTAssertFalse(status.isReady)
+    }
+
     func testInstallationStatusUsesAccountRecordHomeOutsideSandboxContainer() {
         let containerHome = URL(fileURLWithPath: "/Users/friendly/Library/Containers/example/Data")
         let accountHome = DesktopWidgetsInstallationStatus.accountHomeDirectory(
